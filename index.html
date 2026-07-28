@@ -295,9 +295,68 @@ nav button.activa{color:var(--verde)}
 .toast.ver{opacity:1;transform:translateX(-50%) translateY(0)}
 .toast.con-accion{pointer-events:auto}
 .toast-btn{background:none;border:none;color:var(--verde);font-size:13px;font-weight:800;cursor:pointer;text-decoration:underline}
+
+/* ---------- Pantalla de entrada ---------- */
+#portada{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:32px 26px calc(32px + env(safe-area-inset-bottom));text-align:center;
+  background:radial-gradient(85% 45% at 18% -8%, rgba(150,190,70,.28), transparent 60%),
+             radial-gradient(70% 35% at 90% -5%, rgba(34,197,94,.14), transparent 65%), var(--bg)}
+#portada.oculta{display:none}
+#portada .logo{width:76px;height:76px;border-radius:22px;background:var(--grad);display:flex;align-items:center;justify-content:center;margin-bottom:22px;box-shadow:0 10px 30px rgba(34,197,94,.28)}
+#portada h1{font-size:31px;font-weight:800;letter-spacing:-1px;margin-bottom:8px}
+#portada h1 span{background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+#portada .lema{font-size:15px;color:var(--ink-soft);font-weight:600;line-height:1.55;max-width:320px;margin-bottom:30px}
+.btn-google{display:flex;align-items:center;justify-content:center;gap:11px;width:100%;max-width:320px;
+  padding:15px;border:none;border-radius:999px;background:#fff;color:#1F2328;font-size:15.5px;font-weight:800;cursor:pointer}
+.btn-google:active{transform:scale(.98)}
+.btn-google svg{flex:none}
+#portadaPie{font-size:12px;color:var(--ink-soft);line-height:1.55;max-width:320px;margin-top:22px}
+#portadaError{display:none;margin-top:20px;padding:13px 15px;border-radius:14px;background:var(--red-soft);
+  color:var(--red);font-size:12.5px;font-weight:700;line-height:1.5;max-width:340px}
+#portadaError.ver{display:block}
+
+/* ---------- Cuenta y sincronización ---------- */
+.cuenta{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.cuenta .ava{width:42px;height:42px;border-radius:999px;background:var(--green-soft);color:var(--verde2);
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;flex:none;overflow:hidden}
+.cuenta .ava img{width:100%;height:100%;object-fit:cover}
+.cuenta .datos-c{flex:1;min-width:0}
+.cuenta .correo{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cuenta .sinc{font-size:11.5px;font-weight:700;color:var(--ink-soft);margin-top:2px;display:flex;align-items:center;gap:5px}
+.cuenta .sinc::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ink-soft);flex:none}
+.cuenta .sinc.ok::before{background:var(--verde)}
+.cuenta .sinc.ok{color:var(--verde2)}
+.cuenta .sinc.pend::before{background:var(--gold)}
+.cuenta .sinc.pend{color:var(--gold)}
+.cuenta .sinc.mal::before{background:var(--red)}
+.cuenta .sinc.mal{color:var(--red)}
 </style>
 </head>
 <body>
+
+<!-- Pantalla de entrada: cubre la app hasta que haya sesión -->
+<div id="portada">
+  <div class="logo">
+    <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#052012" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 20V5M5 12l7-7 7 7"/>
+    </svg>
+  </div>
+  <h1>Impulsa<span>.</span></h1>
+  <p class="lema">Tu plan diario de prospección: metas, seguimientos y los números reales de tu negocio.</p>
+
+  <button class="btn-google" id="btnEntrar">
+    <svg width="19" height="19" viewBox="0 0 48 48" aria-hidden="true">
+      <path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h11.8c-.5 2.7-2 5-4.4 6.6v5.5h7.1c4.1-3.8 6.6-9.4 6.6-16.1z"/>
+      <path fill="#34A853" d="M24 46c6 0 11-2 14.6-5.4l-7.1-5.5c-2 1.3-4.5 2.1-7.5 2.1-5.8 0-10.6-3.9-12.4-9.1H4.3v5.7C7.9 41.1 15.4 46 24 46z"/>
+      <path fill="#FBBC05" d="M11.6 28.1c-.4-1.3-.7-2.7-.7-4.1s.3-2.8.7-4.1v-5.7H4.3C2.8 17.1 2 20.4 2 24s.8 6.9 2.3 9.8l7.3-5.7z"/>
+      <path fill="#EA4335" d="M24 10.8c3.3 0 6.2 1.1 8.5 3.3l6.3-6.3C35 4.3 30 2 24 2 15.4 2 7.9 6.9 4.3 14.2l7.3 5.7c1.8-5.2 6.6-9.1 12.4-9.1z"/>
+    </svg>
+    Entrar con Google
+  </button>
+
+  <p id="portadaPie">Tus datos quedan guardados en tu cuenta. Si cambias de teléfono, entras con el mismo Google y ahí está todo.</p>
+  <div id="portadaError"></div>
+</div>
 
 <header class="app">
   <div class="hdr-izq">
@@ -403,6 +462,19 @@ nav button.activa{color:var(--verde)}
 
   <!-- ============ AJUSTES ============ -->
   <section class="tab" id="tab-ajustes">
+    <div class="card">
+      <h2>Mi cuenta</h2>
+      <div class="cuenta">
+        <div class="ava" id="cuentaAva">?</div>
+        <div class="datos-c">
+          <div class="correo" id="cuentaCorreo">Sin sesión</div>
+          <div class="sinc" id="cuentaSinc">Conectando…</div>
+        </div>
+      </div>
+      <button class="btn btn-sec" onclick="cerrarSesion()">Cerrar sesión</button>
+      <p class="nota">Tus datos se guardan solos en tu cuenta unos segundos después de cada cambio. Si te quedas sin señal sigues trabajando y todo sube al reconectar.</p>
+    </div>
+
     <div class="card">
       <h2>Mis metas diarias</h2>
       <div id="editorMetas"></div>
@@ -601,7 +673,33 @@ function cargar(){
     metaMes: {ventas:0, socios:0}
   };
 }
-function guardar(){ try{ localStorage.setItem(CLAVE, JSON.stringify(datos)); }catch(e){ avisar("No se pudo guardar 😕"); } }
+/* Guardar es siempre local y al instante: la nube va después, sin bloquear.
+   `actualizado` es el árbitro cuando el mismo usuario edita en dos aparatos. */
+function guardar(){
+  datos.actualizado = Date.now();
+  guardarLocal();
+  if(window.Nube) window.Nube.programarSubida();
+}
+function guardarLocal(){
+  try{ localStorage.setItem(CLAVE, JSON.stringify(datos)); }
+  catch(e){ avisar("No se pudo guardar 😕"); }
+}
+
+/* ---- Puente para el módulo de Firebase (script aparte, ver abajo) ---- */
+function nubeDatos(){ return datos; }
+function nubeAplicar(obj){           // adopta lo que vino de la nube sin re-subirlo
+  datos = normalizar(obj);
+  guardarLocal();
+}
+function nubeReiniciar(){            // deja el dispositivo limpio (otra cuenta o salida)
+  localStorage.removeItem(CLAVE);
+  datos = cargar();
+}
+function repintarTodo(){
+  pintarFecha();
+  pintarHoy();
+  pintarTab();
+}
 
 function claveDia(f){ const d=f||new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 /* hoy() se calcula SIEMPRE al momento: si la app queda abierta pasada la
@@ -1508,6 +1606,182 @@ if("serviceWorker" in navigator && location.protocol.startsWith("http")){
     navigator.serviceWorker.register("sw.js").catch(()=>{ /* sin offline, la app igual funciona */ });
   });
 }
+
+/* Red de seguridad: si el módulo de Firebase nunca carga (CDN bloqueado, sin
+   red en la primera visita), avisar en vez de dejar la portada colgada. */
+setTimeout(()=>{
+  if(!window.Nube && !document.getElementById("portada").classList.contains("oculta")){
+    const e = document.getElementById("portadaError");
+    e.innerHTML = 'No se pudo cargar el inicio de sesión. Revisa tu conexión y '
+      + '<button class="toast-btn" onclick="location.reload()">reintenta</button>.';
+    e.classList.add("ver");
+  }
+}, 12000);
+</script>
+
+<script type="module">
+/* =================== Sincronización con Firebase ===================
+   El teléfono manda: cada cambio se guarda en localStorage al instante y la
+   nube se actualiza unos segundos después. Así veinte toques al "+" son una
+   sola escritura, y sin señal la app no se entera.
+   Esta configuración es pública a propósito: la seguridad vive en las reglas
+   de Firestore y en la lista de dominios autorizados, no en esconderla. */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect,
+         getRedirectResult, onAuthStateChanged, signOut }
+  from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import { initializeFirestore, persistentLocalCache, persistentSingleTabManager,
+         doc, getDoc, setDoc, onSnapshot }
+  from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBIlQ4B-c-flDs6MLPasns_lRrpB52xs1U",
+  authDomain: "impulsa-d9262.firebaseapp.com",
+  projectId: "impulsa-d9262",
+  storageBucket: "impulsa-d9262.firebasestorage.app",
+  messagingSenderId: "30639871064",
+  appId: "1:30639871064:web:3ae4be5e63762e93cea62d"
+};
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = initializeFirestore(app, {
+  localCache: persistentLocalCache({ tabManager: persistentSingleTabManager() })
+});
+
+const portada = document.getElementById("portada");
+const cajaError = document.getElementById("portadaError");
+let refDoc = null, desuscribir = null, temporizador = null, bajando = false;
+
+function marcar(txt, clase){
+  const el = document.getElementById("cuentaSinc");
+  if(el){ el.textContent = txt; el.className = "sinc " + (clase || ""); }
+}
+function fallo(msg){ cajaError.textContent = msg; cajaError.classList.add("ver"); }
+function explicar(e){
+  const c = (e && e.code) || "";
+  if(c === "auth/unauthorized-domain")
+    return "Este dominio no está autorizado en Firebase. Agrégalo en Authentication → Settings → Dominios autorizados.";
+  if(c === "auth/network-request-failed")
+    return "Sin conexión. Revisa tu internet e inténtalo otra vez.";
+  return "No se pudo iniciar sesión (" + (c || "error") + "). Inténtalo de nuevo.";
+}
+
+async function subir(){
+  if(!refDoc) return;
+  const d = nubeDatos();
+  try{
+    await setDoc(refDoc, {
+      datos: JSON.stringify(d),
+      actualizado: d.actualizado || Date.now(),
+      correo: auth.currentUser ? (auth.currentUser.email || "") : ""
+    });
+    marcar("Todo guardado en la nube", "ok");
+  }catch(e){
+    // Firestore reintenta solo al recuperar la red
+    marcar("Sin conexión · se subirá solo", "pend");
+  }
+}
+function programarSubida(){
+  if(bajando) return;                     // no re-subir lo que acabamos de bajar
+  clearTimeout(temporizador);
+  marcar("Guardando…", "pend");
+  temporizador = setTimeout(subir, 2500);
+}
+window.Nube = { programarSubida };
+
+function escuchar(){
+  if(desuscribir) desuscribir();
+  desuscribir = onSnapshot(refDoc, snap=>{
+    if(!snap.exists()) return;
+    const d = snap.data();
+    if(!d || !d.datos) return;
+    if((d.actualizado || 0) <= (nubeDatos().actualizado || 0)) return;  // lo local va igual o adelante
+    bajando = true;
+    try{
+      nubeAplicar(JSON.parse(d.datos));
+      repintarTodo();
+      marcar("Actualizado desde otro dispositivo", "ok");
+    }catch(e){ /* documento ilegible: se ignora */ }
+    finally{ bajando = false; }
+  }, ()=> marcar("Sin conexión", "pend"));
+}
+
+async function entrar(user){
+  refDoc = doc(db, "usuarios", user.uid);
+  // copia local de otra cuenta (teléfono prestado): se descarta
+  if(nubeDatos()._uid && nubeDatos()._uid !== user.uid) nubeReiniciar();
+
+  marcar("Sincronizando…", "pend");
+  let remoto = null;
+  try{
+    const snap = await getDoc(refDoc);
+    if(snap.exists() && snap.data().datos) remoto = snap.data();
+  }catch(e){ /* sin red: se sigue con lo local */ }
+
+  // gana el más reciente; en la primera entrada sube lo que ya tenía el teléfono
+  if(remoto && (remoto.actualizado || 0) > (nubeDatos().actualizado || 0)){
+    try{ nubeAplicar(JSON.parse(remoto.datos)); }catch(e){}
+  }
+  nubeDatos()._uid = user.uid;
+  guardarLocal();
+  repintarTodo();
+
+  document.getElementById("cuentaCorreo").textContent = user.email || "Sesión activa";
+  const ava = document.getElementById("cuentaAva");
+  ava.textContent = "";
+  if(user.photoURL){
+    const img = document.createElement("img");
+    img.src = user.photoURL; img.alt = ""; img.referrerPolicy = "no-referrer";
+    ava.appendChild(img);
+  }else{
+    ava.textContent = (user.email || "?").slice(0,1).toUpperCase();
+  }
+
+  portada.classList.add("oculta");
+  await subir();
+  escuchar();
+}
+
+function salir(){
+  if(desuscribir){ desuscribir(); desuscribir = null; }
+  refDoc = null;
+  portada.classList.remove("oculta");
+}
+
+window.cerrarSesion = async ()=>{
+  if(!confirm("¿Cerrar sesión? Tus datos quedan guardados en tu cuenta.")) return;
+  clearTimeout(temporizador);
+  await subir();                          // que no se quede nada sin subir
+  if(desuscribir){ desuscribir(); desuscribir = null; }
+  try{ await signOut(auth); }catch(e){}
+  nubeReiniciar();
+  repintarTodo();
+};
+
+const proveedor = new GoogleAuthProvider();
+proveedor.setCustomParameters({ prompt: "select_account" });
+// En una PWA instalada en iOS la ventana emergente no funciona: ahí va redirección
+const instalada = window.matchMedia("(display-mode: standalone)").matches
+               || navigator.standalone === true;
+
+document.getElementById("btnEntrar").addEventListener("click", async ()=>{
+  cajaError.classList.remove("ver");
+  try{
+    if(instalada) await signInWithRedirect(auth, proveedor);
+    else          await signInWithPopup(auth, proveedor);
+  }catch(e){
+    const c = (e && e.code) || "";
+    if(c === "auth/popup-blocked" || c === "auth/operation-not-supported-in-this-environment"){
+      try{ await signInWithRedirect(auth, proveedor); }catch(e2){ fallo(explicar(e2)); }
+    }else if(c !== "auth/popup-closed-by-user" && c !== "auth/cancelled-popup-request"){
+      fallo(explicar(e));
+    }
+  }
+});
+
+getRedirectResult(auth).catch(e=>{ if(e && e.code) fallo(explicar(e)); });
+onAuthStateChanged(auth, user => user ? entrar(user) : salir());
 </script>
 </body>
 </html>
