@@ -1636,10 +1636,13 @@ import { initializeFirestore, persistentLocalCache, persistentSingleTabManager,
 
 const firebaseConfig = {
   apiKey: "AIzaSyBIlQ4B-c-flDs6MLPasns_lRrpB52xs1U",
-  // Mismo dominio donde vive la app (no el .firebaseapp.com que trae la consola):
-  // si difieren, Safari corta el paso de la credencial y la app instalada se
-  // queda en un bucle de carga que regresa a la portada.
-  authDomain: "impulsa-d9262.web.app",
+  // Debe coincidir con el dominio desde el que se sirve la app (por eso la app
+  // se abre en .firebaseapp.com y no en .web.app). Dos motivos:
+  //  1. Si difieren, Safari corta el paso de la credencial y la app instalada
+  //     gira cargando y regresa a la portada.
+  //  2. Google solo tiene autorizada la dirección de retorno de este dominio;
+  //     apuntar a .web.app da "Error 400: redirect_uri_mismatch".
+  authDomain: "impulsa-d9262.firebaseapp.com",
   projectId: "impulsa-d9262",
   storageBucket: "impulsa-d9262.firebasestorage.app",
   messagingSenderId: "30639871064",
