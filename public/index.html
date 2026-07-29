@@ -85,6 +85,18 @@ main{padding:0 16px}
 .hero-txt b.v{color:var(--verde)}
 .hero-txt b.o{color:var(--gold)}
 .hero-txt b.a{color:var(--azul)}
+.hero-txt b.r{color:var(--red)}
+
+/* ---------- Trío de métricas del inicio ---------- */
+.trio{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px}
+.trio .t{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,0)),var(--card);
+  border:1px solid var(--line);border-radius:17px;padding:13px 9px;text-align:center}
+.trio .tn{font-size:22px;font-weight:800;letter-spacing:-.8px;line-height:1.05}
+.trio .tn small{font-size:13px;font-weight:800;color:var(--ink-soft);letter-spacing:0}
+.trio .tm{font-size:10.5px;font-weight:700;color:var(--ink-soft);margin-top:4px;line-height:1.3}
+.trio .t.verde .tn{color:var(--verde)}
+.trio .t.oro   .tn{color:var(--gold)}
+.trio .t.rojo  .tn{color:var(--red)}
 .chips-hero{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
 .chip-h{display:flex;align-items:center;gap:6px;padding:7px 13px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--line);font-size:12.5px;font-weight:700}
 .chip-h.alerta{background:var(--red-soft);color:var(--red);border-color:transparent}
@@ -393,6 +405,8 @@ nav button.activa{color:var(--verde)}
       <p class="hero-txt" id="heroTxt"></p>
       <div class="chips-hero" id="chipsHero"></div>
     </div>
+
+    <div class="trio" id="trioInicio"></div>
 
     <div class="card">
       <h2>Actividades de hoy</h2>
@@ -851,9 +865,9 @@ function pintarHoy(){
   const conv = dia["conv"]||0;
   const seg = datos.prospectos.filter(p=>p.fecha && p.fecha<=H && p.etapa!=="Descartado");
   const atrasados = seg.filter(p=>p.fecha<H).length;
-  document.getElementById("heroTxt").innerHTML =
-    `Llevas <b class="v">${logradas} de ${total} metas</b>, <b class="a">${conv} conversaciones</b> y <b class="o">${seg.length} seguimientos</b> hoy.`;
   const racha = calcularRacha();
+  document.getElementById("heroTxt").innerHTML =
+    mensajeDelDia({pctDia, logradas, total, conv, racha, hora});
   const pendientes = datos.agenda.filter(t=>!t.hecha && t.fecha<=H).length;
   document.getElementById("chipsHero").innerHTML =
     `<span class="chip-h">🔥 ${racha===1? "1 día" : racha+" días"}</span>
@@ -862,8 +876,96 @@ function pintarHoy(){
      ${atrasados? `<span class="chip-h alerta">⚠️ ${atrasados} atrasado${atrasados>1?"s":""}</span>` : ""}`;
 
   pintarSemana();
+  pintarTrio(seg.length);
   pintarSegHoy();
   pintarAgenda();
+}
+
+/* El mensaje del inicio empuja según qué tanto llevas Y qué hora es: 0% a las
+   8am no es lo mismo que 0% a las 9pm. Dentro de cada caso hay variantes que
+   rotan por día del mes, para que no sea siempre la misma frase. */
+function mensajeDelDia({pctDia, logradas, total, conv, racha, hora}){
+  if(total===0)
+    return `Configura tus metas en <b class="a">Ajustes</b> para empezar a medir tu día.`;
+
+  const franja = hora<12 ? "manana" : (hora<18 ? "tarde" : "noche");
+  const faltan = total - logradas;
+  const elige = arr => arr[new Date().getDate() % arr.length];
+
+  // La racha en riesgo pesa más que cualquier otra cosa: se pierde hoy o no.
+  if(racha>=2 && pctDia<100 && franja==="noche"){
+    return elige([
+      `Llevas <b class="o">${racha} días</b> de racha. Cierra el día y la mantienes; si no, se rompe hoy.`,
+      `<b class="o">${racha} días</b> seguidos cumpliendo. No los tires por ${faltan} meta${faltan>1?"s":""}.`
+    ]);
+  }
+
+  if(pctDia>=100){
+    if(racha>=3) return elige([
+      `<b class="v">${racha} días seguidos</b> cumpliendo. Esto ya es hábito, no suerte.`,
+      `Día cerrado y <b class="v">${racha} de racha</b>. Así se construye una red.`
+    ]);
+    return elige([
+      `Día cerrado al <b class="v">100%</b>. Así se construye.`,
+      `<b class="v">Las ${total} metas</b> hechas. Mañana otra vez.`
+    ]);
+  }
+
+  if(pctDia>=75) return elige({
+    manana: [`Vas <b class="v">arriba del 75%</b> y apenas es temprano. Ciérralo.`,
+             `Buen ritmo: <b class="v">${logradas} de ${total}</b> antes del mediodía.`],
+    tarde:  [`<b class="v">${logradas} de ${total}</b>. Te falta poco, no lo dejes ahí.`,
+             `Ya casi. ${faltan} meta${faltan>1?"s":""} para cerrar el día completo.`],
+    noche:  [`Casi lo cierras: te falta${faltan>1?"n":""} <b class="o">${faltan}</b>. ¿Aguantas otro rato?`,
+             `<b class="o">${faltan} meta${faltan>1?"s":""}</b> entre tú y el día perfecto.`]
+  }[franja]);
+
+  if(pctDia>=50) return elige({
+    manana: [`Media mañana y ya vas a la <b class="v">mitad</b>. Buen arranque.`,
+             `<b class="v">${logradas} de ${total}</b> y todavía te sobra día.`],
+    tarde:  [`Vas a medio camino. <b class="o">Las próximas horas</b> deciden el día.`,
+             `<b class="o">${logradas} de ${total}</b>. Ni bien ni mal: define.`],
+    noche:  [`Te quedaste <b class="o">a medias</b>. Falta${faltan>1?"n":""} ${faltan} y todavía hay tiempo.`,
+             `Medio día hecho. <b class="o">Medio día perdido</b>.`]
+  }[franja]);
+
+  if(pctDia>0) return elige({
+    manana: [`Ya arrancaste con <b class="v">${conv} conversacion${conv===1?"":"es"}</b>. Ahora no pares.`,
+             `Primer paso dado. Lo difícil ya pasó.`],
+    tarde:  [`<b class="o">Vas lento</b> para la hora que es. Todavía se compone.`,
+             `Solo <b class="o">${logradas} de ${total}</b> y ya es tarde. Acelera.`],
+    noche:  [`El día se acaba y llevas <b class="r">${logradas} de ${total}</b>. Lo que hagas ahora cuenta.`,
+             `<b class="r">Día flojo</b>. Rescata lo que puedas antes de dormir.`]
+  }[franja]);
+
+  return elige({
+    manana: [`Día en blanco. Las <b class="v">primeras 5 conversaciones</b> son las que cuestan.`,
+             `Nada todavía. <b class="v">Empieza por una</b> y el resto se acomoda.`],
+    tarde:  [`Medio día ido y <b class="o">cero actividad</b>. Si arrancas ahora todavía te alcanza.`,
+             `<b class="o">Sigues en cero</b>. El día no se va a trabajar solo.`],
+    noche:  [`Se te fue el día <b class="r">completo</b>. Que mañana no sea igual.`,
+             `<b class="r">Cero</b>. Hoy tu negocio no avanzó nada.`]
+  }[franja]);
+}
+
+/* Ventas y socios del MES, porque así se mide el negocio; seguimientos de hoy. */
+function pintarTrio(nSeg){
+  const mm = datos.metaMes||{ventas:0,socios:0};
+  const v = sumaMes("venta"), s = sumaMes("socio");
+  const activos = datos.prospectos.filter(p=>
+    p.etapa!=="Descartado" && p.etapa!=="Cliente" && p.etapa!=="Socio").length;
+  const bloque = (num, meta, etiqueta, clase)=>{
+    const cumplida = meta>0 && num>=meta;
+    return `<div class="t ${cumplida? "verde" : clase}">
+      <div class="tn">${num}${meta>0? `<small>/${meta}</small>` : ""}</div>
+      <div class="tm">${etiqueta}</div>
+    </div>`;
+  };
+  document.getElementById("trioInicio").innerHTML =
+      bloque(v, +mm.ventas||0, "ventas del mes", v>0? "verde":"rojo")
+    + bloque(s, +mm.socios||0, "socios del mes", s>0? "oro":"rojo")
+    + `<div class="t"><div class="tn">${activos}</div>
+         <div class="tm">en seguimiento${nSeg? " · "+nSeg+" hoy" : ""}</div></div>`;
 }
 
 function pintarSemana(){
