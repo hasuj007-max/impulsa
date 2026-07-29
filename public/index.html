@@ -27,8 +27,11 @@
   --radius:20px;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%}
-body{
+/* min-height y NO height: con `height:100%` + border-box, el padding-bottom
+   queda atrapado dentro de la altura de la pantalla y el final del contenido
+   se esconde detrás de la barra fija. */
+html{height:100%}
+body{min-height:100%;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
   background:
     radial-gradient(85% 45% at 18% -8%, rgba(150,190,70,.28), transparent 60%),
@@ -55,6 +58,9 @@ header.app{
 main{padding:0 16px}
 .tab{display:none}
 .tab.activa{display:block;animation:fade .18s ease}
+/* El botón flotante (+) se asoma 148px sobre el borde: sin esto tapaba el
+   último prospecto de la lista. */
+#tab-prospectos{padding-bottom:72px}
 @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
