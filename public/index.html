@@ -258,14 +258,6 @@ main{padding:0 16px}
 .btn-x{width:34px;height:34px;border:none;border-radius:11px;background:var(--red-soft);color:var(--red);font-weight:800;font-size:15px;cursor:pointer;flex:none;display:flex;align-items:center;justify-content:center}
 .candado{width:34px;height:34px;border-radius:11px;background:rgba(255,255,255,.05);color:var(--ink-soft);flex:none;display:flex;align-items:center;justify-content:center}
 .ajuste-meta input[type=text]:disabled{opacity:.75}
-/* ---------- Reprogramar rápido ---------- */
-.reprog{display:flex;gap:6px;margin-top:9px}
-.btn-reprog{flex:1;min-width:0;padding:7px 4px;border-radius:10px;border:1px solid var(--line2);background:rgba(255,255,255,.05);color:var(--ink);font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap}
-.btn-reprog.listo{color:var(--verde);border-color:rgba(74,222,128,.3)}
-.btn-reprog:active{transform:scale(.95)}
-.seg-item{padding:13px 0;border-bottom:1px solid var(--line)}
-.seg-item:last-child{border-bottom:none}
-.seg-item .prospecto{padding:0;border-bottom:none}
 
 .btn{display:block;width:100%;padding:14px;border:none;border-radius:999px;font-size:15px;font-weight:800;cursor:pointer;margin-top:10px}
 .btn-pri{background:var(--grad);color:#052012;box-shadow:0 6px 18px rgba(34,197,94,.3)}
@@ -435,11 +427,6 @@ nav button.activa{color:var(--verde)}
     <div class="card">
       <h2>Actividades de hoy</h2>
       <div id="listaMetas"></div>
-    </div>
-
-    <div class="card">
-      <h2>Seguimientos para hoy</h2>
-      <div id="segHoy"></div>
     </div>
 
     <div class="card">
@@ -668,14 +655,16 @@ function sellarEtapa(p, etapa, fecha){
    `socio` NO se pueden renombrar: los leen el marcador, el trío del inicio y
    la meta mensual. Cambiar esta lista no afecta a quien ya tiene cuenta. */
 const METAS_INICIALES = [
-  {id:"conv",  nombre:"Conversaciones nuevas Facebook o Instagram", objetivo:25},
-  {id:"fbgr",  nombre:"Publicar en grupos FB",     objetivo:25},
-  {id:"mkt",   nombre:"Publicar Marketplace",      objetivo:25},
-  {id:"tiktok",nombre:"Video TikTok",              objetivo:3},
-  {id:"venta", nombre:"Ventas",                    objetivo:1},
-  {id:"socio", nombre:"Nuevos socios",             objetivo:1},
-  {id:"addfb", nombre:"Agregar 10 personas a fb",  objetivo:10},
-  {id:"segig", nombre:"Seguir 50 nuevos en ig",    objetivo:50}
+  {id:"conv",   nombre:"Conversaciones nuevas Facebook o Instagram", objetivo:25},
+  {id:"fbgr",   nombre:"Publicar en grupos FB",              objetivo:25},
+  {id:"mkt",    nombre:"Publicar Marketplace",               objetivo:25},
+  {id:"tiktok", nombre:"Video TikTok",                       objetivo:3},
+  {id:"venta",  nombre:"Ventas",                             objetivo:1},
+  {id:"socio",  nombre:"Nuevos socios",                      objetivo:1},
+  {id:"addfb",  nombre:"Agregar 10 personas a fb",           objetivo:10},
+  {id:"segig",  nombre:"Seguir 50 nuevos en ig",             objetivo:50},
+  {id:"hist",   nombre:"5 historias en todas tus redes sociales", objetivo:1},
+  {id:"gruposfb", nombre:"Agrégate a 5 grupos nuevos de FB", objetivo:5}
 ];
 
 /* [nombre] se reemplaza por el nombre del prospecto al copiar. */
@@ -898,7 +887,6 @@ function pintarHoy(){
 
   pintarSemana();
   pintarTrio(seg.length);
-  pintarSegHoy();
   pintarAgenda();
 }
 
@@ -1095,50 +1083,6 @@ function copiaManual(t){
   ta.remove();
 }
 
-function pintarSegHoy(){
-  const H = hoy();
-  const pend = datos.prospectos
-    .filter(p=>p.fecha && p.fecha<=H && p.etapa!=="Descartado")
-    .sort((a,b)=>a.fecha.localeCompare(b.fecha));
-  const cont = document.getElementById("segHoy");
-  if(!pend.length){ cont.innerHTML = `<div class="vacio"><div class="big">✅</div><p>Sin seguimientos pendientes.<br>¡A abrir conversaciones nuevas!</p></div>`; return; }
-  cont.innerHTML = pend.map(p=>`
-    <div class="seg-item">
-      <div class="prospecto" onclick="abrirFormulario('${p.id}')">
-        <div class="avatar">${esc(iniciales(p.nombre))}</div>
-        <div class="datos">
-          <div class="nom">${esc(p.nombre)}</div>
-          <div class="sub">${esc(p.red)} · ${p.fecha<H?'<span class="aviso-seg">Atrasado · '+esc(fCorta(p.fecha))+'</span>':'Hoy'}</div>
-        </div>
-        ${botonChat(p)}
-        <span class="etiqueta ${claseEtapa(p.etapa)}">${esc(p.etapa)}</span>
-      </div>
-      <div class="reprog">
-        <button class="btn-reprog" onclick="reprogramar('${p.id}',1)">+1d</button>
-        <button class="btn-reprog" onclick="reprogramar('${p.id}',3)">+3d</button>
-        <button class="btn-reprog" onclick="reprogramar('${p.id}',7)">+1 sem</button>
-        <button class="btn-reprog" onclick="reprogramar('${p.id}',30)">+1 mes</button>
-        <button class="btn-reprog listo" onclick="cerrarSeguimiento('${p.id}')">Listo ✓</button>
-      </div>
-    </div>`).join("");
-}
-/* Reprograma contando desde hoy, no desde la fecha vencida. */
-function reprogramar(id, dias){
-  const p = datos.prospectos.find(x=>x.id===id); if(!p) return;
-  const d = new Date(); d.setDate(d.getDate()+dias);
-  p.fecha = claveDia(d);
-  guardar(); pintarHoy(); pintarProspectos();
-  avisar("Reprogramado al "+fCorta(p.fecha));
-}
-function cerrarSeguimiento(id){
-  const p = datos.prospectos.find(x=>x.id===id); if(!p) return;
-  const antes = p.fecha;
-  p.fecha = "";
-  guardar(); pintarHoy(); pintarProspectos();
-  avisar("Seguimiento cerrado","Deshacer",()=>{
-    p.fecha = antes; guardar(); pintarHoy(); pintarProspectos();
-  });
-}
 
 /* =================== AGENDA PERSONAL =================== */
 const ICONO_CHECK='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
