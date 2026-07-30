@@ -677,11 +677,30 @@ const PLANTILLAS_INICIALES = [
   {id:"pl4", titulo:"Cierre", texto:"[nombre], ¿qué fue lo que más te gustó de lo que viste? Si te animas, hoy mismo te ayudo a arrancar y te acompaño en los primeros pasos."}
 ];
 
+/* Versión del plan de actividades. SUBIR ESTE NÚMERO cada vez que cambie
+   METAS_INICIALES: cada cuenta que abra la app con una versión menor adopta el
+   plan nuevo sola, sin que nadie tenga que tocar nada ni yo necesite acceso a
+   los datos de nadie — lo aplica el propio dispositivo con sus permisos.
+   Va ANTES de `let datos = cargar()`: cargar() llama a normalizar(), que lee
+   estas dos, y con const/let declaradas después reventaría el script entero. */
+const PLAN_VERSION = 1;
+let planRecienMigrado = false;
+
 let datos = cargar();
 
 /* Rellena lo que falte en datos guardados con versiones anteriores de la app.
    Se aplica igual al cargar y al restaurar un respaldo. */
 function normalizar(d){
+  planRecienMigrado = false;
+  if(d.planVersion !== PLAN_VERSION){
+    d.metas = JSON.parse(JSON.stringify(METAS_INICIALES));
+    d.planVersion = PLAN_VERSION;
+    // Marca estrictamente mayor a la que traía: si el reloj del otro aparato
+    // va adelantado, un Date.now() a secas quedaría "más viejo" y la nube
+    // volvería a pisar el plan ya migrado.
+    d.actualizado = Math.max(Date.now(), (d.actualizado || 0) + 1);
+    planRecienMigrado = true;
+  }
   if(!Array.isArray(d.agenda)) d.agenda = [];
   if(!Array.isArray(d.plantillas)) d.plantillas = PLANTILLAS_INICIALES.map(x=>({...x}));
   if(!d.metaMes) d.metaMes = {ventas:0, socios:0};
@@ -691,6 +710,7 @@ function normalizar(d){
   return d;
 }
 function cargar(){
+  planRecienMigrado = false;   // la cuenta nueva no migra nada
   try{
     const crudo = localStorage.getItem(CLAVE);
     if(crudo){
@@ -700,6 +720,7 @@ function cargar(){
   }catch(e){}
   return {
     metas: JSON.parse(JSON.stringify(METAS_INICIALES)),
+    planVersion: PLAN_VERSION,
     dias:{}, prospectos:[], agenda:[],
     plantillas: PLANTILLAS_INICIALES.map(x=>({...x})),
     metaMes: {ventas:0, socios:0}
@@ -721,6 +742,9 @@ function guardarLocal(){
 function nubeDatos(){ return datos; }
 function nubeAplicar(obj){           // adopta lo que vino de la nube sin re-subirlo
   datos = normalizar(obj);
+  // si la copia de la nube traía un plan viejo, normalizar ya lo actualizó:
+  // hay que sellar el día en curso para que el conteo cuadre
+  if(planRecienMigrado) resellarHoy();
   guardarLocal();
 }
 function nubeReiniciar(){            // deja el dispositivo limpio (otra cuenta o salida)
@@ -1638,6 +1662,13 @@ function pintarFecha(){
     f.toLocaleDateString("es-MX",{weekday:"long"})+"<br>"+f.toLocaleDateString("es-MX",{month:"long"});
 }
 pintarFecha();
+/* Si al cargar se adoptó un plan nuevo, sellarlo en el día en curso y avisar:
+   cambiarle a alguien sus actividades en silencio sería peor que no hacerlo. */
+if(planRecienMigrado){
+  resellarHoy();
+  guardarLocal();
+  setTimeout(()=>avisar("Se actualizó tu plan de actividades ✓"), 900);
+}
 pintarHoy();
 
 /* Service worker: permite abrir la app sin internet y la instala en la
