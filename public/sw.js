@@ -4,7 +4,7 @@
      llega en cuanto hay internet, y sin internet la app sigue abriendo.
    - Recursos (iconos, manifest): caché primero, con refresco en segundo plano.
    Sube VERSION en cada despliegue para desalojar la caché anterior. */
-const VERSION = "impulsa-v13";
+const VERSION = "impulsa-v15";
 const ESENCIALES = [
   "./",
   "./index.html",
@@ -39,7 +39,10 @@ self.addEventListener("fetch", e=>{
   // El documento: red primero para que las actualizaciones lleguen solas
   if(req.mode === "navigate"){
     e.respondWith(
-      fetch(req)
+      // `no-cache` obliga a revalidar contra el servidor: sin esto, la caché
+      // HTTP del navegador podía devolver una copia vieja y anular esta
+      // estrategia de red-primero sin que se notara.
+      fetch(req, { cache: "no-cache" })
         .then(res => {
           const copia = res.clone();
           caches.open(VERSION).then(c => c.put("./index.html", copia));

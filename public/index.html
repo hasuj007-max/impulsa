@@ -521,7 +521,8 @@ nav button.activa{color:var(--verde)}
       <div id="editorMetas"></div>
       <button class="btn btn-sec" onclick="agregarMeta()">+ Agregar meta</button>
       <button class="btn btn-pri" onclick="guardarMetas()">Guardar metas</button>
-      <p class="nota">La meta "Conversaciones nuevas" alimenta el marcador y las métricas, por eso no se puede eliminar.</p>
+      <button class="btn btn-sec" onclick="restaurarPlan()">↺ Traer el plan sugerido</button>
+      <p class="nota">La meta "Conversaciones nuevas" alimenta el marcador y las métricas, por eso no se puede eliminar. El plan sugerido reemplaza tu lista por la que trae la app; tu historial y tus conteos no se tocan.</p>
     </div>
 
     <div class="card">
@@ -1547,6 +1548,17 @@ function leerEditorMetas(){
     if(campo==="nombre") datos.metas[i].nombre = inp.value.trim()||"Actividad";
     else datos.metas[i].objetivo = Math.max(0, parseInt(inp.value)||0);
   });
+}
+/* Las metas por defecto solo se aplican al crear la cuenta. Esto permite que
+   quien ya está dentro adopte el plan actualizado sin perder su historial:
+   se reemplaza la lista, pero los conteos de cada día siguen intactos. */
+function restaurarPlan(){
+  if(!confirm("Se reemplazarán tus metas por el plan sugerido de la app ("
+    + METAS_INICIALES.length + " actividades).\n\nTu historial y tus conteos NO se borran.\n\n¿Continuar?")) return;
+  datos.metas = JSON.parse(JSON.stringify(METAS_INICIALES));
+  resellarHoy();          // el día en curso adopta la lista nueva
+  guardar(); pintarAjustes(); pintarHoy();
+  avisar("Plan sugerido aplicado ✓");
 }
 function agregarMeta(){
   leerEditorMetas();

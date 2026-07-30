@@ -12,7 +12,11 @@
         "headers": [{ "key": "Cache-Control", "value": "no-cache, max-age=0" }]
       },
       {
-        "//": "El HTML se revalida siempre para que los cambios lleguen solos.",
+        "//": "El HTML se revalida siempre. Van las DOS rutas: la app abre en '/' y una regla solo para '/index.html' no la cubre — ahí se quedaba una hora cacheada.",
+        "source": "/",
+        "headers": [{ "key": "Cache-Control", "value": "no-cache, max-age=0" }]
+      },
+      {
         "source": "/index.html",
         "headers": [{ "key": "Cache-Control", "value": "no-cache, max-age=0" }]
       },
