@@ -1,0 +1,35 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /* Un código vale si está en la lista maestra (se cambia desplegando estas
+       reglas) o si existe como documento en /invitaciones (se agrega desde la
+       consola de Firebase, sin tocar código). */
+    function codigoValido(c){
+      // El formato se exige ANTES de armar la ruta: sin esto, un código con
+      // barras podría apuntar a otro documento.
+      return c is string
+             && c.matches('^[A-Z0-9-]{3,24}$')
+             && (c in ['IMPULSA2026']
+                 || exists(/databases/$(database)/documents/invitaciones/$(c)));
+    }
+
+    match /usuarios/{uid} {
+      // Cada quien solo alcanza lo suyo.
+      allow read, update, delete: if request.auth != null
+                                  && request.auth.uid == uid;
+
+      // Crear cuenta exige un código válido. Se valida aquí, en el servidor:
+      // aunque alguien manipule la app desde su teléfono, sin código no entra.
+      allow create: if request.auth != null
+                    && request.auth.uid == uid
+                    && codigoValido(request.resource.data.codigo);
+    }
+
+    match /invitaciones/{codigo} {
+      allow get: if request.auth != null;   // solo si ya conoces el código exacto
+      allow list: if false;                 // nadie puede enumerar los códigos
+      allow write: if false;                // solo se crean desde la consola
+    }
+  }
+}

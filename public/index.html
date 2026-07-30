@@ -332,6 +332,15 @@ nav button.activa{color:var(--verde)}
 #portadaError{display:none;margin-top:20px;padding:13px 15px;border-radius:14px;background:var(--red-soft);
   color:var(--red);font-size:12.5px;font-weight:700;line-height:1.5;max-width:340px}
 #portadaError.ver{display:block}
+/* Paso del código de invitación (solo para cuentas nuevas) */
+.oculto{display:none}
+#panelCodigo{display:flex;flex-direction:column;align-items:center;width:100%;max-width:320px}
+#campoCodigo{width:100%;padding:15px;border:1px solid var(--line2);border-radius:14px;background:var(--card2);
+  color:var(--ink);font-size:19px;font-weight:800;text-align:center;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:12px}
+#campoCodigo::placeholder{color:var(--ink-soft);letter-spacing:1px;font-weight:700;font-size:15px}
+#panelCodigo .btn-pri{margin-top:0}
+.link-salir{background:none;border:none;color:var(--ink-soft);font-size:13px;font-weight:700;
+  cursor:pointer;text-decoration:underline;margin-top:18px;padding:6px}
 
 /* ---------- Cuenta y sincronización ---------- */
 .cuenta{display:flex;align-items:center;gap:12px;margin-bottom:6px}
@@ -372,7 +381,18 @@ nav button.activa{color:var(--verde)}
     Entrar con Google
   </button>
 
-  <p id="portadaPie">Tus datos quedan guardados en tu cuenta. Si cambias de teléfono, entras con el mismo Google y ahí está todo.</p>
+  <div id="panelEntrar">
+    <p id="portadaPie">Tus datos quedan guardados en tu cuenta. Si cambias de teléfono, entras con el mismo Google y ahí está todo.</p>
+  </div>
+
+  <div id="panelCodigo" class="oculto">
+    <input id="campoCodigo" type="text" inputmode="text" autocapitalize="characters"
+           autocomplete="off" spellcheck="false" maxlength="24" placeholder="Escribe tu código"
+           aria-label="Código de invitación">
+    <button class="btn btn-pri" id="btnCodigo">Continuar</button>
+    <button class="link-salir" id="btnOtraCuenta">Usar otra cuenta</button>
+  </div>
+
   <div id="portadaError"></div>
 </div>
 
@@ -1766,6 +1786,7 @@ const db   = initializeFirestore(app, {
 const portada = document.getElementById("portada");
 const cajaError = document.getElementById("portadaError");
 let refDoc = null, desuscribir = null, temporizador = null, bajando = false;
+let codigoUsado = null;   // se reenvía en cada subida; sin él, crear cuenta falla
 
 function marcar(txt, clase){
   const el = document.getElementById("cuentaSinc");
@@ -1788,12 +1809,13 @@ async function subir(){
     await setDoc(refDoc, {
       datos: JSON.stringify(d),
       actualizado: d.actualizado || Date.now(),
-      correo: auth.currentUser ? (auth.currentUser.email || "") : ""
+      correo: auth.currentUser ? (auth.currentUser.email || "") : "",
+      codigo: codigoUsado || null      // las reglas lo exigen al crear la cuenta
     });
     marcar("Todo guardado en la nube", "ok");
   }catch(e){
-    // Firestore reintenta solo al recuperar la red
-    marcar("Sin conexión · se subirá solo", "pend");
+    if(e && e.code === "permission-denied") marcar("Falta validar tu código", "mal");
+    else marcar("Sin conexión · se subirá solo", "pend");   // Firestore reintenta al volver la red
   }
 }
 function programarSubida(){
@@ -1821,21 +1843,83 @@ function escuchar(){
   }, ()=> marcar("Sin conexión", "pend"));
 }
 
+/* Muestra el paso del código y espera a que uno válido cree la cuenta.
+   No valida en el navegador: intenta crear el documento y deja que las reglas
+   de Firestore acepten o rechacen. Así no se puede saltar desde el teléfono. */
+function pedirCodigo(user){
+  return new Promise(resolve=>{
+    const lema = document.querySelector("#portada .lema");
+    const btnG = document.getElementById("btnEntrar");
+    const inp  = document.getElementById("campoCodigo");
+    const btn  = document.getElementById("btnCodigo");
+    lema.textContent = "Necesitas un código de invitación para crear tu cuenta. Pídeselo a quien te compartió la app.";
+    btnG.classList.add("oculto");
+    document.getElementById("panelEntrar").classList.add("oculto");
+    document.getElementById("panelCodigo").classList.remove("oculto");
+    inp.value = ""; setTimeout(()=>inp.focus(), 100);
+
+    const intentar = async ()=>{
+      // se limpia aquí también, para que nunca salga basura hacia el servidor
+      const c = inp.value.trim().toUpperCase().replace(/[^A-Z0-9-]/g, "");
+      if(!c){ fallo("Escribe el código que te dieron."); return; }
+      cajaError.classList.remove("ver");
+      btn.disabled = true; btn.textContent = "Comprobando…";
+      const ok = await crearCuenta(user, c);
+      btn.disabled = false; btn.textContent = "Continuar";
+      if(ok){
+        document.getElementById("panelCodigo").classList.add("oculto");
+        resolve(true);
+      }else{
+        fallo("Ese código no es válido. Pídeselo a quien te compartió la app.");
+        inp.select();
+      }
+    };
+    btn.onclick = intentar;
+    inp.onkeydown = e=>{ if(e.key === "Enter") intentar(); };
+    document.getElementById("btnOtraCuenta").onclick = async ()=>{
+      try{ await signOut(auth); }catch(e){}
+      location.reload();
+    };
+  });
+}
+async function crearCuenta(user, codigo){
+  const d = nubeDatos();
+  d._uid = user.uid;
+  try{
+    await setDoc(refDoc, {
+      datos: JSON.stringify(d),
+      actualizado: d.actualizado || Date.now(),
+      correo: user.email || "",
+      codigo
+    });
+    codigoUsado = codigo;
+    return true;
+  }catch(e){ return false; }   // permission-denied = código inválido
+}
+
 async function entrar(user){
   refDoc = doc(db, "usuarios", user.uid);
   // copia local de otra cuenta (teléfono prestado): se descarta
   if(nubeDatos()._uid && nubeDatos()._uid !== user.uid) nubeReiniciar();
 
   marcar("Sincronizando…", "pend");
-  let remoto = null;
+  let remoto = null, alcanzamosLaNube = false;
   try{
     const snap = await getDoc(refDoc);
-    if(snap.exists() && snap.data().datos) remoto = snap.data();
+    alcanzamosLaNube = true;
+    if(snap.exists()) remoto = snap.data();
   }catch(e){ /* sin red: se sigue con lo local */ }
 
-  // gana el más reciente; en la primera entrada sube lo que ya tenía el teléfono
-  if(remoto && (remoto.actualizado || 0) > (nubeDatos().actualizado || 0)){
-    try{ nubeAplicar(JSON.parse(remoto.datos)); }catch(e){}
+  if(remoto){
+    codigoUsado = remoto.codigo || null;
+    // gana el más reciente; en la primera entrada sube lo que ya tenía el teléfono
+    if(remoto.datos && (remoto.actualizado || 0) > (nubeDatos().actualizado || 0)){
+      try{ nubeAplicar(JSON.parse(remoto.datos)); }catch(e){}
+    }
+  }else if(alcanzamosLaNube){
+    // Solo pedimos código cuando pudimos confirmar que la cuenta no existe.
+    // Sin red no se pide, para no dejar afuera a alguien que ya estaba dentro.
+    await pedirCodigo(user);
   }
   nubeDatos()._uid = user.uid;
   guardarLocal();
@@ -1860,6 +1944,14 @@ async function entrar(user){
 function salir(){
   if(desuscribir){ desuscribir(); desuscribir = null; }
   refDoc = null;
+  codigoUsado = null;
+  // dejar la portada en su estado inicial (por si se salió a medio código)
+  document.querySelector("#portada .lema").textContent =
+    "Tu plan diario de prospección: metas, seguimientos y los números reales de tu negocio.";
+  document.getElementById("btnEntrar").classList.remove("oculto");
+  document.getElementById("panelEntrar").classList.remove("oculto");
+  document.getElementById("panelCodigo").classList.add("oculto");
+  cajaError.classList.remove("ver");
   portada.classList.remove("oculta");
 }
 
