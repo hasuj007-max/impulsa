@@ -342,6 +342,18 @@ nav button.activa{color:var(--verde)}
 .link-salir{background:none;border:none;color:var(--ink-soft);font-size:13px;font-weight:700;
   cursor:pointer;text-decoration:underline;margin-top:18px;padding:6px}
 
+/* ---------- Invitaciones (solo admin) ---------- */
+.inv{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
+.inv:last-child{border-bottom:none}
+.inv .ic{flex:1;min-width:0}
+.inv .icod{font-size:16px;font-weight:800;letter-spacing:1.5px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.inv.usada .icod{color:var(--ink-soft);text-decoration:line-through}
+.inv .idet{font-size:11.5px;font-weight:700;color:var(--ink-soft);margin-top:3px;line-height:1.35}
+.inv .idet.libre{color:var(--verde2)}
+.inv .iacc{flex:none;width:34px;height:34px;border-radius:11px;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;background:var(--green-soft);color:var(--verde2)}
+.inv .iacc.borrar{background:none;color:var(--ink-soft);font-size:14px}
+
 /* ---------- Cuenta y sincronización ---------- */
 .cuenta{display:flex;align-items:center;gap:12px;margin-bottom:6px}
 .cuenta .ava{width:42px;height:42px;border-radius:999px;background:var(--green-soft);color:var(--verde2);
@@ -502,6 +514,16 @@ nav button.activa{color:var(--verde)}
 
   <!-- ============ AJUSTES ============ -->
   <section class="tab" id="tab-ajustes">
+    <div class="card oculto" id="cardInvitaciones">
+      <h2>Invitaciones</h2>
+      <p class="sub-card">Genera un código por persona. Se quema en cuanto alguien lo usa, así que si se filtra no entra nadie más.</p>
+      <div class="agregar-tarea">
+        <input id="notaInvitacion" type="text" placeholder="¿Para quién? (opcional)" aria-label="Nombre de la persona">
+        <button onclick="generarInvitacion()" aria-label="Generar código">+</button>
+      </div>
+      <div id="listaInvitaciones"></div>
+    </div>
+
     <div class="card">
       <h2>Mi cuenta</h2>
       <div class="cuenta">
@@ -1759,7 +1781,8 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect,
          getRedirectResult, onAuthStateChanged, signOut }
   from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 import { initializeFirestore, persistentLocalCache, persistentSingleTabManager,
-         doc, getDoc, setDoc, onSnapshot }
+         doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot,
+         collection, query, orderBy }
   from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -1864,13 +1887,13 @@ function pedirCodigo(user){
       if(!c){ fallo("Escribe el código que te dieron."); return; }
       cajaError.classList.remove("ver");
       btn.disabled = true; btn.textContent = "Comprobando…";
-      const ok = await crearCuenta(user, c);
+      const motivo = await crearCuenta(user, c);
       btn.disabled = false; btn.textContent = "Continuar";
-      if(ok){
+      if(!motivo){
         document.getElementById("panelCodigo").classList.add("oculto");
         resolve(true);
       }else{
-        fallo("Ese código no es válido. Pídeselo a quien te compartió la app.");
+        fallo(motivo);
         inp.select();
       }
     };
@@ -1882,7 +1905,22 @@ function pedirCodigo(user){
     };
   });
 }
+/* Dos pasos: primero se reclama el código (las reglas solo lo permiten si
+   estaba libre) y después se crea la cuenta, que exige ese reclamo. Devuelve
+   null si todo salió bien, o el motivo para poder explicárselo a la persona. */
 async function crearCuenta(user, codigo){
+  try{
+    await updateDoc(doc(db, "invitaciones", codigo), {
+      usadoPor: user.uid,
+      usadoEn: Date.now(),
+      correoUsado: user.email || ""
+    });
+  }catch(e){
+    const c = (e && e.code) || "";
+    if(c === "not-found")         return "Ese código no existe. Revisa que esté bien escrito.";
+    if(c === "permission-denied") return "Ese código ya fue usado por otra persona. Pide uno nuevo.";
+    return "No se pudo validar el código. Revisa tu conexión.";
+  }
   const d = nubeDatos();
   d._uid = user.uid;
   try{
@@ -1893,8 +1931,68 @@ async function crearCuenta(user, codigo){
       codigo
     });
     codigoUsado = codigo;
-    return true;
-  }catch(e){ return false; }   // permission-denied = código inválido
+    return null;
+  }catch(e){
+    return "El código se validó pero no se pudo crear tu cuenta. Inténtalo otra vez.";
+  }
+}
+
+/* ---- Panel de invitaciones (solo la cuenta admin lo ve) ---- */
+const CORREO_ADMIN = "hasuj007@gmail.com";
+const ALFABETO = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";   // sin O/0 ni I/1
+let dejarDeEscucharInvs = null;
+
+function nuevoCodigo(){
+  const bloque = n => Array.from({length:n},
+    ()=>ALFABETO[Math.floor(Math.random()*ALFABETO.length)]).join("");
+  return bloque(4) + "-" + bloque(4);
+}
+window.generarInvitacion = async ()=>{
+  const campo = document.getElementById("notaInvitacion");
+  const codigo = nuevoCodigo();
+  try{
+    await setDoc(doc(db, "invitaciones", codigo), {
+      nota: campo.value.trim(),
+      creadoEn: Date.now(),
+      usadoPor: null, usadoEn: null, correoUsado: null
+    });
+    campo.value = "";
+    avisar("Código " + codigo + " creado ✓");
+  }catch(e){ avisar("No se pudo crear el código"); }
+};
+window.copiarInvitacion = cod => copiarTexto(cod);
+window.borrarInvitacion = async cod =>{
+  if(!confirm("¿Borrar el código " + cod + "?\n\nQuien ya lo usó conserva su cuenta.")) return;
+  try{ await deleteDoc(doc(db, "invitaciones", cod)); avisar("Código borrado"); }
+  catch(e){ avisar("No se pudo borrar"); }
+};
+
+function escucharInvitaciones(){
+  if(dejarDeEscucharInvs) dejarDeEscucharInvs();
+  const cont = document.getElementById("listaInvitaciones");
+  dejarDeEscucharInvs = onSnapshot(
+    query(collection(db, "invitaciones"), orderBy("creadoEn", "desc")),
+    snap=>{
+      if(snap.empty){
+        cont.innerHTML = `<p class="nota" style="margin:10px 0 0">Sin códigos todavía. Genera el primero arriba.</p>`;
+        return;
+      }
+      cont.innerHTML = snap.docs.map(d=>{
+        const v = d.data(), libre = !v.usadoPor;
+        const quien = v.correoUsado || "alguien";
+        const cuando = v.usadoEn ? fCorta(claveDia(new Date(v.usadoEn))) : "";
+        const det = libre
+          ? `<div class="idet libre">Libre${v.nota? " · para "+esc(v.nota) : ""}</div>`
+          : `<div class="idet">Usado por ${esc(quien)}${cuando? " el "+cuando : ""}</div>`;
+        return `<div class="inv ${libre?"":"usada"}">
+          <div class="ic"><div class="icod">${esc(d.id)}</div>${det}</div>
+          ${libre? `<button class="iacc" onclick="copiarInvitacion('${esc(d.id)}')" aria-label="Copiar ${esc(d.id)}">${ICONO_COPIAR}</button>` : ""}
+          <button class="iacc borrar" onclick="borrarInvitacion('${esc(d.id)}')" aria-label="Borrar ${esc(d.id)}">✕</button>
+        </div>`;
+      }).join("");
+    },
+    ()=>{ cont.innerHTML = `<p class="nota" style="margin:10px 0 0">No se pudieron cargar los códigos.</p>`; }
+  );
 }
 
 async function entrar(user){
@@ -1936,6 +2034,12 @@ async function entrar(user){
     ava.textContent = (user.email || "?").slice(0,1).toUpperCase();
   }
 
+  // El panel de invitaciones solo existe para la cuenta admin
+  if((user.email || "").toLowerCase() === CORREO_ADMIN){
+    document.getElementById("cardInvitaciones").classList.remove("oculto");
+    escucharInvitaciones();
+  }
+
   portada.classList.add("oculta");
   await subir();
   escuchar();
@@ -1943,6 +2047,8 @@ async function entrar(user){
 
 function salir(){
   if(desuscribir){ desuscribir(); desuscribir = null; }
+  if(dejarDeEscucharInvs){ dejarDeEscucharInvs(); dejarDeEscucharInvs = null; }
+  document.getElementById("cardInvitaciones").classList.add("oculto");
   refDoc = null;
   codigoUsado = null;
   // dejar la portada en su estado inicial (por si se salió a medio código)

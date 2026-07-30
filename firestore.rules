@@ -2,34 +2,54 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /* Un código vale si está en la lista maestra (se cambia desplegando estas
-       reglas) o si existe como documento en /invitaciones (se agrega desde la
-       consola de Firebase, sin tocar código). */
-    function codigoValido(c){
-      // El formato se exige ANTES de armar la ruta: sin esto, un código con
-      // barras podría apuntar a otro documento.
-      return c is string
-             && c.matches('^[A-Z0-9-]{3,24}$')
-             && (c in ['IMPULSA2026']
-                 || exists(/databases/$(database)/documents/invitaciones/$(c)));
+    function esAdmin(){
+      return request.auth != null
+             && request.auth.token.email == 'hasuj007@gmail.com';
+    }
+
+    /* El formato se exige ANTES de armar la ruta: sin esto, un código con
+       barras podría apuntar a otro documento. */
+    function formatoOk(c){
+      return c is string && c.matches('^[A-Z0-9-]{3,24}$');
+    }
+
+    /* Un código sirve para crear cuenta solo si quien lo presenta ya lo
+       reclamó. El reclamo se hace antes, en /invitaciones, y solo puede
+       hacerlo una persona: la regla de abajo exige que estuviera libre. */
+    function codigoReclamado(c){
+      return formatoOk(c)
+             && exists(/databases/$(database)/documents/invitaciones/$(c))
+             && get(/databases/$(database)/documents/invitaciones/$(c)).data.usadoPor == request.auth.uid;
     }
 
     match /usuarios/{uid} {
-      // Cada quien solo alcanza lo suyo.
       allow read, update, delete: if request.auth != null
                                   && request.auth.uid == uid;
 
-      // Crear cuenta exige un código válido. Se valida aquí, en el servidor:
-      // aunque alguien manipule la app desde su teléfono, sin código no entra.
+      // El admin puede recrear su cuenta sin código (red de seguridad para no
+      // quedarse fuera de su propia app).
       allow create: if request.auth != null
                     && request.auth.uid == uid
-                    && codigoValido(request.resource.data.codigo);
+                    && (esAdmin() || codigoReclamado(request.resource.data.codigo));
     }
 
     match /invitaciones/{codigo} {
-      allow get: if request.auth != null;   // solo si ya conoces el código exacto
-      allow list: if false;                 // nadie puede enumerar los códigos
-      allow write: if false;                // solo se crean desde la consola
+      // Consultar un código exacto que ya conoces, para validarlo.
+      allow get: if request.auth != null;
+      // Solo el admin ve la lista completa y crea o borra códigos.
+      allow list, create, delete: if esAdmin();
+
+      // Reclamar: únicamente si está libre, marcándose uno mismo y sin tocar
+      // ningún otro campo. Firestore evalúa contra el estado actual, así que
+      // dos personas no pueden reclamarlo a la vez.
+      allow update: if request.auth != null
+                    && resource.data.usadoPor == null
+                    && request.resource.data.usadoPor == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['usadoPor','usadoEn','correoUsado']);
+
+      // El admin puede liberar o editar un código.
+      allow update: if esAdmin();
     }
   }
 }
