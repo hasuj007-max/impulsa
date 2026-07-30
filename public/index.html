@@ -664,15 +664,18 @@ function sellarEtapa(p, etapa, fecha){
   if(idx>0) ESCALERA.slice(0,idx).forEach(e=>{ if(!p.hist[e]) p.hist[e] = p.hist[etapa]; });
   if(CERRADAS.includes(etapa)) ESCALERA.forEach(e=>{ if(!p.hist[e]) p.hist[e] = p.hist[etapa]; });
 }
+/* Plan diario con el que arranca cada cuenta nueva. Los ids `conv`, `venta` y
+   `socio` NO se pueden renombrar: los leen el marcador, el trío del inicio y
+   la meta mensual. Cambiar esta lista no afecta a quien ya tiene cuenta. */
 const METAS_INICIALES = [
-  {id:"conv",  nombre:"Conversaciones nuevas", objetivo:25},
-  {id:"ig",    nombre:"Mensajes Instagram",    objetivo:10},
-  {id:"fbmsg", nombre:"Mensajes Facebook",     objetivo:10},
-  {id:"fbgr",  nombre:"Publicar en grupos FB", objetivo:3},
-  {id:"mkt",   nombre:"Publicar Marketplace",  objetivo:2},
-  {id:"tiktok",nombre:"Video TikTok",          objetivo:1},
-  {id:"venta", nombre:"Ventas",                objetivo:1},
-  {id:"socio", nombre:"Nuevos socios",         objetivo:1}
+  {id:"conv",  nombre:"Conversaciones nuevas Facebook o Instagram", objetivo:25},
+  {id:"fbgr",  nombre:"Publicar en grupos FB",     objetivo:25},
+  {id:"mkt",   nombre:"Publicar Marketplace",      objetivo:25},
+  {id:"tiktok",nombre:"Video TikTok",              objetivo:3},
+  {id:"venta", nombre:"Ventas",                    objetivo:1},
+  {id:"socio", nombre:"Nuevos socios",             objetivo:1},
+  {id:"addfb", nombre:"Agregar 10 personas a fb",  objetivo:10},
+  {id:"segig", nombre:"Seguir 50 nuevos en ig",    objetivo:50}
 ];
 
 /* [nombre] se reemplaza por el nombre del prospecto al copiar. */
