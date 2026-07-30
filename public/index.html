@@ -2007,26 +2007,49 @@ window.cerrarSesion = async ()=>{
 
 const proveedor = new GoogleAuthProvider();
 proveedor.setCustomParameters({ prompt: "select_account" });
-// En una PWA instalada en iOS la ventana emergente no funciona: ahí va redirección
-const instalada = window.matchMedia("(display-mode: standalone)").matches
-               || navigator.standalone === true;
+
+/* SIEMPRE ventana emergente primero, también en la app instalada. En iOS de
+   pantalla de inicio la emergente se abre como hoja ENCIMA de la app, que así
+   nunca navega ni pierde su estado. La redirección — que parecía la opción
+   "segura" — es la rota ahí: el viaje a Google y de vuelta borra la memoria
+   temporal donde Firebase apunta que hay un login en curso, y el usuario
+   regresa a la portada como si nada. La redirección queda solo de respaldo,
+   con una marca en localStorage (que sí sobrevive al viaje) para detectar
+   cuándo se perdió y avisar en vez de dejar un bucle mudo. */
+const MARCA_REDIRECT = "impulsa_redirigiendo";
 
 document.getElementById("btnEntrar").addEventListener("click", async ()=>{
   cajaError.classList.remove("ver");
   try{
-    if(instalada) await signInWithRedirect(auth, proveedor);
-    else          await signInWithPopup(auth, proveedor);
+    await signInWithPopup(auth, proveedor);
+    localStorage.removeItem(MARCA_REDIRECT);
   }catch(e){
     const c = (e && e.code) || "";
-    if(c === "auth/popup-blocked" || c === "auth/operation-not-supported-in-this-environment"){
-      try{ await signInWithRedirect(auth, proveedor); }catch(e2){ fallo(explicar(e2)); }
-    }else if(c !== "auth/popup-closed-by-user" && c !== "auth/cancelled-popup-request"){
+    if(c === "auth/popup-closed-by-user" || c === "auth/cancelled-popup-request") return;
+    if(c === "auth/popup-blocked" || c === "auth/operation-not-supported-in-this-environment"
+       || c === "auth/internal-error"){
+      try{
+        localStorage.setItem(MARCA_REDIRECT, String(Date.now()));
+        await signInWithRedirect(auth, proveedor);
+      }catch(e2){ localStorage.removeItem(MARCA_REDIRECT); fallo(explicar(e2)); }
+    }else{
       fallo(explicar(e));
     }
   }
 });
 
-getRedirectResult(auth).catch(e=>{ if(e && e.code) fallo(explicar(e)); });
+getRedirectResult(auth)
+  .then(res=>{ if(res && res.user) localStorage.removeItem(MARCA_REDIRECT); })
+  .catch(e=>{ localStorage.removeItem(MARCA_REDIRECT); if(e && e.code) fallo(explicar(e)); });
+
+// Si veníamos de una redirección y no llegó ningún usuario, el regreso se
+// perdió (típico de la app instalada en iOS): avisar en vez de girar en vacío.
+setTimeout(()=>{
+  if(localStorage.getItem(MARCA_REDIRECT) && !auth.currentUser){
+    localStorage.removeItem(MARCA_REDIRECT);
+    fallo("El inicio de sesión no se completó. Toca el botón otra vez para reintentarlo.");
+  }
+}, 4000);
 onAuthStateChanged(auth, user => user ? entrar(user) : salir());
 </script>
 </body>
