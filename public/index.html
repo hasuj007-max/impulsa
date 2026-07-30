@@ -97,6 +97,10 @@ main{padding:0 16px}
 .trio .t.verde .tn{color:var(--verde)}
 .trio .t.oro   .tn{color:var(--gold)}
 .trio .t.rojo  .tn{color:var(--red)}
+.trio .tmas{display:block;width:32px;height:32px;margin:9px auto 0;border:none;border-radius:11px;
+  background:var(--grad);color:#052012;font-size:18px;font-weight:800;cursor:pointer;
+  box-shadow:0 3px 10px rgba(34,197,94,.28)}
+.trio .tmas:active{transform:scale(.9)}
 .chips-hero{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
 .chip-h{display:flex;align-items:center;gap:6px;padding:7px 13px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--line);font-size:12.5px;font-weight:700}
 .chip-h.alerta{background:var(--red-soft);color:var(--red);border-color:transparent}
@@ -254,18 +258,6 @@ main{padding:0 16px}
 .btn-x{width:34px;height:34px;border:none;border-radius:11px;background:var(--red-soft);color:var(--red);font-weight:800;font-size:15px;cursor:pointer;flex:none;display:flex;align-items:center;justify-content:center}
 .candado{width:34px;height:34px;border-radius:11px;background:rgba(255,255,255,.05);color:var(--ink-soft);flex:none;display:flex;align-items:center;justify-content:center}
 .ajuste-meta input[type=text]:disabled{opacity:.75}
-/* ---------- Plantillas ---------- */
-.pl-item{padding:12px 0;border-bottom:1px solid var(--line)}
-.pl-item:last-child{border-bottom:none}
-.pl-top{display:flex;gap:8px;align-items:center;margin-bottom:7px}
-.pl-top input{flex:1;min-width:0;padding:10px;border:1px solid var(--line);border-radius:11px;font-size:14px;font-weight:700;background:var(--card2);color:var(--ink)}
-.pl-item textarea{width:100%;padding:11px;border:1px solid var(--line);border-radius:11px;font-size:13.5px;font-family:inherit;line-height:1.45;background:var(--card2);color:var(--ink);resize:vertical;min-height:84px}
-.pl-pick{display:flex;align-items:center;gap:11px;padding:13px 0;border-bottom:1px solid var(--line);cursor:pointer}
-.pl-pick:last-child{border-bottom:none}
-.pl-pick .pp{flex:1;min-width:0}
-.pl-pick .ppt{font-size:14.5px;font-weight:700}
-.pl-pick .ppx{font-size:12px;color:var(--ink-soft);margin-top:3px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.pl-pick .ppc{flex:none;width:34px;height:34px;border-radius:11px;background:var(--green-soft);color:var(--verde2);display:flex;align-items:center;justify-content:center}
 /* ---------- Reprogramar rápido ---------- */
 .reprog{display:flex;gap:6px;margin-top:9px}
 .btn-reprog{flex:1;min-width:0;padding:7px 4px;border-radius:10px;border:1px solid var(--line2);background:rgba(255,255,255,.05);color:var(--ink);font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap}
@@ -560,13 +552,6 @@ nav button.activa{color:var(--verde)}
     </div>
 
     <div class="card">
-      <h2>Mis plantillas de mensajes</h2>
-      <div id="editorPlantillas"></div>
-      <button class="btn btn-sec" onclick="agregarPlantilla()">+ Agregar plantilla</button>
-      <button class="btn btn-pri" onclick="guardarPlantillas()">Guardar plantillas</button>
-      <p class="nota">Escribe <b>[nombre]</b> donde quieras que se ponga el nombre del prospecto. Las usas desde la ficha de cada persona.</p>
-    </div>
-    <div class="card">
       <h2>Respaldo de datos</h2>
       <button class="btn btn-sec" onclick="exportar()">⬇︎ Descargar respaldo (JSON)</button>
       <button class="btn btn-sec" onclick="exportarCSV()">⬇︎ Prospectos en Excel (CSV)</button>
@@ -607,19 +592,10 @@ nav button.activa{color:var(--verde)}
       <button class="btn-log" onclick="agregarLog()" aria-label="Agregar al historial">+</button>
     </div>
   </div>
-  <button class="btn btn-sec" onclick="abrirPlantillas()">💬 Usar una plantilla</button>
   <button class="btn btn-pri" onclick="guardarProspecto()">Guardar</button>
   <button class="btn btn-peligro" id="btnEliminar" onclick="eliminarProspecto()" style="display:none">Eliminar prospecto</button>
 </div>
 
-<!-- Hoja: plantillas de mensajes -->
-<div class="hoja" id="hojaPlantillas">
-  <div class="asa"></div>
-  <h3>Plantillas</h3>
-  <p class="sub-card" id="plantillaPara"></p>
-  <div id="listaPlantillas"></div>
-  <button class="btn btn-sec" onclick="cerrarPlantillas()">Cerrar</button>
-</div>
 
 <!-- Hoja: detalle de un día (se abre desde la tira semanal o las barras) -->
 <div class="hoja" id="hojaDia">
@@ -996,18 +972,30 @@ function pintarTrio(nSeg){
   const v = sumaMes("venta"), s = sumaMes("socio");
   const activos = datos.prospectos.filter(p=>
     p.etapa!=="Descartado" && p.etapa!=="Cliente" && p.etapa!=="Socio").length;
-  const bloque = (num, meta, etiqueta, clase)=>{
+  const bloque = (num, meta, etiqueta, clase, accion, aria)=>{
     const cumplida = meta>0 && num>=meta;
     return `<div class="t ${cumplida? "verde" : clase}">
       <div class="tn">${num}${meta>0? `<small>/${meta}</small>` : ""}</div>
       <div class="tm">${etiqueta}</div>
+      ${accion? `<button class="tmas" onclick="${accion}" aria-label="${aria}">+</button>` : ""}
     </div>`;
   };
   document.getElementById("trioInicio").innerHTML =
-      bloque(v, +mm.ventas||0, "ventas del mes", v>0? "verde":"rojo")
-    + bloque(s, +mm.socios||0, "socios del mes", s>0? "oro":"rojo")
+      bloque(v, +mm.ventas||0, "ventas del mes", v>0? "verde":"rojo", "registrarVenta()", "Registrar una venta")
+    + bloque(s, +mm.socios||0, "socios del mes", s>0? "oro":"rojo",  "registrarSocio()", "Registrar un socio nuevo")
     + `<div class="t"><div class="tn">${activos}</div>
          <div class="tm">en seguimiento${nSeg? " · "+nSeg+" hoy" : ""}</div></div>`;
+}
+
+/* Registro rápido desde el inicio. Suma al MISMO contador del día que las
+   metas, así que no hay dos verdades: lo que se toca aquí se ve allá. */
+function registrarVenta(){
+  contar("venta", 1);
+  avisar("🎉 ¡Venta registrada!", "Deshacer", ()=>contar("venta", -1));
+}
+function registrarSocio(){
+  contar("socio", 1);
+  avisar("🎉 ¡Nuevo socio!", "Deshacer", ()=>contar("socio", -1));
 }
 
 function pintarSemana(){
@@ -1083,45 +1071,12 @@ function cerrarDia(){
   document.getElementById("velo").classList.remove("abierta");
 }
 function cerrarTodo(){
-  // el velo cierra solo la hoja de encima, para no perder lo escrito en la ficha
-  if(document.getElementById("hojaPlantillas").classList.contains("abierta")){ cerrarPlantillas(); return; }
   cerrarFormulario(); cerrarDia();
 }
 
 /* =================== PLANTILLAS =================== */
 const ICONO_COPIAR='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
 
-function personalizar(txt, nombre){
-  const primer = (nombre||"").trim().split(/\s+/)[0] || "";
-  return txt.replace(/\[nombre\]/gi, primer);
-}
-function abrirPlantillas(){
-  const nombre = document.getElementById("fNombre").value.trim();
-  if(!nombre){ avisar("Escribe primero el nombre"); return; }
-  document.getElementById("plantillaPara").textContent =
-    "Se personalizan para " + nombre.split(/\s+/)[0] + ". Toca una para copiarla y pégala en el chat.";
-  document.getElementById("listaPlantillas").innerHTML = datos.plantillas.length
-    ? datos.plantillas.map((p,i)=>`
-      <div class="pl-pick" onclick="copiarPlantilla(${i})">
-        <div class="pp">
-          <div class="ppt">${esc(p.titulo)}</div>
-          <div class="ppx">${esc(personalizar(p.texto, nombre))}</div>
-        </div>
-        <span class="ppc">${ICONO_COPIAR}</span>
-      </div>`).join("")
-    : `<div class="vacio"><p>No tienes plantillas.<br>Créalas en Ajustes.</p></div>`;
-  document.getElementById("velo").classList.add("abierta");
-  document.getElementById("hojaPlantillas").classList.add("abierta");
-}
-function cerrarPlantillas(){
-  document.getElementById("hojaPlantillas").classList.remove("abierta");
-  if(!document.getElementById("hoja").classList.contains("abierta"))
-    document.getElementById("velo").classList.remove("abierta");
-}
-function copiarPlantilla(i){
-  const p = datos.plantillas[i]; if(!p) return;
-  copiarTexto(personalizar(p.texto, document.getElementById("fNombre").value));
-}
 function copiarTexto(t){
   if(navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(t).then(()=>avisar("Copiado ✓"), ()=>copiaManual(t));
@@ -1626,14 +1581,6 @@ function pintarAjustes(){
   document.getElementById("mesVentas").value = mm.ventas||0;
   document.getElementById("mesSocios").value = mm.socios||0;
 
-  document.getElementById("editorPlantillas").innerHTML = datos.plantillas.map((p,i)=>`
-    <div class="pl-item">
-      <div class="pl-top">
-        <input type="text" value="${esc(p.titulo)}" data-pi="${i}" data-pc="titulo" aria-label="Nombre de la plantilla">
-        <button class="btn-x" onclick="quitarPlantilla(${i})" aria-label="Quitar plantilla ${esc(p.titulo)}">✕</button>
-      </div>
-      <textarea data-pi="${i}" data-pc="texto" aria-label="Texto de la plantilla">${esc(p.texto)}</textarea>
-    </div>`).join("") || `<p class="nota" style="margin:0">Sin plantillas. Agrega la primera.</p>`;
 }
 function guardarMetaMes(){
   datos.metaMes = {
@@ -1641,27 +1588,6 @@ function guardarMetaMes(){
     socios: Math.max(0, parseInt(document.getElementById("mesSocios").value)||0)
   };
   guardar(); avisar("Meta del mes guardada ✓");
-}
-function leerEditorPlantillas(){
-  document.querySelectorAll("#editorPlantillas [data-pi]").forEach(el=>{
-    const i=+el.dataset.pi, campo=el.dataset.pc;
-    if(!datos.plantillas[i]) return;
-    datos.plantillas[i][campo] = campo==="titulo"? (el.value.trim()||"Plantilla") : el.value;
-  });
-}
-function agregarPlantilla(){
-  leerEditorPlantillas();
-  datos.plantillas.push({id:"pl"+Date.now()+Math.floor(Math.random()*999), titulo:"Nueva plantilla", texto:"Hola [nombre], "});
-  pintarAjustes();
-}
-function quitarPlantilla(i){
-  if(!confirm("¿Quitar la plantilla \""+datos.plantillas[i].titulo+"\"?")) return;
-  leerEditorPlantillas();            // conservar ediciones de las demás
-  datos.plantillas.splice(i,1); guardar(); pintarAjustes();
-}
-function guardarPlantillas(){
-  leerEditorPlantillas();
-  guardar(); avisar("Plantillas guardadas ✓");
 }
 /* Vuelca lo escrito en el editor a datos.metas. Se llama antes de agregar o
    quitar filas: sin esto, repintar el editor descartaba en silencio lo que el
@@ -1730,11 +1656,16 @@ function importar(input){
   lector.readAsText(archivo);
 }
 function borrarTodo(){
-  if(!confirm("Se borrará TODO: metas, historial y prospectos. ¿Seguro?")) return;
+  if(!confirm("Se borrará TODO: metas, historial, prospectos y agenda.\n\nTambién se borra de tu cuenta en la nube y de tus otros dispositivos.\n\n¿Seguro?")) return;
   if(!confirm("Última confirmación: ¿borrar todos los datos?")) return;
+  const cuenta = datos._uid;              // no se pierde la sesión
   localStorage.removeItem(CLAVE);
-  datos=cargar();
+  datos = cargar();
+  if(cuenta) datos._uid = cuenta;
   filtroEtapa="Todos"; filtroTexto=""; document.getElementById("buscador").value="";
+  // Sin esto, la nube conservaba lo viejo y al reabrir lo bajaba de vuelta.
+  guardar();
+  if(window.Nube && window.Nube.subirYa) window.Nube.subirYa();   // sin esperar los 2.5s
   pintarHoy(); pintarProspectos(); pintarAjustes();
   avisar("Datos borrados");
 }
@@ -1847,7 +1778,10 @@ function programarSubida(){
   marcar("Guardando…", "pend");
   temporizador = setTimeout(subir, 2500);
 }
-window.Nube = { programarSubida };
+/* Sube ya, sin esperar el temporizador. Lo usa "Borrar todos los datos": si se
+   dejara al debounce y la app se cerrara antes, la nube conservaría lo viejo. */
+function subirYa(){ clearTimeout(temporizador); return subir(); }
+window.Nube = { programarSubida, subirYa };
 
 function escuchar(){
   if(desuscribir) desuscribir();
