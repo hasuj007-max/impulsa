@@ -695,11 +695,14 @@ function normalizar(d){
   if(d.planVersion !== PLAN_VERSION){
     d.metas = JSON.parse(JSON.stringify(METAS_INICIALES));
     d.planVersion = PLAN_VERSION;
-    // Marca estrictamente mayor a la que traía: si el reloj del otro aparato
-    // va adelantado, un Date.now() a secas quedaría "más viejo" y la nube
-    // volvería a pisar el plan ya migrado.
-    d.actualizado = Math.max(Date.now(), (d.actualizado || 0) + 1);
     planRecienMigrado = true;
+    /* NO se toca `actualizado`. Antes se le ponía la hora actual para que la
+       copia migrada le ganara a la de la nube — y eso destruyó datos: un
+       aparato con una copia VIEJA (plan viejo, y de paso conteos y prospectos
+       viejos) se migraba al abrirlo, se estampaba con la hora de ahora, le
+       ganaba a la copia buena de la nube y la pisaba entera.
+       No hace falta que gane: la migración se aplica a la copia que gane,
+       venga de donde venga, porque `nubeAplicar` también pasa por aquí. */
   }
   if(!Array.isArray(d.agenda)) d.agenda = [];
   if(!Array.isArray(d.plantillas)) d.plantillas = PLANTILLAS_INICIALES.map(x=>({...x}));
