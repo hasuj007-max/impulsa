@@ -1649,7 +1649,8 @@ function borrarTodo(){
   filtroEtapa="Todos"; filtroTexto=""; document.getElementById("buscador").value="";
   // Sin esto, la nube conservaba lo viejo y al reabrir lo bajaba de vuelta.
   guardar();
-  if(window.Nube && window.Nube.subirYa) window.Nube.subirYa();   // sin esperar los 2.5s
+  // permitirVacio: este es el único caso donde vaciar la nube es lo que se quiere
+  if(window.Nube && window.Nube.subirYa) window.Nube.subirYa({permitirVacio:true});
   pintarHoy(); pintarProspectos(); pintarAjustes();
   avisar("Datos borrados");
 }
@@ -1747,9 +1748,44 @@ function explicar(e){
   return "No se pudo iniciar sesión (" + (c || "error") + "). Inténtalo de nuevo.";
 }
 
-async function subir(){
+/* ¿Esta copia está en blanco? Se mira el contenido que costó trabajo —conteos,
+   prospectos, agenda, meta del mes—, no las metas, porque una copia recién
+   creada ya viene con el plan sugerido puesto y parecería "llena". */
+function pareceVacio(d){
+  if(!d) return true;
+  const hayConteos = Object.values(d.dias || {}).some(dia =>
+    Object.keys(dia).some(k => k !== "_metas" && dia[k]));
+  const mes = d.metaMes || {};
+  return !hayConteos
+      && !(d.prospectos || []).length
+      && !(d.agenda || []).length
+      && !mes.ventas && !mes.socios;
+}
+
+async function subir(opciones){
   if(!refDoc) return;
   const d = nubeDatos();
+  /* Candado contra el borrado accidental: si lo que hay aquí está en blanco,
+     no se pisa la nube sin antes comprobar que allá tampoco hay nada. Si allá
+     sí hay, se recupera en vez de destruirlo. "Borrar todos los datos" es el
+     único que pasa `permitirVacio` y sí puede vaciar la cuenta. */
+  if(pareceVacio(d) && !(opciones && opciones.permitirVacio)){
+    try{
+      const snap = await getDoc(refDoc);
+      const guardado = snap.exists() && snap.data().datos
+        ? JSON.parse(snap.data().datos) : null;
+      if(guardado && !pareceVacio(guardado)){
+        nubeAplicar(guardado);
+        repintarTodo();
+        marcar("Recuperado de tu cuenta", "ok");
+        return;
+      }
+    }catch(e){
+      // No se pudo comprobar: ante la duda, no se sube nada.
+      marcar("Sin conexión · se subirá solo", "pend");
+      return;
+    }
+  }
   try{
     await setDoc(refDoc, {
       datos: JSON.stringify(d),
@@ -1771,8 +1807,8 @@ function programarSubida(){
 }
 /* Sube ya, sin esperar el temporizador. Lo usa "Borrar todos los datos": si se
    dejara al debounce y la app se cerrara antes, la nube conservaría lo viejo. */
-function subirYa(){ clearTimeout(temporizador); return subir(); }
-window.Nube = { programarSubida, subirYa };
+function subirYa(opciones){ clearTimeout(temporizador); return subir(opciones); }
+window.Nube = { programarSubida, subirYa, pareceVacio };
 
 function escuchar(){
   if(desuscribir) desuscribir();
@@ -1966,7 +2002,12 @@ async function entrar(user){
   }
 
   portada.classList.add("oculta");
-  await subir();
+  /* Solo se sube si se pudo LEER la nube. Si la lectura falló (un bache de red
+     justo al entrar) lo de aquí puede estar en blanco —cerrar sesión deja el
+     aparato limpio— y subirlo borraría la cuenta entera. Sin lectura, no se
+     escribe: el temporizador subirá en cuanto haya algo que guardar. */
+  if(alcanzamosLaNube) await subir();
+  else marcar("Sin conexión · no se tocó tu cuenta", "pend");
   escuchar();
 }
 

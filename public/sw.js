@@ -4,7 +4,7 @@
      llega en cuanto hay internet, y sin internet la app sigue abriendo.
    - Recursos (iconos, manifest): caché primero, con refresco en segundo plano.
    Sube VERSION en cada despliegue para desalojar la caché anterior. */
-const VERSION = "impulsa-v16";
+const VERSION = "impulsa-v17";
 const ESENCIALES = [
   "./",
   "./index.html",
