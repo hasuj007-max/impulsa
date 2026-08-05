@@ -33,6 +33,19 @@ service cloud.firestore {
                     && (esAdmin() || codigoReclamado(request.resource.data.codigo));
     }
 
+    /* Tablero de constancia del líder.
+       `usuarios/` sigue siendo privado: ni el admin puede leerlo. Lo que cada
+       aparato publica aquí es SOLO un resumen —constancia y números del mes—
+       y nunca prospectos, notas ni agenda personal. Así el líder ve quién
+       trabaja sin ver la libreta de nadie. La app se lo dice a cada persona. */
+    match /resumenes/{uid} {
+      allow get: if request.auth != null
+                 && (request.auth.uid == uid || esAdmin());
+      allow list: if esAdmin();
+      // Cada quien escribe el suyo y nada más; nadie puede inventar el de otro.
+      allow write: if request.auth != null && request.auth.uid == uid;
+    }
+
     match /invitaciones/{codigo} {
       // Consultar un código exacto que ya conoces, para validarlo.
       allow get: if request.auth != null;
