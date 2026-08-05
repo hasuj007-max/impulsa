@@ -1160,7 +1160,15 @@ function agregarTarea(){
 function marcarTarea(id){
   const t = datos.agenda.find(x=>x.id===id); if(!t) return;
   t.hecha = !t.hecha;
-  if(t.hecha && t.fecha<hoy()) t.fecha = hoy();  // al cerrar una atrasada, queda registrada hoy
+  // Al cerrar una atrasada queda registrada hoy, pero se recuerda de cuándo
+  // venía: si la desmarcas vuelve a su fecha y sigue avisando "desde el ...".
+  if(t.hecha && t.fecha<hoy()){
+    if(!t.desde) t.desde = t.fecha;
+    t.fecha = hoy();
+  }else if(!t.hecha && t.desde){
+    t.fecha = t.desde;
+    delete t.desde;
+  }
   guardar(); pintarHoy();
 }
 function borrarTarea(id){
@@ -1299,7 +1307,14 @@ function guardarProspecto(){
     fecha:document.getElementById("fFecha").value||"",
     notas:document.getElementById("fNotas").value.trim()
   };
-  const etapaAntes = editandoId? (datos.prospectos.find(x=>x.id===editandoId)||{}).etapa : null;
+  /* Se mira ANTES de sellar la etapa: una conversación se cuenta la PRIMERA vez
+     que este prospecto llega a Contactado o En conversación, y nunca más. Antes
+     se comparaba con la etapa anterior, así que mover a alguien de Nuevo a
+     Contactado, devolverlo a Nuevo y repetir sumaba una conversación cada vez:
+     números inventados que ensuciaban la ley de promedios. */
+  const anterior = editandoId? datos.prospectos.find(x=>x.id===editandoId) : null;
+  const yaConversado = !!(anterior && anterior.hist &&
+    (anterior.hist["Contactado"] || anterior.hist["En conversación"]));
   if(editandoId){
     const p=datos.prospectos.find(x=>x.id===editandoId);
     if(p){ Object.assign(p,registro); sellarEtapa(p, registro.etapa); }
@@ -1311,10 +1326,10 @@ function guardarProspecto(){
     sellarEtapa(registro, registro.etapa);
     datos.prospectos.push(registro);
   }
-  // Pasar de "Nuevo" (o recién creado) a Contactado/En conversación suma 1 conversación
+  // Llegar por primera vez a Contactado/En conversación suma 1 conversación
   let extra="";
   const abreConv = ["Contactado","En conversación"].includes(registro.etapa);
-  if(abreConv && (etapaAntes===null || etapaAntes==="Nuevo") && etapaAntes!==registro.etapa){
+  if(abreConv && !yaConversado){
     const dia=diaDe(hoy()); dia["conv"]=(dia["conv"]||0)+1;
     extra=" · +1 conversación";
   }
@@ -1544,6 +1559,12 @@ function pintarMetaMes(){
 
 /* =================== AJUSTES =================== */
 function pintarAjustes(){
+  /* Si el usuario está tecleando aquí, no se repinta: una sincronización desde
+     otro aparato llega a repintar la pantalla entera y le borraba de golpe lo
+     que llevaba escrito. Lo que ya tiene tecleado manda hasta que guarde. */
+  const foco = document.activeElement;
+  if(foco && (foco.closest("#editorMetas") || foco.id==="mesVentas" || foco.id==="mesSocios")) return;
+
   document.getElementById("editorMetas").innerHTML = datos.metas.map((m,i)=>`
     <div class="ajuste-meta">
       <input type="text" value="${esc(m.nombre)}" data-i="${i}" data-campo="nombre" aria-label="Nombre de la meta">
@@ -1590,13 +1611,18 @@ function restaurarPlan(){
 function agregarMeta(){
   leerEditorMetas();
   datos.metas.push({id:"m"+Date.now()+Math.floor(Math.random()*999), nombre:"Nueva actividad", objetivo:1});
-  pintarAjustes();
+  // Igual que al quitar: sellar el día y guardar en el momento. Sin esto la
+  // pestaña Hoy mostraba la actividad nueva pero la racha, el anillo y la
+  // gráfica seguían midiendo la lista vieja — dos verdades en pantalla — y la
+  // actividad se perdía al recargar si no se pulsaba "Guardar metas".
+  resellarHoy(); guardar();
+  pintarAjustes(); pintarHoy();
 }
 function quitarMeta(i){
   if(datos.metas[i].id==="conv"){ avisar("Esa meta alimenta las métricas, no se puede quitar"); return; }
   if(!confirm("¿Quitar la meta \""+datos.metas[i].nombre+"\"?")) return;
   leerEditorMetas();                 // conservar ediciones de las demás filas
-  datos.metas.splice(i,1); resellarHoy(); guardar(); pintarAjustes();
+  datos.metas.splice(i,1); resellarHoy(); guardar(); pintarAjustes(); pintarHoy();
 }
 function guardarMetas(){
   leerEditorMetas();
@@ -1612,7 +1638,11 @@ function descargar(blob, nombre){
   document.body.appendChild(a); a.click(); a.remove();
 }
 function exportar(){
-  descargar(new Blob([JSON.stringify(datos,null,2)],{type:"application/json"}), "impulsa-respaldo-"+hoy()+".json");
+  // Sin el identificador de cuenta: el archivo se puede compartir sin arrastrar
+  // a qué sesión de Google pertenece.
+  const copia = {...datos};
+  delete copia._uid;
+  descargar(new Blob([JSON.stringify(copia,null,2)],{type:"application/json"}), "impulsa-respaldo-"+hoy()+".json");
   avisar("Respaldo descargado ✓");
 }
 function exportarCSV(){
@@ -1636,7 +1666,14 @@ function importar(input){
       const d=JSON.parse(lector.result);
       if(!d.metas||!d.dias||!d.prospectos) throw 0;
       if(!confirm("Esto reemplazará tus datos actuales por el respaldo. ¿Continuar?")) return;
+      /* El archivo trae el identificador de cuenta de quien lo exportó. Si se
+         adopta, al entrar la app lo ve distinto al tuyo y da por hecho que es
+         un teléfono prestado: borraba en silencio todo lo recién importado.
+         Se conserva SIEMPRE el de la sesión de aquí. */
+      const miCuenta = datos._uid;
+      delete d._uid;
       datos = normalizar(d);
+      if(miCuenta) datos._uid = miCuenta;
       guardar(); pintarHoy(); pintarAjustes(); avisar("Respaldo restaurado ✓");
     }catch(e){ avisar("El archivo no es un respaldo válido"); }
   };
@@ -1770,9 +1807,12 @@ async function subir(opciones){
   const d = nubeDatos();
   /* Candado contra el borrado accidental: si lo que hay aquí está en blanco,
      no se pisa la nube sin antes comprobar que allá tampoco hay nada. Si allá
-     sí hay, se recupera en vez de destruirlo. "Borrar todos los datos" es el
-     único que pasa `permitirVacio` y sí puede vaciar la cuenta. */
-  if(pareceVacio(d) && !(opciones && opciones.permitirVacio)){
+     sí hay, se recupera en vez de destruirlo.
+     Solo protege las subidas AUTOMÁTICAS (la de al entrar). Si el vacío es
+     obra del usuario —borró su último prospecto, o usó "Borrar todos los
+     datos"— el candado estorba: le devolvería lo que acaba de borrar. */
+  const deliberado = !!(opciones && (opciones.permitirVacio || opciones.cambioDelUsuario));
+  if(pareceVacio(d) && !deliberado){
     try{
       const snap = await getDoc(refDoc);
       const guardado = snap.exists() && snap.data().datos
@@ -1806,7 +1846,9 @@ function programarSubida(){
   if(bajando) return;                     // no re-subir lo que acabamos de bajar
   clearTimeout(temporizador);
   marcar("Guardando…", "pend");
-  temporizador = setTimeout(subir, 2500);
+  // Aquí siempre se llega por un cambio que hizo el usuario: si dejó su cuenta
+  // en blanco a propósito, es su decisión y se respeta.
+  temporizador = setTimeout(()=>subir({cambioDelUsuario:true}), 2500);
 }
 /* Sube ya, sin esperar el temporizador. Lo usa "Borrar todos los datos": si se
    dejara al debounce y la app se cerrara antes, la nube conservaría lo viejo. */
