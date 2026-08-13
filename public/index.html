@@ -1058,16 +1058,24 @@ function pintarHoy(){
   pintarAgenda();
 }
 
-/* El mensaje del inicio empuja según qué tanto llevas Y qué hora es: 0% a las
+/* El mensaje del inicio cambia según qué tanto llevas Y qué hora es: 0% a las
    8am no es lo mismo que 0% a las 9pm. Dentro de cada caso hay variantes que
-   rotan por día del mes, para que no sea siempre la misma frase. */
-/* El tono es deliberadamente crudo: el mensaje empuja, no acompaña. Dos reglas
-   que no se rompen al escribir frases nuevas:
+   rotan por día del mes, para que no sea siempre la misma frase.
+
+   EL CORTE ESTÁ EN EL 40%:
+   - Por debajo, el mensaje SACUDE. Quien no arrancó no necesita ánimos.
+   - Del 40% para arriba, el mensaje LEVANTA. Quien ya está trabajando necesita
+     gasolina para terminar, no que le recuerden lo que le falta.
+
+   Tres reglas que no se rompen al escribir frases nuevas:
    1. El golpe va contra el DÍA FLOJO, nunca contra la persona. "Hoy no
       trabajaste" motiva; "eres un flojo" hace que borren la app.
    2. Lo más duro se guarda para quien ya tiene historial (`veterano`). A quien
       lleva menos de una semana se le empuja fuerte, pero no se le remata: es
-      justo cuando más gente abandona. */
+      justo cuando más gente abandona.
+   3. Arriba del 40% NUNCA se reprocha. Ni "vas lento", ni "te falta". Se
+      reconoce lo hecho y se empuja a cerrar. */
+const UMBRAL_MOTIVA = 40;
 function mensajeDelDia({pctDia, logradas, total, conv, racha, hora, veterano}){
   if(total===0)
     return `Configura tus metas en <b class="a">Ajustes</b> para empezar a medir tu día.`;
@@ -1083,7 +1091,8 @@ function mensajeDelDia({pctDia, logradas, total, conv, racha, hora, veterano}){
     return elige([
       `<b class="o">${racha} días</b> construyendo. Se rompen hoy si no cierras.`,
       `¿Vas a tirar <b class="o">${racha} días</b> por ${faltan} ${m}?`,
-      `Falta${n} ${faltan}. Tu racha de <b class="o">${racha} días</b> depende de los próximos minutos.`
+      `Falta${n} ${faltan} para mantener tus <b class="o">${racha} días</b>. Ve por ${faltan>1?"ellas":"ella"}.`,
+      `<b class="o">${racha} días seguidos</b> y solo ${faltan} ${m} de por medio. Ciérralo.`
     ]);
   }
 
@@ -1091,59 +1100,84 @@ function mensajeDelDia({pctDia, logradas, total, conv, racha, hora, veterano}){
     if(racha>=3) return elige([
       `<b class="v">${racha} días seguidos</b>. Esto ya no es suerte, es quién eres.`,
       `<b class="v">${racha} de racha</b>. La mayoría no aguanta ni tres.`,
-      `Día cerrado, <b class="v">${racha} seguidos</b>. Así se construye una red de verdad.`
+      `Día cerrado, <b class="v">${racha} seguidos</b>. Así se construye una red de verdad.`,
+      `<b class="v">${racha} días</b> sin fallar. Tu equipo está viendo esto.`
     ]);
     return elige([
-      `Día cerrado al <b class="v">100%</b>. Mañana no vale de nada esto.`,
+      `Día cerrado al <b class="v">100%</b>. Mañana empiezas otra vez desde arriba.`,
       `<b class="v">Las ${total}</b> hechas. Hoy sí te ganaste el día.`,
-      `Completo. Ahora <b class="v">hazlo otra vez mañana</b>.`
+      `Completo. Ahora <b class="v">hazlo otra vez mañana</b>.`,
+      `<b class="v">Día perfecto.</b> Uno más y ya es racha.`
     ]);
   }
 
+  /* ---- Del 75% para arriba: ya casi. Solo empuje para rematar. ---- */
   if(pctDia>=75) return elige({
-    manana: [`<b class="v">${logradas} de ${total}</b> y apenas es temprano. Ciérralo ya.`,
-             `Vas bien. <b class="v">Bien no es completo</b>: falta${n} ${faltan}.`],
-    tarde:  [`${faltan} ${m} de distancia. <b class="v">No te quedes ahí.</b>`,
-             `<b class="v">${logradas} de ${total}</b>. Terminar es lo único que cuenta.`],
-    noche:  [`Te falta${n} <b class="o">${faltan}</b>. Casi no es lo mismo que hecho.`,
-             `<b class="o">${faltan} ${m}</b> entre tú y un día completo. Decide.`]
+    manana: [`<b class="v">${logradas} de ${total}</b> y apenas empieza el día. Vas volando.`,
+             `A este paso cierras antes de comer. <b class="v">Sigue.</b>`,
+             `<b class="v">${logradas} de ${total}</b> temprano. Así se ve un día ganado.`,
+             `Ya hiciste lo difícil. <b class="v">Remátalo.</b>`],
+    tarde:  [`<b class="v">${logradas} de ${total}</b>. Está a tiro, ciérralo.`,
+             `Falta${n} <b class="v">${faltan}</b>. Nada más. Ve por ${faltan>1?"ellas":"ella"}.`,
+             `Ya casi es tuyo. <b class="v">${faltan} ${m}</b> y listo.`,
+             `<b class="v">${logradas} de ${total}</b> y todavía hay tarde. Termínalo.`],
+    noche:  [`Falta${n} <b class="v">${faltan}</b>. No se abandona en la última.`,
+             `<b class="v">${faltan} ${m}</b> entre tú y un día completo. Ve por ${faltan>1?"ellas":"ella"}.`,
+             `Llegaste hasta aquí. <b class="v">Ciérralo y duerme tranquilo.</b>`,
+             `<b class="v">${logradas} de ${total}</b>. El que remata de noche es el que crece.`]
   }[franja]);
 
-  if(pctDia>=50) return elige({
-    manana: [`<b class="v">Mitad</b> y aún es temprano. Sin excusas hoy.`,
-             `<b class="v">${logradas} de ${total}</b>. Te sobra día, aprovéchalo.`],
-    tarde:  [`A medias. <b class="o">Las próximas horas</b> deciden si hoy sirvió.`,
-             `<b class="o">${logradas} de ${total}</b>. Ni bien ni mal es un día perdido a medias.`],
-    noche:  [`Medio día hecho, <b class="o">medio día tirado</b>.`,
-             `Falta${n} ${faltan} y se te acaba el tiempo. <b class="o">Muévete.</b>`]
+  /* ---- Del 40% al 74%: ya está trabajando. Se reconoce y se empuja. ---- */
+  if(pctDia>=UMBRAL_MOTIVA) return elige({
+    manana: [`<b class="v">${logradas} de ${total}</b> y apenas es mañana. Vas en buen ritmo.`,
+             `Arrancaste fuerte. <b class="v">Este día ya es tuyo</b> si sigues así.`,
+             `<b class="v">${pctDia}%</b> antes del mediodía. Te sobra día para cerrarlo.`,
+             `Vas encaminado. <b class="v">No sueltes el ritmo.</b>`],
+    tarde:  [`<b class="v">${logradas} de ${total}</b>. Ya estás dentro; ahora termina.`,
+             `Vas bien. <b class="v">${faltan} ${m}</b> y cierras el día completo.`,
+             `Ya llevas más de la mitad del camino. <b class="v">Sigue.</b>`,
+             `<b class="v">${pctDia}%</b> y aún hay tarde por delante. Aprovéchala.`],
+    noche:  [`<b class="v">${logradas} de ${total}</b> hoy. Un empujón más y lo cierras.`,
+             `Trabajaste hoy. <b class="v">Falta${n} ${faltan}</b> para cerrarlo completo.`,
+             `Buen día. <b class="v">Ciérralo</b> y arranca la racha.`,
+             `<b class="v">${faltan} ${m}</b> te separan del día perfecto. Todavía hay tiempo.`]
   }[franja]);
 
+  /* ---- Por debajo del 40%: arrancó pero no va. Aquí sí se sacude. ---- */
   if(pctDia>0) return elige({
     manana: [`<b class="v">${conv} conversacion${conv===1?"":"es"}</b>. Arrancaste; ahora no te detengas.`,
-             `Empezaste. <b class="v">Empezar es lo fácil</b>.`],
+             `Empezaste. <b class="v">Empezar es lo fácil.</b>`,
+             `<b class="o">${logradas} de ${total}</b>. Eso todavía no es un día de trabajo.`],
     tarde:  [`<b class="o">${logradas} de ${total}</b> y ya es tarde. A este ritmo no llegas.`,
-             `Vas lento. <b class="o">Nadie va a hacer tu trabajo</b> por ti.`],
+             `Vas lento. <b class="o">Nadie va a hacer tu trabajo</b> por ti.`,
+             `Medio día ido y <b class="o">${pctDia}%</b>. Eso no es falta de tiempo.`],
     noche:  [`<b class="r">${logradas} de ${total}</b> y se acabó el día. Eso es lo que hoy valió tu negocio.`,
-             `Día flojo. <b class="r">Rescata algo</b> antes de dormir.`]
+             `Día flojo. <b class="r">Rescata algo</b> antes de dormir.`,
+             `<b class="r">${pctDia}%</b>. Empezar sin terminar no construye nada.`]
   }[franja]);
 
   // Día en blanco: lo más duro, y aquí sí se distingue al que va empezando.
   if(!veterano) return elige({
     manana: [`Nada todavía. <b class="v">Empieza por una</b> conversación; el resto se acomoda.`,
-             `Día en blanco. Las <b class="v">primeras cuestan</b>, después baja solo.`],
+             `Día en blanco. Las <b class="v">primeras cuestan</b>, después baja solo.`,
+             `Todo por hacer. <b class="v">Una sola</b> y ya no es un día perdido.`],
     tarde:  [`Medio día ido y <b class="o">cero</b>. Todavía te alcanza si arrancas ahora.`,
-             `<b class="o">Sigues en cero</b>. Una conversación cambia el día.`],
+             `<b class="o">Sigues en cero</b>. Una conversación cambia el día.`,
+             `Aún hay tarde. <b class="o">Arranca con una</b> y sube del cero.`],
     noche:  [`Hoy no avanzaste. <b class="o">Que mañana no sea igual.</b>`,
-             `<b class="o">Cero</b>. Mañana se empieza otra vez, pero se empieza.`]
+             `<b class="o">Cero</b>. Mañana se empieza otra vez, pero se empieza.`,
+             `Día perdido. <b class="o">Uno solo no rompe nada</b>: mañana arrancas.`]
   }[franja]);
 
   return elige({
     manana: [`<b class="v">Cero.</b> Tu lista no se va a hablar sola.`,
              `Día en blanco. <b class="v">Nadie va a construir tu negocio por ti.</b>`],
     tarde:  [`Medio día ido y <b class="o">cero</b>. Eso no es falta de tiempo.`,
-             `<b class="o">Sigues en cero</b>. El día no se trabaja solo.`],
+             `<b class="o">Sigues en cero</b>. El día no se trabaja solo.`,
+             `Media jornada ida y <b class="o">nada que apuntar</b>.`],
     noche:  [`<b class="r">Cero.</b> Hoy tu negocio no avanzó ni un paso.`,
-             `Un día menos y <b class="r">ni una conversación</b>. Mañana amaneces igual de lejos.`]
+             `Un día menos y <b class="r">ni una conversación</b>. Mañana amaneces igual de lejos.`,
+             `<b class="r">Cero.</b> Los días así son los que después se extrañan.`]
   }[franja]);
 }
 
