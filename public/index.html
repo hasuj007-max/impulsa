@@ -171,7 +171,10 @@ main{padding:0 16px}
 .meta{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
 .meta:last-child{border-bottom:none}
 .meta .info{flex:1;min-width:0}
-.meta .nombre{font-size:15px;font-weight:700;display:flex;align-items:center;gap:6px}
+/* overflow-wrap: un nombre de actividad largo sin espacios ensanchaba la página
+   entera y la dejaba con desplazamiento lateral. */
+.meta .nombre{font-size:15px;font-weight:700;display:flex;align-items:center;gap:6px;
+  min-width:0;overflow-wrap:anywhere}
 .meta.lograda .nombre::after{content:"✓";color:var(--green);font-weight:800}
 .meta .barra{height:6px;background:var(--velo);border-radius:3px;margin-top:7px;overflow:hidden}
 .meta .barra i{display:block;height:100%;background:var(--grad);border-radius:3px;transition:width .3s ease}
@@ -852,6 +855,7 @@ function normalizar(d){
   // Prospectos anteriores al historial de etapas: se siembran con su etapa
   // actual, fechada en su día de alta. Es lo único que se puede saber de ellos.
   d.prospectos.forEach(p=>{ if(!p.hist) sellarEtapa(p, p.etapa, p.creado||""); });
+  compactarPlanes(d);   // deja de duplicar la lista de metas en cada día
   return d;
 }
 function cargar(){
@@ -907,20 +911,64 @@ function claveDia(f){ const d=f||new Date(); return d.getFullYear()+"-"+String(d
 /* hoy() se calcula SIEMPRE al momento: si la app queda abierta pasada la
    medianoche, los conteos y seguimientos caen en el día correcto. */
 function hoy(){ return claveDia(new Date()); }
-/* Cada día guarda una copia de las metas que estaban configuradas ese día (_metas).
-   Así los días pasados quedan cerrados: agregar, quitar o cambiar metas hoy no
-   reescribe el historial. Los días sin copia (anteriores a esta versión) usan
-   las metas actuales. */
+/* Cada día queda ligado a las metas que regían ESE día, para que los días
+   pasados queden cerrados: cambiar el plan hoy no reescribe el historial.
+
+   Antes cada día guardaba una copia entera de la lista (`_metas`). Como el plan
+   casi nunca cambia, eran decenas de copias idénticas: el 88% del documento y
+   más de 1 KB por día. A ese ritmo se rebasaba el límite de 1 MB por documento
+   de Firestore en un par de años, y la cuenta dejaba de sincronizar mostrando
+   "sin conexión", que era mentira. Ahora cada lista distinta se guarda UNA vez
+   en `planes` y cada día apunta a la suya con `_pl`. Los días viejos con
+   `_metas` se siguen leyendo, y `compactarPlanes()` los convierte al abrir. */
 function snapshotMetas(){
   return datos.metas.map(m=>({id:m.id, nombre:m.nombre, objetivo:m.objetivo}));
 }
+/* Huella de una lista de metas. No necesita ser criptográfica: solo distinguir
+   listas distintas. Se le pega la longitud para hacer las colisiones inverosímiles. */
+function idDePlan(metas){
+  const s = JSON.stringify(metas);
+  let h = 5381;
+  for(let i=0; i<s.length; i++) h = ((h*33) ^ s.charCodeAt(i)) >>> 0;
+  // el guion importa: sin él, "abc"+"12" y "ab"+"c12" darían el mismo id
+  return "p" + h.toString(36) + "-" + s.length.toString(36);
+}
+function guardarPlan(d, metas){
+  if(!d.planes) d.planes = {};
+  const id = idDePlan(metas);
+  if(!d.planes[id]) d.planes[id] = metas;
+  return id;
+}
+/* Las claves internas de un día. Cualquier otra es un conteo de verdad: si se
+   añade una nueva, va aquí, o "¿este día tiene registro?" empezará a mentir. */
+const CLAVES_INTERNAS = ["_metas", "_pl"];
+function tieneRegistro(dia){
+  return !!dia && Object.keys(dia).some(k => !CLAVES_INTERNAS.includes(k) && dia[k]);
+}
 function diaDe(clave){
-  if(!datos.dias[clave]) datos.dias[clave] = { _metas: snapshotMetas() };
+  if(!datos.dias[clave]) datos.dias[clave] = { _pl: guardarPlan(datos, snapshotMetas()) };
   return datos.dias[clave];
 }
 function metasDelDia(clave){
   const d = datos.dias[clave];
-  return (d && Array.isArray(d._metas) && d._metas.length)? d._metas : datos.metas;
+  if(!d) return datos.metas;
+  const guardado = d._pl && datos.planes && datos.planes[d._pl];
+  if(Array.isArray(guardado) && guardado.length) return guardado;
+  if(Array.isArray(d._metas) && d._metas.length) return d._metas;   // días antiguos
+  return datos.metas;
+}
+/* Pasa los días con copia entera al formato compartido y tira los planes que
+   ya no usa nadie. Se llama al cargar y al adoptar datos de la nube. */
+function compactarPlanes(d){
+  if(!d.planes) d.planes = {};
+  Object.values(d.dias || {}).forEach(dia=>{
+    if(Array.isArray(dia._metas) && dia._metas.length){
+      dia._pl = guardarPlan(d, dia._metas);
+      delete dia._metas;
+    }
+  });
+  const usados = new Set(Object.values(d.dias || {}).map(x=>x._pl).filter(Boolean));
+  Object.keys(d.planes).forEach(k=>{ if(!usados.has(k)) delete d.planes[k]; });
 }
 /* Una meta en objetivo 0 está pausada: no cuenta ni como lograda ni como
    pendiente. Sin este filtro la racha la daba por cumplida (0>=0) mientras la
@@ -943,7 +991,10 @@ function diaCompleto(clave){
 /* Solo el día en curso sigue el ritmo de los cambios de configuración. */
 function resellarHoy(){
   const d = datos.dias[hoy()];
-  if(d) d._metas = snapshotMetas();
+  if(!d) return;
+  d._pl = guardarPlan(datos, snapshotMetas());
+  delete d._metas;
+  compactarPlanes(datos);   // el plan que dejó de usarse se va
 }
 
 let diaVisto = hoy();
@@ -1060,7 +1111,7 @@ function pintarHoy(){
   /* Con una semana de registro ya hay hábito que defender: a partir de ahí el
      mensaje puede ser duro sin riesgo de espantar a quien apenas empieza. */
   const diasConRegistro = Object.values(datos.dias).filter(d=>
-    Object.keys(d).some(k=>k!=="_metas" && d[k])).length;
+    tieneRegistro(d)).length;
   document.getElementById("heroTxt").innerHTML =
     mensajeDelDia({pctDia, logradas, total, conv, racha, hora, veterano: diasConRegistro>=7});
   const pendientes = datos.agenda.filter(t=>!t.hecha && t.fecha<=H).length;
@@ -1789,7 +1840,7 @@ function calcularConstancia(){
     const clave = claveDia(f);
     const d = datos.dias[clave];
     if(d){
-      const registro = Object.keys(d).some(k=>k!=="_metas" && d[k]);
+      const registro = tieneRegistro(d);
       if(registro){
         activos++;
         if(clave > ultima) ultima = clave;
@@ -2051,8 +2102,7 @@ function explicar(e){
    creada ya viene con el plan sugerido puesto y parecería "llena". */
 function pareceVacio(d){
   if(!d) return true;
-  const hayConteos = Object.values(d.dias || {}).some(dia =>
-    Object.keys(dia).some(k => k !== "_metas" && dia[k]));
+  const hayConteos = Object.values(d.dias || {}).some(tieneRegistro);
   const mes = d.metaMes || {};
   return !hayConteos
       && !(d.prospectos || []).length
