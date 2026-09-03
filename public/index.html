@@ -412,6 +412,23 @@ nav button.activa{color:var(--verde)}
 .cuenta .sinc.mal::before{background:var(--red)}
 .cuenta .sinc.mal{color:var(--red)}
 </style>
+<script>
+/* El tema se decide ANTES de pintar. Si esto se deja para el guion de abajo,
+   quien tenga el teléfono en claro ve la app abrir en oscuro y saltar a claro
+   en cada arranque. Solo pone la clase; el resto lo hace aplicarTema(). */
+(function(){
+  try{
+    var pref = localStorage.getItem("impulsa_tema") || "auto";
+    var claro = pref === "claro" ||
+      (pref === "auto" && window.matchMedia("(prefers-color-scheme: light)").matches);
+    if(claro){
+      document.documentElement.classList.add("claro");
+      var m = document.querySelector('meta[name="theme-color"]');
+      if(m) m.content = "#F3F6F2";
+    }
+  }catch(e){ /* sin localStorage se queda en oscuro, que es el de siempre */ }
+})();
+</script>
 </head>
 <body>
 
@@ -1196,8 +1213,11 @@ function pintarTrio(nSeg){
     </div>`;
   };
   document.getElementById("trioInicio").innerHTML =
-      bloque(v, +mm.ventas||0, "ventas del mes", v>0? "verde":"rojo", "registrarVenta()", "Registrar una venta")
-    + bloque(s, +mm.socios||0, "socios del mes", s>0? "oro":"rojo",  "registrarSocio()", "Registrar un socio nuevo")
+    /* Nunca en rojo: son resultados. Pintar de rojo un 0 en ventas el día 2 del
+       mes es exactamente el castigo que quisimos quitar de las actividades.
+       En cero se quedan neutros; en cuanto hay algo, se celebran. */
+      bloque(v, +mm.ventas||0, "ventas del mes", v>0? "verde":"", "registrarVenta()", "Registrar una venta")
+    + bloque(s, +mm.socios||0, "socios del mes", s>0? "oro":"",  "registrarSocio()", "Registrar un socio nuevo")
     + `<div class="t"><div class="tn">${activos}</div>
          <div class="tm">en seguimiento${nSeg? " · "+nSeg+" hoy" : ""}</div></div>`;
 }
@@ -1799,6 +1819,7 @@ function pintarAjustes(){
   /* Si el usuario está tecleando aquí, no se repinta: una sincronización desde
      otro aparato llega a repintar la pantalla entera y le borraba de golpe lo
      que llevaba escrito. Lo que ya tiene tecleado manda hasta que guarde. */
+  aplicarTema();   // marca el botón del tema puesto; va antes del posible corte
   const foco = document.activeElement;
   if(foco && (foco.closest("#editorMetas") || foco.id==="mesVentas" || foco.id==="mesSocios")) return;
 
@@ -1814,7 +1835,6 @@ function pintarAjustes(){
   const mm = datos.metaMes||{ventas:0,socios:0};
   document.getElementById("mesVentas").value = mm.ventas||0;
   document.getElementById("mesSocios").value = mm.socios||0;
-  aplicarTema();   // marca el botón del tema que está puesto
 
 }
 function guardarMetaMes(){
@@ -2059,6 +2079,7 @@ async function subir(opciones){
         nubeAplicar(guardado);
         repintarTodo();
         marcar("Recuperado de tu cuenta", "ok");
+        publicarConstancia();   // lo recuperado también cuenta para el tablero
         return;
       }
     }catch(e){
@@ -2109,7 +2130,8 @@ function programarSubida(){
 /* Sube ya, sin esperar el temporizador. Lo usa "Borrar todos los datos": si se
    dejara al debounce y la app se cerrara antes, la nube conservaría lo viejo. */
 function subirYa(opciones){ clearTimeout(temporizador); return subir(opciones); }
-window.Nube = { programarSubida, subirYa, pareceVacio };
+// pareceVacio y diasDesde se exponen para poder comprobarlas desde fuera
+window.Nube = { programarSubida, subirYa, pareceVacio, diasDesde: c=>diasDesde(c) };
 
 function escuchar(){
   if(desuscribir) desuscribir();
@@ -2234,7 +2256,10 @@ let dejarDeEscucharEquipo = null;
 
 function diasDesde(clave){
   if(!clave) return null;
-  return Math.round((new Date(hoy()+"T12:00:00") - new Date(clave+"T12:00:00"))/86400000);
+  const d = Math.round((new Date(hoy()+"T12:00:00") - new Date(clave+"T12:00:00"))/86400000);
+  // Si el reloj del otro aparato va adelantado la fecha sale en el futuro y
+  // esto daría "sin abrir hace -26439 días". Se trata como actividad de hoy.
+  return Math.max(0, d);
 }
 
 function escucharEquipo(){
