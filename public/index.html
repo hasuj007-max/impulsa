@@ -1047,6 +1047,7 @@ function nubeReiniciar(){            // deja el dispositivo limpio (otra cuenta 
 }
 function repintarTodo(){
   pintarFecha();
+  reacomodarMetas();   // refresco completo: aquí sí puede cambiar el orden
   pintarHoy();
   pintarTab();
 }
@@ -1143,7 +1144,7 @@ function resellarHoy(){
 
 let diaVisto = hoy();
 function revisarCambioDia(){
-  if(diaVisto!==hoy()){ diaVisto=hoy(); pintarFecha(); pintarTab(); }
+  if(diaVisto!==hoy()){ diaVisto=hoy(); reacomodarMetas(); pintarFecha(); pintarTab(); }
 }
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden) revisarCambioDia(); });
 setInterval(revisarCambioDia, 60000);
@@ -1189,6 +1190,8 @@ function pintarTab(){
   ({hoy:pintarHoy, prospectos:pintarProspectos, metricas:pintarMetricas, ajustes:pintarAjustes})[tabActiva]();
 }
 function irA(nombre, btn){
+  // al entrar a Hoy la lista se acomoda: no hay ningún dedo esperando sobre ella
+  if(nombre==="hoy") reacomodarMetas();
   tabActiva=nombre;
   document.querySelectorAll(".tab").forEach(s=>s.classList.remove("activa"));
   document.getElementById("tab-"+nombre).classList.add("activa");
@@ -1201,11 +1204,38 @@ function irA(nombre, btn){
 }
 
 /* =================== HOY =================== */
+/* El orden en que se están mostrando las actividades, por id. Se conserva entre
+   repintados para que una fila NO se mueva bajo el dedo: al completar la de
+   arriba, la siguiente subía al punto exacto que acababas de tocar y el segundo
+   toque —de impaciencia o para confirmar— le sumaba a la actividad equivocada,
+   y ese número se guardaba y se sincronizaba. Ahora la cumplida se tacha en su
+   sitio y la lista se acomoda sola un momento después del último toque. */
+let ordenMetas = null;
+let reacomodoPendiente = null;
+
+function acomodarMetas(){   // pendientes arriba, cumplidas, pausadas al final
+  const dia = datos.dias[hoy()] || {};
+  const pend=[], hech=[], paus=[];
+  datos.metas.forEach(m=>{
+    const v = dia[m.id]||0;
+    (!(m.objetivo>0)? paus : (v>=m.objetivo? hech : pend)).push(m.id);
+  });
+  return pend.concat(hech, paus);
+}
+/* Se llama cuando el orden puede cambiar sin que haya un dedo encima: al abrir
+   la app, al entrar a la pestaña, al cambiar el día y al editar el plan. */
+function reacomodarMetas(){ ordenMetas = null; }
+
 function contar(idMeta, delta){
   const dia = diaDe(hoy());
   const antes = dia[idMeta]||0;
   dia[idMeta] = Math.max(0, antes+delta);
-  guardar(); pintarHoy();
+  guardar();
+  pintarHoy();              // repinta en el MISMO orden: nada salta
+  /* ...y la lista se asienta cuando dejas de tocar. Cada toque reinicia la
+     espera, así que contando rápido no se mueve nada. */
+  clearTimeout(reacomodoPendiente);
+  reacomodoPendiente = setTimeout(()=>{ reacomodarMetas(); pintarHoy(); }, 900);
   if(delta>0){
     const m = datos.metas.find(x=>x.id===idMeta);
     if(m && m.objetivo>0 && antes<m.objetivo && dia[idMeta]>=m.objetivo)
@@ -1214,43 +1244,50 @@ function contar(idMeta, delta){
 }
 
 /* Una actividad = un renglón. Se pinta igual esté cumplida o no; lo que cambia
-   es en cuál de las dos listas cae (ver pintarHoy). */
+   es dónde queda en el orden (ver acomodarMetas). */
 function filaMeta(m, v){
   const pausada = !(m.objetivo>0);
   const pct = pausada? 0 : Math.min(1, v/m.objetivo);
   const ok = !pausada && v>=m.objetivo;
+  /* Una pausada no se cuenta: sus botones desaparecen. Antes seguían ahí y
+     funcionando, pero la fila mostraba "pausada" y la barra se quedaba en 0%,
+     así que tocabas el "+" y no pasaba nada a la vista mientras el número sí
+     se guardaba y salía después en "Actividad de la semana". Si quedó un conteo
+     de antes de pausarla, se enseña en vez de esconderlo. */
   return `<div class="meta ${ok?"lograda":""} ${pausada?"pausada":""}">
     <div class="info">
       <div class="nombre">${esc(m.nombre)}</div>
       <div class="barra"><i style="width:${pct*100}%"></i></div>
     </div>
-    <div class="conteo">${pausada? "pausada" : v+"/"+m.objetivo}</div>
-    <div class="botones">
+    <div class="conteo">${pausada? (v? v+" · pausada" : "pausada") : v+"/"+m.objetivo}</div>
+    ${pausada? "" : `<div class="botones">
       <button class="btn-cnt btn-menos" onclick="contar('${m.id}',-1)" aria-label="Restar 1 a ${esc(m.nombre)}">−</button>
       <button class="btn-cnt btn-mas" onclick="contar('${m.id}',1)" aria-label="Sumar 1 a ${esc(m.nombre)}">+</button>
-    </div>
+    </div>`}
   </div>`;
 }
 
 function pintarHoy(){
   const dia = diaDe(hoy());
   let logradas=0, sumaPct=0, activas=0;
-  /* Tres montones que se pintan SEGUIDOS, no plegados: lo que falta arriba, lo
-     cumplido tachado debajo y lo pausado al final. Nada desaparece — ver lo
-     tachado es parte de la recompensa del día. Se separan igual porque cumplida
-     y pausada no son lo mismo: contarlas juntas hacía que un plan entero en
-     pausa se anunciara como "9 ya hechas" con el anillo en 0%. */
-  const pendientes=[], hechas=[], pausadas=[];
   datos.metas.forEach(m=>{
     const v = dia[m.id]||0;
-    const pausada = !(m.objetivo>0);
-    const ok = !pausada && v>=m.objetivo;
-    if(!pausada){ activas++; sumaPct += Math.min(1, v/m.objetivo); if(ok) logradas++; }
-    (pausada? pausadas : ok? hechas : pendientes).push(filaMeta(m, v));
+    if(m.objetivo>0){
+      activas++; sumaPct += Math.min(1, v/m.objetivo);
+      if(v>=m.objetivo) logradas++;
+    }
   });
-  const todas = pendientes.concat(hechas, pausadas);
-  document.getElementById("listaMetas").innerHTML = todas.length
-    ? todas.join("")
+
+  /* Nada se esconde: lo que falta arriba, lo cumplido tachado debajo y lo
+     pausado al final. El orden se reutiliza mientras el plan sea el mismo, para
+     que un repintado a media cuenta no mueva las filas (ver ordenMetas). */
+  const porId = {};
+  datos.metas.forEach(m=>{ porId[m.id] = m; });
+  if(ordenMetas && (ordenMetas.length !== datos.metas.length
+                    || ordenMetas.some(id => !porId[id]))) ordenMetas = null;
+  if(!ordenMetas) ordenMetas = acomodarMetas();
+  document.getElementById("listaMetas").innerHTML = ordenMetas.length
+    ? ordenMetas.map(id => filaMeta(porId[id], dia[id]||0)).join("")
     : `<div class="vacio"><p>Agrega tus actividades en Ajustes.</p></div>`;
 
   const total = activas;                       // las pausadas no cuentan al día
@@ -1797,12 +1834,21 @@ function pintarProspectos(){
       atrasados: `<div class="big">✅</div><p>No le debes un mensaje a nadie.<br>Así se ve estar al corriente.</p>`,
       hoy:       `<div class="big">📭</div><p>Nadie agendado para hoy.<br>Ponle fecha de seguimiento a tus prospectos.</p>`
     };
+    /* El caso por defecto ("todos", sin nada filtrado) no tiene entrada en
+       `vacios` y caía en un texto que culpaba a un filtro que no existe: con
+       tres prospectos, todos descartados, la app decía "nadie coincide con el
+       filtro" mientras el botón "Ver 3 descartados" la contradecía justo
+       debajo. Hay que distinguir no tener a nadie de haberlos descartado. */
+    const soloDescartados = datos.prospectos.length &&
+      !datos.prospectos.some(p=>p.etapa!=="Descartado");
     cont.innerHTML = `<div class="vacio">${
       acotada
         ? `<div class="big">🔎</div><p>Nadie coincide con lo que estás filtrando.</p>
            <button class="plegable" onclick="limpiarFiltros()">Quitar filtros</button>`
         : (vacios[filtroLista] ||
-           `<div class="big">👥</div><p>${datos.prospectos.length? "Nadie coincide con el filtro." : "Aún no tienes prospectos.<br>Toca <b>+</b> para agregar el primero."}</p>`)
+           (soloDescartados
+             ? `<div class="big">🗂</div><p>Descartaste a todos tus prospectos.<br>Los tienes ahí abajo, o toca <b>+</b> para sumar gente nueva.</p>`
+             : `<div class="big">👥</div><p>${datos.prospectos.length? "Nadie coincide con el filtro." : "Aún no tienes prospectos.<br>Toca <b>+</b> para agregar el primero."}</p>`))
     }</div>`;
   }else{
     cont.innerHTML = lista.map(p=> filtroLista==="frios"
@@ -2279,6 +2325,7 @@ function restaurarPlan(){
     + METAS_INICIALES.length + " actividades).\n\nTu historial y tus conteos NO se borran.\n\n¿Continuar?")) return;
   datos.metas = JSON.parse(JSON.stringify(METAS_INICIALES));
   resellarHoy();          // el día en curso adopta la lista nueva
+  reacomodarMetas();      // el plan cambió: la lista se ordena de nuevo
   guardar(); pintarAjustes(); pintarHoy();
   avisar("Plan sugerido aplicado ✓");
 }
@@ -2289,18 +2336,20 @@ function agregarMeta(){
   // pestaña Hoy mostraba la actividad nueva pero la racha, el anillo y la
   // gráfica seguían midiendo la lista vieja — dos verdades en pantalla — y la
   // actividad se perdía al recargar si no se pulsaba "Guardar metas".
-  resellarHoy(); guardar();
+  resellarHoy(); reacomodarMetas(); guardar();
   pintarAjustes(); pintarHoy();
 }
 function quitarMeta(i){
   if(datos.metas[i].id==="conv"){ avisar("Esa meta alimenta las métricas, no se puede quitar"); return; }
   if(!confirm("¿Quitar la meta \""+datos.metas[i].nombre+"\"?")) return;
   leerEditorMetas();                 // conservar ediciones de las demás filas
-  datos.metas.splice(i,1); resellarHoy(); guardar(); pintarAjustes(); pintarHoy();
+  datos.metas.splice(i,1); resellarHoy(); reacomodarMetas();
+  guardar(); pintarAjustes(); pintarHoy();
 }
 function guardarMetas(){
   leerEditorMetas();
   resellarHoy();  // solo hoy adopta los cambios; los días cerrados no se tocan
+  reacomodarMetas();   // pausar o reactivar una actividad cambia su sitio
   guardar(); pintarAjustes(); avisar("Metas guardadas ✓");
 }
 
