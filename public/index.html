@@ -612,7 +612,7 @@ nav button.activa{color:var(--verde)}
         <span class="nota" id="contadorSeg"></span>
       </div>
       <div id="listaSeguimientos"></div>
-      <button class="plegable oculto" id="verMasSeg" onclick="verAtrasados()"></button>
+      <button class="plegable oculto" id="verMasSeg" onclick="verToda()"></button>
     </div>
 
     <!-- Marcador, no lista de tareas: ventas y socios no dependen de ti, así que
@@ -838,10 +838,14 @@ nav button.activa{color:var(--verde)}
   <button class="activa" data-tab="hoy" onclick="irA('hoy',this)" aria-label="Hoy">
     <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
     Hoy</button>
-  <button data-tab="prospectos" onclick="irA('prospectos',this)" aria-label="Prospectos">
+  <!-- Sin aria-label: el texto visible ya nombra el botón, y uno puesto a mano
+       se quedó diciendo "Prospectos"/"Métricas" cuando la pestaña pasó a
+       llamarse Gente y Números — el lector de pantalla decía un nombre que no
+       existe en ninguna parte. -->
+  <button data-tab="prospectos" onclick="irA('prospectos',this)">
     <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.2 3.4-5 6.5-5s5.7 1.8 6.5 5"/><circle cx="17.5" cy="9" r="2.6"/><path d="M17 15.2c2.4.4 4 1.9 4.6 4.6"/></svg>
     Gente</button>
-  <button data-tab="metricas" onclick="irA('metricas',this)" aria-label="Métricas">
+  <button data-tab="metricas" onclick="irA('metricas',this)">
     <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 20v-7M12 20V5M19 20v-10M3 20h18"/></svg>
     Números</button>
   <button data-tab="ajustes" onclick="irA('ajustes',this)" aria-label="Ajustes">
@@ -1241,29 +1245,37 @@ function alternarHechas(){
 function pintarHoy(){
   const dia = diaDe(hoy());
   let logradas=0, sumaPct=0, activas=0;
-  const pendientes=[], hechas=[];
+  /* Tres montones, no dos: cumplida y pausada se pliegan igual, pero NO son lo
+     mismo y contarlas juntas hacía que un plan entero en pausa se anunciara
+     como "9 ya hechas" con el anillo en 0%. */
+  const pendientes=[], hechas=[], pausadas=[];
   datos.metas.forEach(m=>{
     const v = dia[m.id]||0;
     const pausada = !(m.objetivo>0);
     const ok = !pausada && v>=m.objetivo;
     if(!pausada){ activas++; sumaPct += Math.min(1, v/m.objetivo); if(ok) logradas++; }
-    // las pausadas se van al pliegue: no son trabajo de hoy ni cuentan al día
-    (ok||pausada? hechas : pendientes).push(filaMeta(m, v));
+    (pausada? pausadas : ok? hechas : pendientes).push(filaMeta(m, v));
   });
+  const plegadas = hechas.concat(pausadas);
   document.getElementById("listaMetas").innerHTML = pendientes.length
     ? pendientes.join("")
-    : (datos.metas.length
-        ? `<div class="vacio"><div class="big">✅</div><p>Todo hecho por hoy.</p></div>`
-        : `<div class="vacio"><p>Agrega tus actividades en Ajustes.</p></div>`);
+    : !datos.metas.length
+        ? `<div class="vacio"><p>Agrega tus actividades en Ajustes.</p></div>`
+        : activas===0
+          // ninguna activa: no hay nada que cerrar, así que no se felicita a nadie
+          ? `<div class="vacio"><div class="big">⏸</div><p>Todas tus actividades están en pausa.<br>Ponles un objetivo en Ajustes para volver a medir tu día.</p></div>`
+          : `<div class="vacio"><div class="big">✅</div><p>Todo hecho por hoy.</p></div>`;
 
   const btnHechas = document.getElementById("btnHechas");
   const cajaHechas = document.getElementById("listaHechas");
-  btnHechas.classList.toggle("oculto", !hechas.length);
-  document.getElementById("txtHechas").textContent =
-    hechas.length + (hechas.length===1? " ya hecha" : " ya hechas");
+  btnHechas.classList.toggle("oculto", !plegadas.length);
+  const partes = [];
+  if(hechas.length)   partes.push(hechas.length + (hechas.length===1? " ya hecha" : " ya hechas"));
+  if(pausadas.length) partes.push(pausadas.length + " en pausa");
+  document.getElementById("txtHechas").textContent = partes.join(" · ");
   document.getElementById("flHechas").textContent = verHechas? "⌄" : "›";
-  cajaHechas.innerHTML = verHechas? hechas.join("") : "";
-  cajaHechas.classList.toggle("oculto", !verHechas || !hechas.length);
+  cajaHechas.innerHTML = verHechas? plegadas.join("") : "";
+  cajaHechas.classList.toggle("oculto", !verHechas || !plegadas.length);
 
   const total = activas;                       // las pausadas no cuentan al día
   const pctDia = total? Math.round(sumaPct/total*100) : 0;
@@ -1325,7 +1337,11 @@ function pintarSeguimientos(seg){
   const resto = lista.length - TOPE_SEG;
   const btn = document.getElementById("verMasSeg");
   btn.classList.toggle("oculto", resto<=0);
-  if(resto>0) btn.textContent = "Ver "+resto+" más en Gente";
+  /* Lleva a la lista completa, NO al filtro de atrasados: esta tarjeta mezcla
+     a los atrasados con los de hoy, y "atrasados" deja fuera precisamente a los
+     de hoy — el botón ofrecía gente y luego la escondía. En la lista completa
+     salen todos, y como va ordenada por fecha, los que faltan quedan arriba. */
+  if(resto>0) btn.textContent = "Ver toda tu gente";
 }
 
 /* Fila de persona compartida por los seguimientos del inicio y la lista de
@@ -1361,8 +1377,17 @@ const ETAPA_CORTA = {"En conversación":"Conversando"};
 function etiquetaCorta(e){ return ETAPA_CORTA[e] || e; }
 
 /* Desde el aviso del inicio: salta a Gente ya filtrado por quien espera. */
-function verAtrasados(){
-  filtroLista = "atrasados";
+function verAtrasados(){ abrirGente("atrasados"); }
+/* Desde el "ver toda tu gente" de la tarjeta de seguimientos */
+function verToda(){ abrirGente("todos"); }
+function abrirGente(filtro){
+  filtroLista = filtro;
+  // los filtros secundarios se limpian: llegar con una etapa puesta de antes
+  // dejaría la lista vacía sin que se entienda por qué
+  filtroEtapa = "Todas";
+  filtroTexto = "";
+  const buscador = document.getElementById("buscador");
+  if(buscador) buscador.value = "";
   irA("prospectos", document.querySelector('nav button[data-tab="prospectos"]'));
 }
 
@@ -1718,9 +1743,13 @@ function esFrio(p){
    pregunta con la que se abre esta pestaña. Las etapas siguen estando, pero en
    el desplegable de al lado del buscador: eran ocho pastillas en un carrusel
    horizontal, todas del mismo peso, y tapaban lo urgente. */
-let filtroLista = "activos";
+/* "Todos" y no "Activos": este montón incluye a clientes y socios, mientras que
+   `prospectosActivos` —el número que se publica al tablero del líder— los deja
+   fuera. Con la misma palabra para dos cuentas distintas, la app se contradecía
+   a sí misma: aquí decía 7 y el líder veía 5 de la misma persona el mismo día. */
+let filtroLista = "todos";
 const FILTROS = [
-  {id:"activos",   et:"Activos"},
+  {id:"todos",     et:"Todos"},
   {id:"atrasados", et:"Atrasados", alerta:true},
   {id:"hoy",       et:"Hoy"},
   {id:"frios",     et:"Fríos"}
@@ -1747,11 +1776,23 @@ function pintarChips(){
 }
 function filtrarLista(id){ filtroLista=id; pintarProspectos(); }
 function filtrarEtapa(e){ filtroEtapa=e; pintarProspectos(); }
+/* Salida del callejón sin salida: deja solo el montón elegido en los chips */
+function limpiarFiltros(){
+  filtroEtapa = "Todas";
+  filtroTexto = "";
+  document.getElementById("buscador").value = "";
+  pintarProspectos();
+}
 
 function pintarProspectos(){
   pintarChips();
   const H = hoy();
-  let lista = datos.prospectos.filter(p=>p.etapa!=="Descartado");
+  /* Los descartados salen de la lista salvo que los pidas por su nombre en el
+     desplegable. Sin esta excepción, elegir "Descartado" filtraba una lista de
+     la que ya se habían quitado: cero resultados siempre, y el pliegue de abajo
+     escondido al mismo tiempo, así que no había manera de llegar a ellos. */
+  const pidiendoDescartados = filtroEtapa==="Descartado";
+  let lista = datos.prospectos.filter(p=> pidiendoDescartados || p.etapa!=="Descartado");
   if(filtroLista==="frios"){
     lista = datos.prospectos.filter(esFrio).sort((a,b)=>diasSinToque(b)-diasSinToque(a));
   }else{
@@ -1765,13 +1806,25 @@ function pintarProspectos(){
 
   const cont=document.getElementById("listaProspectos");
   if(!lista.length){
+    /* Los mensajes de abajo afirman algo sobre TU negocio ("no le debes un
+       mensaje a nadie"), así que solo pueden decirse cuando la lista está vacía
+       de verdad. Si la vació la etapa o el buscador, la frase sería falsa: con
+       cuatro personas atrasadas y la etapa en "Cliente", la app felicitaba por
+       estar al corriente. Con un filtro secundario puesto se dice lo único
+       cierto — que nadie coincide — y se ofrece quitarlo. */
+    const acotada = filtroEtapa!=="Todas" || !!filtroTexto;
     const vacios = {
       frios:     `<div class="big">🔥</div><p>Ningún prospecto enfriado.<br>Todos con movimiento en los últimos ${DIAS_FRIO} días.</p>`,
       atrasados: `<div class="big">✅</div><p>No le debes un mensaje a nadie.<br>Así se ve estar al corriente.</p>`,
       hoy:       `<div class="big">📭</div><p>Nadie agendado para hoy.<br>Ponle fecha de seguimiento a tus prospectos.</p>`
     };
-    cont.innerHTML = `<div class="vacio">${vacios[filtroLista] ||
-      `<div class="big">👥</div><p>${datos.prospectos.length? "Nadie coincide con el filtro." : "Aún no tienes prospectos.<br>Toca <b>+</b> para agregar el primero."}</p>`}</div>`;
+    cont.innerHTML = `<div class="vacio">${
+      acotada
+        ? `<div class="big">🔎</div><p>Nadie coincide con lo que estás filtrando.</p>
+           <button class="plegable" onclick="limpiarFiltros()">Quitar filtros</button>`
+        : (vacios[filtroLista] ||
+           `<div class="big">👥</div><p>${datos.prospectos.length? "Nadie coincide con el filtro." : "Aún no tienes prospectos.<br>Toca <b>+</b> para agregar el primero."}</p>`)
+    }</div>`;
   }else{
     cont.innerHTML = lista.map(p=> filtroLista==="frios"
       ? filaPersonaFria(p)
@@ -1803,7 +1856,7 @@ function pintarDescartados(){
   const card = document.getElementById("cardDescartados");
   // con un filtro puesto la lista ya está acotada: el pliegue solo tiene sentido
   // sobre el listado completo
-  const mostrar = lista.length && filtroLista==="activos" && filtroEtapa==="Todas" && !filtroTexto;
+  const mostrar = lista.length && filtroLista==="todos" && filtroEtapa==="Todas" && !filtroTexto;
   btn.classList.toggle("oculto", !mostrar);
   card.classList.toggle("oculto", !mostrar || !verDescartados);
   if(!mostrar) return;
@@ -2328,7 +2381,7 @@ function borrarTodo(){
   localStorage.removeItem(CLAVE);
   datos = cargar();
   if(cuenta) datos._uid = cuenta;
-  filtroEtapa="Todas"; filtroLista="activos"; filtroTexto="";
+  filtroEtapa="Todas"; filtroLista="todos"; filtroTexto="";
   document.getElementById("buscador").value="";
   // Sin esto, la nube conservaba lo viejo y al reabrir lo bajaba de vuelta.
   guardar();
