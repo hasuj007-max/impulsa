@@ -70,19 +70,16 @@ body{min-height:100%;
   padding-bottom:calc(84px + env(safe-area-inset-bottom));
   -webkit-font-smoothing:antialiased;
 }
+/* La fecha sale UNA vez. Antes el día iba aquí en grande y otra vez en la tira
+   semanal de abajo: dos relojes para lo mismo. El anillo del avance también
+   estaba aquí, lejos de las metas que mide; ahora vive en el bloque de estado. */
 header.app{
   padding:calc(16px + env(safe-area-inset-top)) 20px 10px;
-  display:flex;align-items:center;justify-content:space-between;
+  display:flex;align-items:baseline;justify-content:space-between;gap:12px;
 }
-.hdr-izq{display:flex;align-items:center;gap:12px}
-.anillo-mini{position:relative;width:40px;height:40px;flex:none}
-.anillo-mini svg{transform:rotate(-90deg);display:block}
-.anillo-mini .fondo{stroke:var(--velo2)}
-.anillo-mini .avance{stroke-linecap:round;transition:stroke-dashoffset .4s ease}
-.anillo-mini span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800}
-.dia-num{font-size:34px;font-weight:800;letter-spacing:-1.5px;line-height:1}
-.dia-txt{font-size:11px;font-weight:800;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.8px;line-height:1.35}
-.marca{font-size:14px;font-weight:800;color:var(--ink-soft)}
+.fecha-hoy{font-size:19px;font-weight:800;letter-spacing:-.4px;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.marca{font-size:14px;font-weight:800;color:var(--ink-soft);flex:none}
 .marca span{color:var(--verde)}
 main{padding:0 16px}
 .tab{display:none}
@@ -105,12 +102,38 @@ main{padding:0 16px}
 .sdia .pt{width:4px;height:4px;border-radius:50%;background:transparent;margin-top:2px}
 .sdia.activo{background:var(--velo2);border-color:var(--line2)}
 .sdia.completo .pt{background:var(--verde)}
+/* Día que se abrió pero no se cerró. Antes solo existía "completo" o nada, así
+   que un día a medias se veía igual que un día en que ni abriste la app.
+   Ámbar y no rojo a propósito: trabajaste, no fallaste — y una tira de siete
+   puntos rojos cada mañana desanima a quien apenas está agarrando el hábito.
+   Es el mismo ámbar de la leyenda de las barras en Números. */
+.sdia.flojo .pt{background:var(--gold)}
 .sdia.fut{opacity:.35;cursor:default}
 
-/* ---------- Saludo ---------- */
-.hero{padding:4px 4px 18px}
-.saludo{font-size:15px;font-weight:700;color:var(--ink-soft);margin-bottom:6px}
-.hero-txt{font-size:25px;font-weight:800;line-height:1.3;letter-spacing:-.6px}
+/* ---------- Bloque de estado del día ----------
+   Reúne en una sola pieza lo que antes andaba suelto por la pantalla: el anillo
+   (que estaba en la cabecera), el mensaje del día y los chips de racha y
+   porcentaje. El aviso de atrasados dejó de ser decorativo: ahora se toca y
+   lleva a esa gente. */
+.estado{background:var(--brillo),var(--card);border:1px solid var(--line);
+  border-radius:var(--radius);padding:18px 18px 0;margin-bottom:14px;overflow:hidden}
+.estado-fila{display:flex;align-items:center;gap:16px;padding-bottom:16px}
+.anillo{position:relative;width:74px;height:74px;flex:none}
+.anillo svg{transform:rotate(-90deg);display:block}
+.anillo .fondo{stroke:var(--velo2)}
+.anillo .avance{stroke-linecap:round;transition:stroke-dashoffset .4s ease}
+.anillo span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:17px;font-weight:800;letter-spacing:-.5px}
+.estado-txt{flex:1;min-width:0}
+.hero-txt{font-size:19px;font-weight:800;line-height:1.3;letter-spacing:-.4px;text-wrap:balance}
+.estado-pie{font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-top:7px}
+/* width con los 36px del padding del bloque devueltos: con width:100% a secas,
+   el desplazamiento de -18px dejaba la franja corta por el lado derecho. */
+.aviso-atrasados{display:flex;align-items:center;gap:10px;width:calc(100% + 36px);text-align:left;
+  margin:0 -18px;padding:13px 18px;border:none;border-top:1px solid var(--line);
+  background:var(--red-soft);color:var(--red);font-size:14px;font-weight:700;
+  font-family:inherit;cursor:pointer}
+.aviso-atrasados .fl{margin-left:auto;opacity:.65;font-weight:800}
 .hero-txt b.v{color:var(--verde)}
 .hero-txt b.o{color:var(--gold)}
 .hero-txt b.a{color:var(--azul)}
@@ -146,12 +169,14 @@ main{padding:0 16px}
 
 .rotulo-suelto{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;
   color:var(--ink-soft);margin:0 0 8px 3px}
-.trio{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px}
+/* Dos, no tres: "en seguimiento" no es un resultado del mes — es trabajo
+   pendiente, y ahora vive en su propia tarjeta con nombres y botón de chat. */
+.trio{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
 .trio .t{background:var(--brillo),var(--card);
-  border:1px solid var(--line);border-radius:17px;padding:13px 9px;text-align:center}
-.trio .tn{font-size:22px;font-weight:800;letter-spacing:-.8px;line-height:1.05}
-.trio .tn small{font-size:13px;font-weight:800;color:var(--ink-soft);letter-spacing:0}
-.trio .tm{font-size:10.5px;font-weight:700;color:var(--ink-soft);margin-top:4px;line-height:1.3}
+  border:1px solid var(--line);border-radius:17px;padding:14px 10px;text-align:center}
+.trio .tn{font-size:28px;font-weight:800;letter-spacing:-1px;line-height:1.05}
+.trio .tn small{font-size:15px;font-weight:800;color:var(--ink-soft);letter-spacing:0}
+.trio .tm{font-size:11.5px;font-weight:700;color:var(--ink-soft);margin-top:5px;line-height:1.3}
 .trio .t.verde .tn{color:var(--verde)}
 .trio .t.oro   .tn{color:var(--gold)}
 .trio .t.rojo  .tn{color:var(--red)}
@@ -159,35 +184,51 @@ main{padding:0 16px}
   background:var(--grad);color:var(--sobre-verde);font-size:18px;font-weight:800;cursor:pointer;
   box-shadow:0 3px 10px rgba(34,197,94,.28)}
 .trio .tmas:active{transform:scale(.9)}
-.chips-hero{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
-.chip-h{display:flex;align-items:center;gap:6px;padding:7px 13px;border-radius:999px;background:var(--velo);border:1px solid var(--line);font-size:12.5px;font-weight:700}
-.chip-h.alerta{background:var(--red-soft);color:var(--red);border-color:transparent}
 
 /* ---------- Encabezado de tarjeta con acción ---------- */
 .card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .card-top h2{margin-bottom:0}
 
-/* ---------- Metas ---------- */
-.meta{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+/* ---------- Metas ----------
+   Una actividad = un renglón. La barra pasó de 6px a 3px y se metió debajo del
+   nombre: lo que importa es el nombre y el botón, no la barra. Las cumplidas se
+   pliegan al final (ver pintarHoy), así la lista se acorta conforme avanza el
+   día en vez de crecer. */
+.meta{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
 .meta:last-child{border-bottom:none}
 .meta .info{flex:1;min-width:0}
-/* overflow-wrap: un nombre de actividad largo sin espacios ensanchaba la página
-   entera y la dejaba con desplazamiento lateral. */
-.meta .nombre{font-size:15px;font-weight:700;display:flex;align-items:center;gap:6px;
-  min-width:0;overflow-wrap:anywhere}
-.meta.lograda .nombre::after{content:"✓";color:var(--green);font-weight:800}
-.meta .barra{height:6px;background:var(--velo);border-radius:3px;margin-top:7px;overflow:hidden}
-.meta .barra i{display:block;height:100%;background:var(--grad);border-radius:3px;transition:width .3s ease}
-.meta.lograda .barra i{background:linear-gradient(135deg,#1F9E63,#3DD68C)}
-.meta .conteo{font-size:13px;font-weight:800;color:var(--ink-soft);min-width:52px;text-align:right}
+/* line-clamp en vez de una sola línea con puntos suspensivos: un nombre largo
+   se lee en dos renglones, no se corta.
+   break-word y NO anywhere: con `anywhere` "Conversaciones" se partía como
+   "Conversacio / nes" aunque cupiera entera en el siguiente renglón. break-word
+   solo parte cuando una palabra sola no cabe, que es de lo que protegía el
+   original (un nombre larguísimo sin espacios ensanchaba la página entera). */
+.meta .nombre{font-size:15px;font-weight:700;line-height:1.25;min-width:0;overflow-wrap:break-word;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.meta .barra{height:3px;background:var(--velo2);border-radius:2px;margin-top:7px;overflow:hidden}
+.meta .barra i{display:block;height:100%;background:var(--verde);border-radius:2px;transition:width .3s ease}
+.meta .conteo{font-size:13px;font-weight:800;color:var(--ink-soft);min-width:46px;text-align:right}
+.meta.lograda{opacity:.5}
+.meta.lograda .nombre{text-decoration:line-through}
 .meta.pausada .nombre,.meta.pausada .conteo{opacity:.45}
 .meta.pausada .conteo{font-size:11px;text-transform:uppercase;letter-spacing:.5px}
 .meta.pausada .barra{opacity:.3}
-.meta .botones{display:flex;gap:8px}
-.btn-cnt{width:40px;height:40px;border-radius:13px;border:none;font-size:20px;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer}
-.btn-mas{background:var(--grad);color:var(--sobre-verde);box-shadow:0 4px 14px rgba(34,197,94,.3)}
+.meta .botones{display:flex;align-items:center;gap:4px}
+.btn-cnt{border:none;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.btn-mas{width:40px;height:40px;border-radius:13px;font-size:20px;
+  background:var(--grad);color:var(--sobre-verde);box-shadow:0 4px 14px rgba(34,197,94,.3)}
 .btn-mas:active{transform:scale(.93)}
-.btn-menos{background:var(--velo);color:var(--ink-soft)}
+/* El "−" deja de competir con el "+": es un rescate para cuando te pasaste,
+   no una acción de todos los días. */
+.btn-menos{width:30px;height:40px;border-radius:10px;font-size:19px;background:none;color:var(--ink-soft);opacity:.55}
+.meta.lograda .btn-mas{background:var(--velo2);color:var(--ink-soft);box-shadow:none}
+
+/* Pliegue de las actividades ya cumplidas */
+.hechas{display:flex;align-items:center;gap:9px;width:100%;padding:13px 0 2px;
+  border:none;border-top:1px solid var(--line);background:none;font-family:inherit;
+  font-size:13px;font-weight:700;color:var(--ink-soft);cursor:pointer;text-align:left}
+.hechas .tic{color:var(--verde);font-weight:800}
+.hechas .fl{margin-left:auto;opacity:.6}
 
 /* ---------- Agenda personal ---------- */
 .tarea{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--line)}
@@ -211,16 +252,34 @@ main{padding:0 16px}
 /* ---------- Prospectos ---------- */
 .buscador{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:14px;font-size:15px;background:var(--card);color:var(--ink);margin-bottom:10px}
 .buscador::placeholder{color:var(--ink-soft)}
-.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-.chips::-webkit-scrollbar{display:none}
-.chip{flex:none;padding:7px 14px;border-radius:999px;border:1px solid var(--line2);background:var(--card);font-size:13px;font-weight:700;color:var(--ink-soft);cursor:pointer}
+/* Cuatro filtros con número, no ocho etiquetas en un carrusel: lo que de verdad
+   se busca es "a quién le debo un mensaje". Las etapas pasaron al desplegable
+   de al lado del buscador, donde no ocupan una fila entera. */
+.chips{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:12px}
+.chip{padding:9px 4px;border-radius:13px;border:1px solid var(--line2);background:var(--card);
+  font-size:12px;font-weight:800;color:var(--ink-soft);cursor:pointer;text-align:center;
+  font-family:inherit;line-height:1.25}
+.chip b{display:block;font-size:15px;color:var(--ink);letter-spacing:-.3px}
+.chip.alerta b{color:var(--red)}
 .chip.activa{background:var(--grad);color:var(--sobre-verde);border-color:transparent}
+.chip.activa b{color:var(--sobre-verde)}
+.busca-fila{display:flex;gap:8px;margin-bottom:11px}
+.busca-fila .buscador{flex:1;min-width:0;margin-bottom:0}
+.sel-etapa{flex:none;max-width:42%;padding:12px 10px;border:1px solid var(--line);
+  border-radius:14px;font-size:13px;font-weight:700;background:var(--card);color:var(--ink);
+  font-family:inherit}
 .prospecto{display:flex;align-items:center;gap:11px;padding:13px 0;border-bottom:1px solid var(--line);cursor:pointer}
 .prospecto:last-child{border-bottom:none}
 .avatar{width:42px;height:42px;border-radius:13px;background:var(--green-soft);color:var(--verde2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;flex:none}
 .prospecto .datos{flex:1;min-width:0}
-.prospecto .nom{font-size:15px;font-weight:700}
-.prospecto .sub{font-size:12px;color:var(--ink-soft);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prospecto .nom{font-size:15px;font-weight:700;line-height:1.25;overflow-wrap:break-word}
+/* Sin nowrap ni puntos suspensivos: la fecha del seguimiento es el dato por el
+   que se abre esta pantalla, y antes era justo lo que se cortaba
+   ("Marketplace · seg:…"). Ahora se lee entera y las notas salen de la fila. */
+.prospecto .sub{font-size:12px;color:var(--ink-soft);margin-top:3px;line-height:1.35;overflow-wrap:break-word}
+.prospecto .sub .hoy{color:var(--verde);font-weight:800}
+.plegable{display:block;width:100%;margin-top:12px;padding:12px;border:none;border-radius:14px;
+  background:var(--velo);color:var(--ink-soft);font-family:inherit;font-size:13px;font-weight:800;cursor:pointer}
 .btn-chat{flex:none;width:36px;height:36px;border-radius:11px;background:var(--green-soft);color:var(--green);display:flex;align-items:center;justify-content:center;text-decoration:none}
 .etiqueta{flex:none;font-size:11px;font-weight:800;padding:4px 10px;border-radius:999px}
 .et-Nuevo{background:var(--azul-soft);color:var(--et-nuevo)}
@@ -235,11 +294,15 @@ main{padding:0 16px}
 .vacio .big{font-size:34px;margin-bottom:8px}
 .vacio p{font-size:14px}
 
-/* ---------- Métricas ---------- */
-.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
-.kpi{background:var(--brillo),var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px}
-.kpi .num{font-size:26px;font-weight:800;letter-spacing:-1px}
-.kpi .txt{font-size:12px;color:var(--ink-soft);font-weight:600;margin-top:2px}
+/* ---------- Métricas ----------
+   Arriba una frase, no cuatro cuadros. Los KPIs decían "0 ventas · 7 días" y dos
+   dedos más abajo "2 / 12 del mes": dos ventanas de tiempo distintas sin avisar,
+   y el lector no tenía cómo saberlo. Ahora la portada de esta pestaña es la ley
+   de promedios, que es la única cifra que cambia decisiones. */
+.titular{background:var(--brillo),var(--card);border:1px solid var(--line);
+  border-radius:var(--radius);padding:19px 18px;margin-bottom:14px}
+.titular .magico{margin-top:0;padding-top:0;border-top:none}
+.titular .pie{font-size:12px;font-weight:700;color:var(--ink-soft);margin-top:13px}
 #grafica{display:flex;align-items:flex-end;gap:6px;height:145px}
 #grafica.densa{gap:2px}
 .cbar{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:5px;justify-content:flex-end;cursor:pointer}
@@ -312,10 +375,31 @@ main{padding:0 16px}
 .tabla-act tr:last-child td{border-bottom:none}
 
 /* ---------- Ajustes ---------- */
-.ajuste-meta{display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+/* Tarjetas que se abren. Antes todo estaba desplegado a la vez — apariencia,
+   cuenta, las 9 metas, meta del mes, respaldo y borrar datos — y había que
+   pasar por encima de todo para llegar a cualquier cosa. */
+.plegada{background:var(--brillo),var(--card);border:1px solid var(--line);
+  border-radius:var(--radius);margin-bottom:14px;overflow:hidden}
+.plegada > summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:13px;padding:16px}
+.plegada > summary::-webkit-details-marker{display:none}
+.plegada .st{flex:1;min-width:0}
+.plegada .st b{display:block;font-size:15px;font-weight:700}
+.plegada .st span{display:block;font-size:12px;color:var(--ink-soft);margin-top:2px}
+.plegada .fl{flex:none;color:var(--ink-soft);opacity:.6;font-weight:800;transition:transform .2s ease}
+.plegada[open] > summary .fl{transform:rotate(90deg)}
+.plegada .cuerpo{padding:0 16px 16px}
+.plegada[open] > summary{border-bottom:1px solid var(--line);margin-bottom:14px}
+
+/* El nombre de la actividad en su propio renglón: en una sola fila con el
+   objetivo y la equis, "5 historias en todas tus redes sociales" se cortaba
+   a la mitad y no había forma de leer lo que estabas editando. */
+.ajuste-meta{padding:10px 0;border-bottom:1px solid var(--line)}
 .ajuste-meta:last-child{border-bottom:none}
-.ajuste-meta input[type=text]{flex:1;min-width:0;padding:10px;border:1px solid var(--line);border-radius:12px;font-size:14px;background:var(--card2);color:var(--ink)}
-.ajuste-meta input[type=number]{width:64px;padding:10px 6px;border:1px solid var(--line);border-radius:12px;font-size:14px;text-align:center;background:var(--card2);color:var(--ink)}
+.ajuste-meta input[type=text]{display:block;width:100%;padding:10px;border:1px solid var(--line);border-radius:12px;font-size:14px;background:var(--card2);color:var(--ink)}
+.ajuste-meta .bajo{display:flex;align-items:center;gap:8px;margin-top:7px}
+.ajuste-meta .bajo label{font-size:11.5px;font-weight:800;letter-spacing:.5px;
+  text-transform:uppercase;color:var(--ink-soft);flex:1}
+.ajuste-meta input[type=number]{width:74px;flex:none;padding:9px 6px;border:1px solid var(--line);border-radius:12px;font-size:14px;text-align:center;background:var(--card2);color:var(--ink)}
 .btn-x{width:34px;height:34px;border:none;border-radius:11px;background:var(--red-soft);color:var(--red);font-weight:800;font-size:15px;cursor:pointer;flex:none;display:flex;align-items:center;justify-content:center}
 .candado{width:34px;height:34px;border-radius:11px;background:var(--velo);color:var(--ink-soft);flex:none;display:flex;align-items:center;justify-content:center}
 .ajuste-meta input[type=text]:disabled{opacity:.75}
@@ -470,46 +554,71 @@ nav button.activa{color:var(--verde)}
   <div id="portadaError"></div>
 </div>
 
+<!-- Sin la marca: dentro de la app nadie necesita que le recuerden en qué app
+     está, y "Impulsa." le robaba a la fecha el ancho que necesita para caber. -->
 <header class="app">
-  <div class="hdr-izq">
-    <div class="anillo-mini">
-      <svg width="40" height="40" viewBox="0 0 40 40">
-        <defs>
-          <linearGradient id="gMini" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#22C55E"/><stop offset="1" stop-color="#86EFAC"/>
-          </linearGradient>
-        </defs>
-        <circle class="fondo" cx="20" cy="20" r="16" fill="none" stroke-width="4"/>
-        <circle class="avance" id="miniAvance" cx="20" cy="20" r="16" fill="none" stroke="url(#gMini)" stroke-width="4"/>
-      </svg>
-      <span id="miniPct">0</span>
-    </div>
-    <div class="dia-num" id="diaNum"></div>
-    <div class="dia-txt" id="diaTxt"></div>
-  </div>
-  <div class="marca">Impulsa<span>.</span></div>
+  <div class="fecha-hoy" id="fechaHoy"></div>
 </header>
 
 <main>
   <!-- ============ HOY ============ -->
   <section class="tab activa" id="tab-hoy">
+    <!-- Los últimos 7 días, no la semana de lunes a domingo: lo que sostiene la
+         racha es ver lo que ya cerraste, no los días que todavía no llegan. -->
     <div class="semana" id="tiraSemana"></div>
-    <div class="hero">
-      <p class="saludo" id="saludo"></p>
-      <p class="hero-txt" id="heroTxt"></p>
-      <div class="chips-hero" id="chipsHero"></div>
+
+    <!-- Todo el estado del día en una sola pieza -->
+    <div class="estado">
+      <div class="estado-fila">
+        <div class="anillo">
+          <svg width="74" height="74" viewBox="0 0 74 74" aria-hidden="true">
+            <defs>
+              <linearGradient id="gAro" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#22C55E"/><stop offset="1" stop-color="#86EFAC"/>
+              </linearGradient>
+            </defs>
+            <circle class="fondo" cx="37" cy="37" r="31" fill="none" stroke-width="6"/>
+            <circle class="avance" id="miniAvance" cx="37" cy="37" r="31" fill="none" stroke="url(#gAro)" stroke-width="6"/>
+          </svg>
+          <span id="miniPct">0</span>
+        </div>
+        <div class="estado-txt">
+          <p class="hero-txt" id="heroTxt"></p>
+          <p class="estado-pie" id="estadoPie"></p>
+        </div>
+      </div>
+      <!-- Solo aparece si hay gente esperando, y lleva hasta ella -->
+      <button class="aviso-atrasados oculto" id="avisoAtrasados" onclick="verAtrasados()"></button>
+    </div>
+
+    <div class="card">
+      <div class="card-top">
+        <h2>Actividades de hoy</h2>
+        <span class="nota" id="contadorAct"></span>
+      </div>
+      <div id="listaMetas"></div>
+      <!-- Las cumplidas se pliegan aquí: la lista se acorta conforme avanza el día -->
+      <button class="hechas oculto" id="btnHechas" onclick="alternarHechas()">
+        <span class="tic">✓</span><span id="txtHechas"></span><span class="fl" id="flHechas">›</span>
+      </button>
+      <div id="listaHechas" class="oculto"></div>
+    </div>
+
+    <!-- El seguimiento se cierra donde se abre: antes esta pantalla anunciaba
+         "6 hoy" y había que irse a otra pestaña a buscar quiénes eran. -->
+    <div class="card oculto" id="cardSeguimientos">
+      <div class="card-top">
+        <h2>Hoy le escribes a</h2>
+        <span class="nota" id="contadorSeg"></span>
+      </div>
+      <div id="listaSeguimientos"></div>
+      <button class="plegable oculto" id="verMasSeg" onclick="verAtrasados()"></button>
     </div>
 
     <!-- Marcador, no lista de tareas: ventas y socios no dependen de ti, así que
          se miden aparte y no cuentan para la racha ni para el % del día. -->
     <h2 class="rotulo-suelto">Resultados del mes</h2>
     <div class="trio" id="trioInicio"></div>
-
-    <div class="card">
-      <h2>Actividades de hoy</h2>
-      <p class="nota" style="margin:-4px 0 12px">Esto sí depende de ti. Cerrar el día es hacerlas todas.</p>
-      <div id="listaMetas"></div>
-    </div>
 
     <div class="card">
       <h2>Agenda del día</h2>
@@ -525,14 +634,23 @@ nav button.activa{color:var(--verde)}
 
   <!-- ============ PROSPECTOS ============ -->
   <section class="tab" id="tab-prospectos">
-    <input class="buscador" id="buscador" type="search" placeholder="Buscar prospecto...">
+    <div class="busca-fila">
+      <input class="buscador" id="buscador" type="search" placeholder="Buscar prospecto...">
+      <select class="sel-etapa" id="selEtapa" aria-label="Filtrar por etapa"></select>
+    </div>
     <div class="chips" id="chipsEtapas"></div>
     <div class="card"><div id="listaProspectos"></div></div>
+    <!-- Los descartados salen de la lista principal: estorban entre la gente viva -->
+    <button class="plegable oculto" id="btnDescartados" onclick="alternarDescartados()"></button>
+    <div class="card oculto" id="cardDescartados"><div id="listaDescartados"></div></div>
   </section>
 
   <!-- ============ MÉTRICAS ============ -->
   <section class="tab" id="tab-metricas">
-    <div class="kpis" id="kpis"></div>
+    <!-- La portada de esta pestaña es la ley de promedios: es la única cifra
+         que cambia decisiones. Antes aquí había cuatro cuadros con ventanas de
+         tiempo distintas entre sí y con la meta del mes de abajo. -->
+    <div class="titular" id="titular"></div>
 
     <div class="card" id="cardMes">
       <h2 id="tituloMes">Meta del mes</h2>
@@ -567,10 +685,16 @@ nav button.activa{color:var(--verde)}
       <div id="fuentes"></div>
     </div>
 
-    <div class="card">
-      <h2>Actividad de la semana</h2>
-      <table class="tabla-act" id="tablaSemana"></table>
-    </div>
+    <!-- Plegada: es la tabla que menos se consulta y ocupaba una pantalla entera -->
+    <details class="plegada">
+      <summary>
+        <span class="st"><b>Actividad de la semana</b><span>Cuánto hiciste de cada cosa</span></span>
+        <span class="fl">›</span>
+      </summary>
+      <div class="cuerpo">
+        <table class="tabla-act" id="tablaSemana"></table>
+      </div>
+    </details>
   </section>
 
   <!-- ============ AJUSTES ============ -->
@@ -615,38 +739,56 @@ nav button.activa{color:var(--verde)}
       <p class="nota">Tus datos se guardan solos en tu cuenta unos segundos después de cada cambio. Si te quedas sin señal sigues trabajando y todo sube al reconectar.</p>
     </div>
 
-    <div class="card">
-      <h2>Mis metas diarias</h2>
-      <div id="editorMetas"></div>
-      <button class="btn btn-sec" onclick="agregarMeta()">+ Agregar meta</button>
-      <button class="btn btn-pri" onclick="guardarMetas()">Guardar metas</button>
-      <button class="btn btn-sec" onclick="restaurarPlan()">↺ Traer el plan sugerido</button>
-      <p class="nota">La meta "Conversaciones nuevas" alimenta el marcador y las métricas, por eso no se puede eliminar. El plan sugerido reemplaza tu lista por la que trae la app; tu historial y tus conteos no se tocan.</p>
-    </div>
-
-    <div class="card">
-      <h2>Meta del mes</h2>
-      <div class="ajuste-meta">
-        <input type="text" value="Ventas del mes" disabled>
-        <input type="number" min="0" id="mesVentas" aria-label="Meta de ventas del mes">
+    <!-- Lo que se toca de vez en cuando queda plegado. Antes todo esto estaba
+         abierto a la vez y había que pasar sobre las 9 metas para llegar al
+         respaldo. -->
+    <details class="plegada">
+      <summary>
+        <span class="st"><b>Mi plan diario</b><span id="resumenPlan"></span></span>
+        <span class="fl">›</span>
+      </summary>
+      <div class="cuerpo">
+        <div id="editorMetas"></div>
+        <button class="btn btn-sec" onclick="agregarMeta()">+ Agregar meta</button>
+        <button class="btn btn-pri" onclick="guardarMetas()">Guardar metas</button>
+        <button class="btn btn-sec" onclick="restaurarPlan()">↺ Traer el plan sugerido</button>
+        <p class="nota">La meta "Conversaciones nuevas" alimenta el marcador y las métricas, por eso no se puede eliminar. El plan sugerido reemplaza tu lista por la que trae la app; tu historial y tus conteos no se tocan.</p>
       </div>
-      <div class="ajuste-meta">
-        <input type="text" value="Nuevos socios del mes" disabled>
-        <input type="number" min="0" id="mesSocios" aria-label="Meta de socios del mes">
-      </div>
-      <button class="btn btn-pri" onclick="guardarMetaMes()">Guardar meta del mes</button>
-      <p class="nota">Déjalas en 0 si no quieres verlas. En Métricas te muestro la proyección de cierre según tu ritmo.</p>
-    </div>
+    </details>
 
-    <div class="card">
-      <h2>Respaldo de datos</h2>
-      <button class="btn btn-sec" onclick="exportar()">⬇︎ Descargar respaldo (JSON)</button>
-      <button class="btn btn-sec" onclick="exportarCSV()">⬇︎ Prospectos en Excel (CSV)</button>
-      <button class="btn btn-sec" onclick="document.getElementById('archivoImport').click()">⬆︎ Restaurar respaldo</button>
-      <input type="file" id="archivoImport" accept=".json" hidden onchange="importar(this)">
-      <p class="nota">Tus datos viven solo en este teléfono. Descarga un respaldo cada semana: si Safari borra sus datos o cambias de equipo, lo restauras aquí y no pierdes nada.</p>
-      <button class="btn btn-peligro" onclick="borrarTodo()">Borrar todos los datos</button>
-    </div>
+    <details class="plegada">
+      <summary>
+        <span class="st"><b>Meta del mes</b><span id="resumenMes"></span></span>
+        <span class="fl">›</span>
+      </summary>
+      <div class="cuerpo">
+        <div class="ajuste-meta">
+          <div class="bajo"><label for="mesVentas">Ventas del mes</label>
+            <input type="number" min="0" id="mesVentas"></div>
+        </div>
+        <div class="ajuste-meta">
+          <div class="bajo"><label for="mesSocios">Nuevos socios del mes</label>
+            <input type="number" min="0" id="mesSocios"></div>
+        </div>
+        <button class="btn btn-pri" onclick="guardarMetaMes()">Guardar meta del mes</button>
+        <p class="nota">Déjalas en 0 si no quieres verlas. En Números te muestro la proyección de cierre según tu ritmo.</p>
+      </div>
+    </details>
+
+    <details class="plegada">
+      <summary>
+        <span class="st"><b>Respaldo de datos</b><span>Descargar, restaurar o borrar todo</span></span>
+        <span class="fl">›</span>
+      </summary>
+      <div class="cuerpo">
+        <button class="btn btn-sec" onclick="exportar()">⬇︎ Descargar respaldo (JSON)</button>
+        <button class="btn btn-sec" onclick="exportarCSV()">⬇︎ Prospectos en Excel (CSV)</button>
+        <button class="btn btn-sec" onclick="document.getElementById('archivoImport').click()">⬆︎ Restaurar respaldo</button>
+        <input type="file" id="archivoImport" accept=".json" hidden onchange="importar(this)">
+        <p class="nota">Tus datos viven solo en este teléfono. Descarga un respaldo cada semana: si Safari borra sus datos o cambias de equipo, lo restauras aquí y no pierdes nada.</p>
+        <button class="btn btn-peligro" onclick="borrarTodo()">Borrar todos los datos</button>
+      </div>
+    </details>
   </section>
 </main>
 
@@ -698,10 +840,10 @@ nav button.activa{color:var(--verde)}
     Hoy</button>
   <button data-tab="prospectos" onclick="irA('prospectos',this)" aria-label="Prospectos">
     <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.2 3.4-5 6.5-5s5.7 1.8 6.5 5"/><circle cx="17.5" cy="9" r="2.6"/><path d="M17 15.2c2.4.4 4 1.9 4.6 4.6"/></svg>
-    Prospectos</button>
+    Gente</button>
   <button data-tab="metricas" onclick="irA('metricas',this)" aria-label="Métricas">
     <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 20v-7M12 20V5M19 20v-10M3 20h18"/></svg>
-    Métricas</button>
+    Números</button>
   <button data-tab="ajustes" onclick="irA('ajustes',this)" aria-label="Ajustes">
     <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/><circle cx="15" cy="7" r="2.2" fill="var(--bg)"/><circle cx="8" cy="12" r="2.2" fill="var(--bg)"/><circle cx="17" cy="17" r="2.2" fill="var(--bg)"/></svg>
     Ajustes</button>
@@ -1069,40 +1211,70 @@ function contar(idMeta, delta){
   }
 }
 
+/* Una actividad = un renglón. Se pinta igual esté cumplida o no; lo que cambia
+   es en cuál de las dos listas cae (ver pintarHoy). */
+function filaMeta(m, v){
+  const pausada = !(m.objetivo>0);
+  const pct = pausada? 0 : Math.min(1, v/m.objetivo);
+  const ok = !pausada && v>=m.objetivo;
+  return `<div class="meta ${ok?"lograda":""} ${pausada?"pausada":""}">
+    <div class="info">
+      <div class="nombre">${esc(m.nombre)}</div>
+      <div class="barra"><i style="width:${pct*100}%"></i></div>
+    </div>
+    <div class="conteo">${pausada? "pausada" : v+"/"+m.objetivo}</div>
+    <div class="botones">
+      <button class="btn-cnt btn-menos" onclick="contar('${m.id}',-1)" aria-label="Restar 1 a ${esc(m.nombre)}">−</button>
+      <button class="btn-cnt btn-mas" onclick="contar('${m.id}',1)" aria-label="Sumar 1 a ${esc(m.nombre)}">+</button>
+    </div>
+  </div>`;
+}
+
+/* Las cumplidas arrancan plegadas y se quedan como el usuario las deje mientras
+   no se salga de la pestaña: repintar (cada toque al "+") no debe cerrárselas. */
+let verHechas = false;
+function alternarHechas(){
+  verHechas = !verHechas;
+  pintarHoy();
+}
+
 function pintarHoy(){
   const dia = diaDe(hoy());
-  let html="", logradas=0, sumaPct=0, activas=0;
+  let logradas=0, sumaPct=0, activas=0;
+  const pendientes=[], hechas=[];
   datos.metas.forEach(m=>{
     const v = dia[m.id]||0;
     const pausada = !(m.objetivo>0);
-    const pct = pausada? 0 : Math.min(1, v/m.objetivo);
     const ok = !pausada && v>=m.objetivo;
-    if(!pausada){ activas++; sumaPct += pct; if(ok) logradas++; }
-    html += `<div class="meta ${ok?"lograda":""} ${pausada?"pausada":""}">
-      <div class="info">
-        <div class="nombre">${esc(m.nombre)}</div>
-        <div class="barra"><i style="width:${pct*100}%"></i></div>
-      </div>
-      <div class="conteo">${pausada? "pausada" : v+"/"+m.objetivo}</div>
-      <div class="botones">
-        <button class="btn-cnt btn-menos" onclick="contar('${m.id}',-1)" aria-label="Restar 1 a ${esc(m.nombre)}">−</button>
-        <button class="btn-cnt btn-mas" onclick="contar('${m.id}',1)" aria-label="Sumar 1 a ${esc(m.nombre)}">+</button>
-      </div>
-    </div>`;
+    if(!pausada){ activas++; sumaPct += Math.min(1, v/m.objetivo); if(ok) logradas++; }
+    // las pausadas se van al pliegue: no son trabajo de hoy ni cuentan al día
+    (ok||pausada? hechas : pendientes).push(filaMeta(m, v));
   });
-  document.getElementById("listaMetas").innerHTML = html || `<div class="vacio"><p>Agrega tus metas en Ajustes.</p></div>`;
+  document.getElementById("listaMetas").innerHTML = pendientes.length
+    ? pendientes.join("")
+    : (datos.metas.length
+        ? `<div class="vacio"><div class="big">✅</div><p>Todo hecho por hoy.</p></div>`
+        : `<div class="vacio"><p>Agrega tus actividades en Ajustes.</p></div>`);
+
+  const btnHechas = document.getElementById("btnHechas");
+  const cajaHechas = document.getElementById("listaHechas");
+  btnHechas.classList.toggle("oculto", !hechas.length);
+  document.getElementById("txtHechas").textContent =
+    hechas.length + (hechas.length===1? " ya hecha" : " ya hechas");
+  document.getElementById("flHechas").textContent = verHechas? "⌄" : "›";
+  cajaHechas.innerHTML = verHechas? hechas.join("") : "";
+  cajaHechas.classList.toggle("oculto", !verHechas || !hechas.length);
 
   const total = activas;                       // las pausadas no cuentan al día
   const pctDia = total? Math.round(sumaPct/total*100) : 0;
-  const circ = 2*Math.PI*16;
+  document.getElementById("contadorAct").textContent = total? logradas+" de "+total : "";
+  const circ = 2*Math.PI*31;
   const av = document.getElementById("miniAvance");
   av.style.strokeDasharray = circ;
   av.style.strokeDashoffset = circ*(1-pctDia/100);
-  document.getElementById("miniPct").textContent = pctDia;
+  document.getElementById("miniPct").textContent = pctDia+"%";
 
   const hora = new Date().getHours();
-  document.getElementById("saludo").textContent =
-    hora<12? "Buenos días." : (hora<19? "Buenas tardes." : "Buenas noches.");
   const H = hoy();
   const conv = dia["conv"]||0;
   const seg = datos.prospectos.filter(p=>p.fecha && p.fecha<=H && p.etapa!=="Descartado");
@@ -1114,16 +1286,84 @@ function pintarHoy(){
     tieneRegistro(d)).length;
   document.getElementById("heroTxt").innerHTML =
     mensajeDelDia({pctDia, logradas, total, conv, racha, hora, veterano: diasConRegistro>=7});
-  const pendientes = datos.agenda.filter(t=>!t.hecha && t.fecha<=H).length;
-  document.getElementById("chipsHero").innerHTML =
-    `<span class="chip-h">🔥 ${racha===1? "1 día" : racha+" días"}</span>
-     <span class="chip-h">⚡ ${pctDia}% del día</span>
-     ${pendientes? `<span class="chip-h">📋 ${pendientes} pendiente${pendientes>1?"s":""}</span>` : ""}
-     ${atrasados? `<span class="chip-h alerta">⚠️ ${atrasados} atrasado${atrasados>1?"s":""}</span>` : ""}`;
+
+  /* El pie sustituye a los chips sueltos: la misma información, sin cuatro
+     pastillas compitiendo debajo del mensaje. */
+  const pendAgenda = datos.agenda.filter(t=>!t.hecha && t.fecha<=H).length;
+  const piezas = [];
+  if(racha) piezas.push("🔥 "+(racha===1? "1 día seguido" : racha+" días seguidos"));
+  if(pendAgenda) piezas.push("📋 "+pendAgenda+" en tu agenda");
+  document.getElementById("estadoPie").textContent = piezas.join("  ·  ");
+
+  /* El aviso de atrasados ya no es un adorno: lleva a esa gente. */
+  const aviso = document.getElementById("avisoAtrasados");
+  aviso.classList.toggle("oculto", !atrasados);
+  if(atrasados) aviso.innerHTML = `<span>⚠︎</span><span>${atrasados} persona${atrasados>1?"s":""} `
+    + `lleva${atrasados>1?"n":""} días esperando tu mensaje</span><span class="fl">›</span>`;
 
   pintarSemana();
-  pintarTrio(seg.length);
+  pintarSeguimientos(seg);
+  pintarTrio();
   pintarAgenda();
+}
+
+/* Los seguimientos de hoy, con nombre y botón de chat, en la pantalla donde se
+   empieza el día. Antes solo se anunciaba el número y había que ir a buscarlos. */
+const TOPE_SEG = 4;
+function pintarSeguimientos(seg){
+  const card = document.getElementById("cardSeguimientos");
+  card.classList.toggle("oculto", !seg.length);
+  if(!seg.length) return;
+  const H = hoy();
+  const lista = seg.slice().sort((a,b)=>(a.fecha||"").localeCompare(b.fecha||""));
+  const atrasados = lista.filter(p=>p.fecha<H).length;
+  document.getElementById("contadorSeg").textContent =
+    atrasados? atrasados+" atrasad"+(atrasados>1?"os":"o")+" · "+lista.length+" en total"
+             : lista.length+(lista.length===1? " persona" : " personas");
+  document.getElementById("listaSeguimientos").innerHTML =
+    lista.slice(0, TOPE_SEG).map(p=>filaPersona(p, H)).join("");
+  const resto = lista.length - TOPE_SEG;
+  const btn = document.getElementById("verMasSeg");
+  btn.classList.toggle("oculto", resto<=0);
+  if(resto>0) btn.textContent = "Ver "+resto+" más en Gente";
+}
+
+/* Fila de persona compartida por los seguimientos del inicio y la lista de
+   Gente: una sola forma de dibujar a alguien en toda la app. */
+function filaPersona(p, H){
+  return `<div class="prospecto" onclick="abrirFormulario('${p.id}')">
+    <div class="avatar">${esc(iniciales(p.nombre))}</div>
+    <div class="datos">
+      <div class="nom">${esc(p.nombre)}</div>
+      <div class="sub">${esc(p.red)} · ${textoSeguimiento(p, H)}</div>
+    </div>
+    ${botonChat(p)}
+    <span class="etiqueta ${claseEtapa(p.etapa)}">${esc(etiquetaCorta(p.etapa))}</span>
+  </div>`;
+}
+/* "hoy" y "2 días tarde" dicen más que "seg: 14 sep", y son cortos: la frase
+   entra en un renglón junto a la red, así que la fecha del seguimiento —el dato
+   por el que se abre esta pantalla— nunca se corta. */
+function textoSeguimiento(p, H){
+  if(!p.fecha) return "sin seguimiento";
+  if(p.fecha < H){
+    const d = Math.round((new Date(H+"T12:00:00") - new Date(p.fecha+"T12:00:00"))/86400000);
+    return `<span class="aviso-seg">${d} ${d===1?"día":"días"} tarde</span>`;
+  }
+  if(p.fecha === H) return `<span class="hoy">hoy</span>`;
+  return esc(fCorta(p.fecha));
+}
+
+/* Solo para pintar: el dato guardado sigue siendo "En conversación" (lo usan
+   hist, las métricas y el formulario). La etiqueta larga empujaba el nombre a
+   dos renglones y hacía filas de distinta altura. */
+const ETAPA_CORTA = {"En conversación":"Conversando"};
+function etiquetaCorta(e){ return ETAPA_CORTA[e] || e; }
+
+/* Desde el aviso del inicio: salta a Gente ya filtrado por quien espera. */
+function verAtrasados(){
+  filtroLista = "atrasados";
+  irA("prospectos", document.querySelector('nav button[data-tab="prospectos"]'));
 }
 
 /* El mensaje del inicio cambia según qué tanto llevas Y qué hora es: 0% a las
@@ -1249,12 +1489,12 @@ function mensajeDelDia({pctDia, logradas, total, conv, racha, hora, veterano}){
   }[franja]);
 }
 
-/* Ventas y socios del MES, porque así se mide el negocio; seguimientos de hoy. */
-function pintarTrio(nSeg){
+/* Ventas y socios del MES, porque así se mide el negocio. Antes había un tercer
+   cuadro con "en seguimiento", que no es un resultado del mes sino trabajo
+   pendiente: ahora tiene su propia tarjeta, con nombres y botón de chat. */
+function pintarTrio(){
   const mm = datos.metaMes||{ventas:0,socios:0};
   const v = sumaMes("venta"), s = sumaMes("socio");
-  const activos = datos.prospectos.filter(p=>
-    p.etapa!=="Descartado" && p.etapa!=="Cliente" && p.etapa!=="Socio").length;
   const bloque = (num, meta, etiqueta, clase, accion, aria)=>{
     const cumplida = meta>0 && num>=meta;
     return `<div class="t ${cumplida? "verde" : clase}">
@@ -1268,9 +1508,7 @@ function pintarTrio(nSeg){
        mes es exactamente el castigo que quisimos quitar de las actividades.
        En cero se quedan neutros; en cuanto hay algo, se celebran. */
       bloque(v, +mm.ventas||0, "ventas del mes", v>0? "verde":"", "registrarVenta()", "Registrar una venta")
-    + bloque(s, +mm.socios||0, "socios del mes", s>0? "oro":"",  "registrarSocio()", "Registrar un socio nuevo")
-    + `<div class="t"><div class="tn">${activos}</div>
-         <div class="tm">en seguimiento${nSeg? " · "+nSeg+" hoy" : ""}</div></div>`;
+    + bloque(s, +mm.socios||0, "socios del mes", s>0? "oro":"",  "registrarSocio()", "Registrar un socio nuevo");
 }
 
 /* Registro rápido desde el inicio. Suma al MISMO contador del día que las
@@ -1284,21 +1522,27 @@ function registrarSocio(){
   avisar("🎉 ¡Nuevo socio!", "Deshacer", ()=>contar("socio", -1));
 }
 
+/* Los ÚLTIMOS 7 días, con hoy al final. Antes iba de lunes a domingo: entre
+   semana media tira eran días futuros en gris que no dicen nada, y el trabajo
+   del jueves pasado desaparecía cada lunes. Lo que sostiene la racha es ver lo
+   que ya cerraste. */
 function pintarSemana(){
-  const f=new Date();
-  const lunes=new Date(f); lunes.setDate(f.getDate()-((f.getDay()+6)%7));
-  const letras=["L","M","M","J","V","S","D"];
+  const letras=["D","L","M","M","J","V","S"];
+  const H = hoy();
   let html="";
-  for(let i=0;i<7;i++){
-    const d=new Date(lunes); d.setDate(lunes.getDate()+i);
+  ultimosDias(7).forEach(d=>{
     const clave=claveDia(d);
+    const registro = !!datos.dias[clave] && tieneRegistro(datos.dias[clave]);
     const completo = !!datos.dias[clave] && diaCompleto(clave);
-    const esHoy = clave===hoy();
-    const futuro = clave>hoy();
-    let cls=""; if(esHoy) cls+=" activo"; if(completo) cls+=" completo"; if(futuro) cls+=" fut";
-    html += `<div class="sdia${cls}" ${futuro?"":`onclick="verDia('${clave}')"`}>
-      <span class="l">${letras[i]}</span><span class="n">${d.getDate()}</span><span class="pt"></span></div>`;
-  }
+    const esHoy = clave===H;
+    let cls="";
+    if(esHoy) cls+=" activo";
+    if(completo) cls+=" completo";
+    else if(registro && !esHoy) cls+=" flojo";   // se abrió pero no se cerró
+    html += `<div class="sdia${cls}" onclick="verDia('${clave}')">
+      <span class="l">${esHoy? "HOY" : letras[d.getDay()]}</span>
+      <span class="n">${d.getDate()}</span><span class="pt"></span></div>`;
+  });
   document.getElementById("tiraSemana").innerHTML = html;
 }
 
@@ -1449,7 +1693,7 @@ function borrarTarea(id){
 document.getElementById("tareaTxt").addEventListener("keydown", e=>{ if(e.key==="Enter") agregarTarea(); });
 
 /* =================== PROSPECTOS =================== */
-let filtroEtapa="Todos", filtroTexto="";
+let filtroEtapa="Todas", filtroTexto="";
 
 /* Un prospecto se enfría cuando lleva días sin ningún movimiento: ni cambio de
    etapa, ni nota en su historial. Clientes, socios y descartados no cuentan. */
@@ -1470,51 +1714,114 @@ function esFrio(p){
   return diasSinToque(p) >= DIAS_FRIO;
 }
 
-function pintarChips(){
-  const cont=document.getElementById("chipsEtapas");
-  const nFrios = datos.prospectos.filter(esFrio).length;
-  const frio = `<button class="chip ${filtroEtapa==="Fríos"?"activa":""}" onclick="filtrarEtapa('Fríos')">❄️ Fríos${nFrios?" ("+nFrios+")":""}</button>`;
-  cont.innerHTML = `<button class="chip ${filtroEtapa==="Todos"?"activa":""}" onclick="filtrarEtapa('Todos')">Todos</button>`
-    + frio
-    + ETAPAS.map(e=>`<button class="chip ${filtroEtapa===e?"activa":""}" onclick="filtrarEtapa('${e}')">${e}</button>`).join("");
+/* Cuatro filtros que responden a "¿a quién le debo un mensaje?", que es la
+   pregunta con la que se abre esta pestaña. Las etapas siguen estando, pero en
+   el desplegable de al lado del buscador: eran ocho pastillas en un carrusel
+   horizontal, todas del mismo peso, y tapaban lo urgente. */
+let filtroLista = "activos";
+const FILTROS = [
+  {id:"activos",   et:"Activos"},
+  {id:"atrasados", et:"Atrasados", alerta:true},
+  {id:"hoy",       et:"Hoy"},
+  {id:"frios",     et:"Fríos"}
+];
+function cuentaFiltro(id){
+  const H = hoy();
+  const vivos = datos.prospectos.filter(p=>p.etapa!=="Descartado");
+  if(id==="atrasados") return vivos.filter(p=>p.fecha && p.fecha<H).length;
+  if(id==="hoy")       return vivos.filter(p=>p.fecha===H).length;
+  if(id==="frios")     return datos.prospectos.filter(esFrio).length;
+  return vivos.length;
 }
+function pintarChips(){
+  document.getElementById("chipsEtapas").innerHTML = FILTROS.map(f=>
+    `<button class="chip ${filtroLista===f.id?"activa":""} ${f.alerta?"alerta":""}"
+             onclick="filtrarLista('${f.id}')">
+       <b>${cuentaFiltro(f.id)}</b>${f.et}</button>`).join("");
+
+  const sel = document.getElementById("selEtapa");
+  if(sel.options.length !== ETAPAS.length+1)
+    sel.innerHTML = `<option value="Todas">Toda etapa</option>`
+      + ETAPAS.map(e=>`<option value="${e}">${e}</option>`).join("");
+  sel.value = filtroEtapa;
+}
+function filtrarLista(id){ filtroLista=id; pintarProspectos(); }
 function filtrarEtapa(e){ filtroEtapa=e; pintarProspectos(); }
 
 function pintarProspectos(){
   pintarChips();
   const H = hoy();
-  let lista = datos.prospectos.slice();
-  if(filtroEtapa==="Fríos"){
-    lista = lista.filter(esFrio).sort((a,b)=>diasSinToque(b)-diasSinToque(a));
+  let lista = datos.prospectos.filter(p=>p.etapa!=="Descartado");
+  if(filtroLista==="frios"){
+    lista = datos.prospectos.filter(esFrio).sort((a,b)=>diasSinToque(b)-diasSinToque(a));
   }else{
+    if(filtroLista==="atrasados") lista = lista.filter(p=>p.fecha && p.fecha<H);
+    else if(filtroLista==="hoy")  lista = lista.filter(p=>p.fecha===H);
+    // sin fecha al final: quien no tiene seguimiento agendado no es urgente
     lista.sort((a,b)=> (a.fecha||"9999").localeCompare(b.fecha||"9999"));
-    if(filtroEtapa!=="Todos") lista = lista.filter(p=>p.etapa===filtroEtapa);
   }
+  if(filtroEtapa!=="Todas") lista = lista.filter(p=>p.etapa===filtroEtapa);
   if(filtroTexto) lista = lista.filter(p=>p.nombre.toLowerCase().includes(filtroTexto)||(p.notas||"").toLowerCase().includes(filtroTexto));
+
   const cont=document.getElementById("listaProspectos");
   if(!lista.length){
-    const vacio = filtroEtapa==="Fríos"
-      ? `<div class="big">🔥</div><p>Ningún prospecto enfriado.<br>Todos con movimiento en los últimos ${DIAS_FRIO} días.</p>`
-      : `<div class="big">👥</div><p>${datos.prospectos.length? "Nadie coincide con el filtro." : "Aún no tienes prospectos.<br>Toca <b>+</b> para agregar el primero."}</p>`;
-    cont.innerHTML = `<div class="vacio">${vacio}</div>`;
-    return;
+    const vacios = {
+      frios:     `<div class="big">🔥</div><p>Ningún prospecto enfriado.<br>Todos con movimiento en los últimos ${DIAS_FRIO} días.</p>`,
+      atrasados: `<div class="big">✅</div><p>No le debes un mensaje a nadie.<br>Así se ve estar al corriente.</p>`,
+      hoy:       `<div class="big">📭</div><p>Nadie agendado para hoy.<br>Ponle fecha de seguimiento a tus prospectos.</p>`
+    };
+    cont.innerHTML = `<div class="vacio">${vacios[filtroLista] ||
+      `<div class="big">👥</div><p>${datos.prospectos.length? "Nadie coincide con el filtro." : "Aún no tienes prospectos.<br>Toca <b>+</b> para agregar el primero."}</p>`}</div>`;
+  }else{
+    cont.innerHTML = lista.map(p=> filtroLista==="frios"
+      ? filaPersonaFria(p)
+      : filaPersona(p, H)).join("");
   }
-  const verFrio = filtroEtapa==="Fríos";
-  cont.innerHTML = lista.map(p=>`
-    <div class="prospecto" onclick="abrirFormulario('${p.id}')">
-      <div class="avatar">${esc(iniciales(p.nombre))}</div>
-      <div class="datos">
-        <div class="nom">${esc(p.nombre)}</div>
-        <div class="sub">${verFrio
-          ? esc(p.red)+' · <span class="aviso-seg">hace '+diasSinToque(p)+' días</span>'
-          : esc(p.red)+(p.fecha? " · seg: "+(p.fecha<H?'<span class="aviso-seg">'+esc(fCorta(p.fecha))+"</span>":esc(fCorta(p.fecha))) : "")+(p.notas? " · "+esc(p.notas):"")
-        }</div>
-      </div>
-      ${botonChat(p)}
-      <span class="etiqueta ${claseEtapa(p.etapa)}">${esc(p.etapa)}</span>
-    </div>`).join("");
+  pintarDescartados();
 }
+
+function filaPersonaFria(p){
+  const d = diasSinToque(p);
+  return `<div class="prospecto" onclick="abrirFormulario('${p.id}')">
+    <div class="avatar">${esc(iniciales(p.nombre))}</div>
+    <div class="datos">
+      <div class="nom">${esc(p.nombre)}</div>
+      <div class="sub">${esc(p.red)} · <span class="aviso-seg">${d} días sin moverse</span></div>
+    </div>
+    ${botonChat(p)}
+    <span class="etiqueta ${claseEtapa(p.etapa)}">${esc(etiquetaCorta(p.etapa))}</span>
+  </div>`;
+}
+
+/* Los descartados no se borran (alimentan la ley de promedios) pero tampoco
+   estorban: viven plegados al final, fuera de la lista de gente viva. */
+let verDescartados = false;
+function alternarDescartados(){ verDescartados = !verDescartados; pintarDescartados(); }
+function pintarDescartados(){
+  const lista = datos.prospectos.filter(p=>p.etapa==="Descartado");
+  const btn = document.getElementById("btnDescartados");
+  const card = document.getElementById("cardDescartados");
+  // con un filtro puesto la lista ya está acotada: el pliegue solo tiene sentido
+  // sobre el listado completo
+  const mostrar = lista.length && filtroLista==="activos" && filtroEtapa==="Todas" && !filtroTexto;
+  btn.classList.toggle("oculto", !mostrar);
+  card.classList.toggle("oculto", !mostrar || !verDescartados);
+  if(!mostrar) return;
+  btn.textContent = verDescartados
+    ? "Ocultar descartados"
+    : "Ver "+lista.length+" descartado"+(lista.length>1?"s":"");
+  if(verDescartados)
+    document.getElementById("listaDescartados").innerHTML =
+      lista.map(p=>`<div class="prospecto" style="opacity:.55" onclick="abrirFormulario('${p.id}')">
+        <div class="avatar">${esc(iniciales(p.nombre))}</div>
+        <div class="datos"><div class="nom">${esc(p.nombre)}</div>
+          <div class="sub">${esc(p.red)}</div></div>
+        <span class="etiqueta et-Descartado">Descartado</span>
+      </div>`).join("");
+}
+
 document.getElementById("buscador").addEventListener("input",e=>{ filtroTexto=e.target.value.trim().toLowerCase(); pintarProspectos(); });
+document.getElementById("selEtapa").addEventListener("change",e=>{ filtrarEtapa(e.target.value); });
 
 /* ---- Formulario ---- */
 let editandoId=null;
@@ -1624,27 +1931,39 @@ function ultimosDias(n){
   return arr;
 }
 function pintarMetricas(){
-  const dias7 = ultimosDias(7);
-  const nombresDia=["dom","lun","mar","mié","jue","vie","sáb"];
-
-  // KPIs
-  let convSem=0, ventasSem=0, sociosSem=0;
-  dias7.forEach(d=>{ const dia=datos.dias[claveDia(d)]||{};
-    convSem+=dia["conv"]||0; ventasSem+=dia["venta"]||0; sociosSem+=dia["socio"]||0; });
-  const activos = datos.prospectos.filter(p=>p.etapa!=="Descartado"&&p.etapa!=="Cliente"&&p.etapa!=="Socio").length;
-  document.getElementById("kpis").innerHTML = `
-    <div class="kpi"><div class="num">${convSem}</div><div class="txt">Conversaciones · 7 días</div></div>
-    <div class="kpi"><div class="num">${activos}</div><div class="txt">Prospectos en seguimiento</div></div>
-    <div class="kpi"><div class="num" style="color:var(--green)">${ventasSem}</div><div class="txt">Ventas · 7 días</div></div>
-    <div class="kpi"><div class="num" style="color:var(--gold)">${sociosSem}</div><div class="txt">Nuevos socios · 7 días</div></div>`;
-
-  // Gráfica conversaciones (línea)
+  pintarTitular();
   pintarGrafica();
-
   pintarMetaMes();
-  pintarTablaSemana(dias7);
+  pintarTablaSemana(ultimosDias(7));
   pintarEmbudo();
   pintarFuentes();
+}
+
+/* La frase de la ley de promedios, arriba del todo. Es la única cifra de esta
+   pestaña que cambia decisiones: dice cuánta gente tienes que tocar para cerrar
+   uno. Antes vivía enterrada al final del embudo, debajo de cuatro cuadros de
+   siete días que no cuadraban con la meta del mes de al lado. */
+function pintarTitular(){
+  const cont = document.getElementById("titular");
+  const lista = datos.prospectos;
+  if(lista.length < 5){
+    cont.innerHTML = `<div class="magico"><div class="m">`
+      + `Llevas <b>${lista.length}</b> ${lista.length===1?"prospecto":"prospectos"}. `
+      + `Con 5 empiezo a poder decirte cuántos necesitas para cerrar uno.</div></div>`;
+    return;
+  }
+  const { clientes, socios, total: cerradas } = cierresDe(lista);
+  const conInfo  = lista.filter(p=>nivelAlcanzado(p)>=2).length;
+  const xCliente = unoDeCada(lista.length, clientes);
+  const xSocio   = unoDeCada(lista.length, socios);
+  const xInfo    = unoDeCada(conInfo, cerradas);
+  cont.innerHTML = `<div class="magico">
+    ${xCliente? `<div class="m">De cada <b>${xCliente}</b> prospectos nuevos, 1 se hace cliente.</div>`
+              : `<div class="m">Aún no cierras clientes — sigue alimentando el embudo.</div>`}
+    ${xSocio? `<div class="m oro">De cada <b>${xSocio}</b> prospectos nuevos, 1 se hace socio.</div>` : ""}
+    ${xInfo? `<div class="m">De cada <b>${xInfo}</b> a los que les das información, 1 cierra.</div>` : ""}
+  </div>
+  <div class="pie">Sobre tus ${lista.length} prospectos, contando también a los descartados.</div>`;
 }
 
 let rangoGrafica=7;
@@ -1730,20 +2049,10 @@ function pintarEmbudo(){
     </div>`;
   }).join("");
 
-  const { clientes, socios, total: personasCerradas } = cierresDe(lista);
-  const conInfo = lista.filter(p=>nivelAlcanzado(p)>=2).length;
-  const xCliente = unoDeCada(base, clientes);
-  const xSocio   = unoDeCada(base, socios);
-  // personasCerradas, no clientes+socios: quien compró Y se asoció es UNA persona
-  const xInfo    = unoDeCada(conInfo, personasCerradas);
-
-  const magico = `<div class="magico">
-    ${xCliente? `<div class="m">De cada <b>${xCliente}</b> prospectos nuevos, 1 se hace cliente.</div>`
-              : `<div class="m">Aún no cierras clientes — sigue alimentando el embudo.</div>`}
-    ${xSocio? `<div class="m oro">De cada <b>${xSocio}</b> prospectos nuevos, 1 se hace socio.</div>` : ""}
-    ${xInfo? `<div class="m">De cada <b>${xInfo}</b> a los que les das información, 1 cierra.</div>` : ""}
-  </div>`;
-  cont.innerHTML = filas + magico;
+  /* Las frases de "uno de cada cuántos" ya no van aquí: son la portada de la
+     pestaña (ver pintarTitular). Repetirlas al final sería decir dos veces lo
+     mismo con dos pesos distintos. */
+  cont.innerHTML = filas;
 }
 
 function pintarFuentes(){
@@ -1771,15 +2080,25 @@ function pintarFuentes(){
     if(b.cierres===0) return -1;
     return b.pct-a.pct;
   });
-  cont.innerHTML = filas.map(f=>`
+  /* Solo las tres primeras: la pregunta es "dónde invierto mi tiempo", y siete
+     renglones donde cuatro dicen "sin cierres" no la contestan mejor. */
+  const fila = f=>`
     <div class="fuente">
       <div class="fi">
         <div class="fn">${esc(f.red)}</div>
         <div class="fd">${f.n} prospecto${f.n>1?"s":""} · ${f.cierres} cierre${f.cierres===1?"":"s"}</div>
       </div>
       <span class="fr ${f.cierres?"":"nulo"}">${f.cierres? Math.round(f.pct)+"% cierra" : "sin cierres"}</span>
-    </div>`).join("");
+    </div>`;
+  const TOPE = 3;
+  cont.innerHTML = (verTodasFuentes? filas : filas.slice(0,TOPE)).map(fila).join("")
+    + (filas.length>TOPE
+        ? `<button class="plegable" onclick="alternarFuentes()">${verTodasFuentes
+            ? "Ver solo las mejores" : "Ver las "+filas.length+" fuentes"}</button>`
+        : "");
 }
+let verTodasFuentes = false;
+function alternarFuentes(){ verTodasFuentes = !verTodasFuentes; pintarFuentes(); }
 
 /* ---- Meta del mes ---- */
 function sumaMes(idMeta){
@@ -1874,19 +2193,33 @@ function pintarAjustes(){
   const foco = document.activeElement;
   if(foco && (foco.closest("#editorMetas") || foco.id==="mesVentas" || foco.id==="mesSocios")) return;
 
+  /* El nombre en su propio renglón y el objetivo debajo: en una sola fila,
+     "5 historias en todas tus redes sociales" se cortaba a la mitad y no había
+     forma de leer lo que estabas editando. */
   document.getElementById("editorMetas").innerHTML = datos.metas.map((m,i)=>`
     <div class="ajuste-meta">
-      <input type="text" value="${esc(m.nombre)}" data-i="${i}" data-campo="nombre" aria-label="Nombre de la meta">
-      <input type="number" min="0" value="${m.objetivo}" data-i="${i}" data-campo="objetivo" aria-label="Objetivo diario">
-      ${m.id==="conv"
-        ? `<span class="candado" title="Meta principal, no se puede eliminar"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>`
-        : `<button class="btn-x" onclick="quitarMeta(${i})" aria-label="Quitar meta ${esc(m.nombre)}">✕</button>`}
+      <input type="text" value="${esc(m.nombre)}" data-i="${i}" data-campo="nombre" aria-label="Nombre de la actividad">
+      <div class="bajo">
+        <label>Objetivo al día</label>
+        <input type="number" min="0" value="${m.objetivo}" data-i="${i}" data-campo="objetivo" aria-label="Objetivo diario de ${esc(m.nombre)}">
+        ${m.id==="conv"
+          ? `<span class="candado" title="Actividad principal, no se puede eliminar"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>`
+          : `<button class="btn-x" onclick="quitarMeta(${i})" aria-label="Quitar ${esc(m.nombre)}">✕</button>`}
+      </div>
     </div>`).join("");
 
   const mm = datos.metaMes||{ventas:0,socios:0};
   document.getElementById("mesVentas").value = mm.ventas||0;
   document.getElementById("mesSocios").value = mm.socios||0;
 
+  // Resúmenes en las tapas plegadas: se sabe qué hay dentro sin abrir
+  const nPausadas = datos.metas.filter(m=>!(m.objetivo>0)).length;
+  document.getElementById("resumenPlan").textContent =
+    datos.metas.length + (datos.metas.length===1? " actividad" : " actividades")
+    + (nPausadas? " · "+nPausadas+" en pausa" : "");
+  const v = +mm.ventas||0, s = +mm.socios||0;
+  document.getElementById("resumenMes").textContent =
+    (v||s)? v+" ventas · "+s+" socios nuevos" : "Sin meta puesta";
 }
 function guardarMetaMes(){
   datos.metaMes = {
@@ -1995,7 +2328,8 @@ function borrarTodo(){
   localStorage.removeItem(CLAVE);
   datos = cargar();
   if(cuenta) datos._uid = cuenta;
-  filtroEtapa="Todos"; filtroTexto=""; document.getElementById("buscador").value="";
+  filtroEtapa="Todas"; filtroLista="activos"; filtroTexto="";
+  document.getElementById("buscador").value="";
   // Sin esto, la nube conservaba lo viejo y al reabrir lo bajaba de vuelta.
   guardar();
   // permitirVacio: este es el único caso donde vaciar la nube es lo que se quiere
@@ -2007,9 +2341,11 @@ function borrarTodo(){
 /* =================== Inicio =================== */
 function pintarFecha(){
   const f=new Date();
-  document.getElementById("diaNum").textContent = f.getDate();
-  document.getElementById("diaTxt").innerHTML =
-    f.toLocaleDateString("es-MX",{weekday:"long"})+"<br>"+f.toLocaleDateString("es-MX",{month:"long"});
+  // Una sola fecha, en una sola línea: "lunes 14 de septiembre".
+  // sin la coma que mete es-MX ("lunes, 14 de septiembre"): se lee igual y cabe
+  const txt = f.toLocaleDateString("es-MX",{weekday:"long", day:"numeric", month:"long"})
+    .replace(",", "");
+  document.getElementById("fechaHoy").textContent = txt.charAt(0).toUpperCase()+txt.slice(1);
 }
 pintarFecha();
 /* Si al cargar se adoptó un plan nuevo, sellarlo en el día en curso y avisar:
