@@ -208,7 +208,10 @@ main{padding:0 16px}
 .meta .barra{height:3px;background:var(--velo2);border-radius:2px;margin-top:7px;overflow:hidden}
 .meta .barra i{display:block;height:100%;background:var(--verde);border-radius:2px;transition:width .3s ease}
 .meta .conteo{font-size:13px;font-weight:800;color:var(--ink-soft);min-width:46px;text-align:right}
-.meta.lograda{opacity:.5}
+/* Cumplida: tachada y apagada, pero se queda a la vista al final de la lista.
+   .55 y no .5 porque ya no es un estado de paso detrás de un pliegue — se lee
+   el resto del día. */
+.meta.lograda{opacity:.55}
 .meta.lograda .nombre{text-decoration:line-through}
 .meta.pausada .nombre,.meta.pausada .conteo{opacity:.45}
 .meta.pausada .conteo{font-size:11px;text-transform:uppercase;letter-spacing:.5px}
@@ -221,14 +224,11 @@ main{padding:0 16px}
 /* El "−" deja de competir con el "+": es un rescate para cuando te pasaste,
    no una acción de todos los días. */
 .btn-menos{width:30px;height:40px;border-radius:10px;font-size:19px;background:none;color:var(--ink-soft);opacity:.55}
-.meta.lograda .btn-mas{background:var(--velo2);color:var(--ink-soft);box-shadow:none}
-
-/* Pliegue de las actividades ya cumplidas */
-.hechas{display:flex;align-items:center;gap:9px;width:100%;padding:13px 0 2px;
-  border:none;border-top:1px solid var(--line);background:none;font-family:inherit;
-  font-size:13px;font-weight:700;color:var(--ink-soft);cursor:pointer;text-align:left}
-.hechas .tic{color:var(--verde);font-weight:800}
-.hechas .fl{margin-left:auto;opacity:.6}
+/* Ni lo cumplido ni lo pausado piden que les sigas sumando: su "+" se apaga.
+   Al quedarse todo a la vista, el botón verde de una pausada al final de la
+   lista era lo más llamativo de la pantalla. */
+.meta.lograda .btn-mas,
+.meta.pausada .btn-mas{background:var(--velo2);color:var(--ink-soft);box-shadow:none}
 
 /* ---------- Agenda personal ---------- */
 .tarea{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--line)}
@@ -596,12 +596,10 @@ nav button.activa{color:var(--verde)}
         <h2>Actividades de hoy</h2>
         <span class="nota" id="contadorAct"></span>
       </div>
+      <!-- Las cumplidas NO se esconden: se tachan y bajan al final de la lista.
+           Verlas tachadas es parte de la recompensa del día; plegarlas hacía
+           desaparecer la prueba del trabajo hecho. -->
       <div id="listaMetas"></div>
-      <!-- Las cumplidas se pliegan aquí: la lista se acorta conforme avanza el día -->
-      <button class="hechas oculto" id="btnHechas" onclick="alternarHechas()">
-        <span class="tic">✓</span><span id="txtHechas"></span><span class="fl" id="flHechas">›</span>
-      </button>
-      <div id="listaHechas" class="oculto"></div>
     </div>
 
     <!-- El seguimiento se cierra donde se abre: antes esta pantalla anunciaba
@@ -1234,20 +1232,14 @@ function filaMeta(m, v){
   </div>`;
 }
 
-/* Las cumplidas arrancan plegadas y se quedan como el usuario las deje mientras
-   no se salga de la pestaña: repintar (cada toque al "+") no debe cerrárselas. */
-let verHechas = false;
-function alternarHechas(){
-  verHechas = !verHechas;
-  pintarHoy();
-}
-
 function pintarHoy(){
   const dia = diaDe(hoy());
   let logradas=0, sumaPct=0, activas=0;
-  /* Tres montones, no dos: cumplida y pausada se pliegan igual, pero NO son lo
-     mismo y contarlas juntas hacía que un plan entero en pausa se anunciara
-     como "9 ya hechas" con el anillo en 0%. */
+  /* Tres montones que se pintan SEGUIDOS, no plegados: lo que falta arriba, lo
+     cumplido tachado debajo y lo pausado al final. Nada desaparece — ver lo
+     tachado es parte de la recompensa del día. Se separan igual porque cumplida
+     y pausada no son lo mismo: contarlas juntas hacía que un plan entero en
+     pausa se anunciara como "9 ya hechas" con el anillo en 0%. */
   const pendientes=[], hechas=[], pausadas=[];
   datos.metas.forEach(m=>{
     const v = dia[m.id]||0;
@@ -1256,30 +1248,17 @@ function pintarHoy(){
     if(!pausada){ activas++; sumaPct += Math.min(1, v/m.objetivo); if(ok) logradas++; }
     (pausada? pausadas : ok? hechas : pendientes).push(filaMeta(m, v));
   });
-  const plegadas = hechas.concat(pausadas);
-  document.getElementById("listaMetas").innerHTML = pendientes.length
-    ? pendientes.join("")
-    : !datos.metas.length
-        ? `<div class="vacio"><p>Agrega tus actividades en Ajustes.</p></div>`
-        : activas===0
-          // ninguna activa: no hay nada que cerrar, así que no se felicita a nadie
-          ? `<div class="vacio"><div class="big">⏸</div><p>Todas tus actividades están en pausa.<br>Ponles un objetivo en Ajustes para volver a medir tu día.</p></div>`
-          : `<div class="vacio"><div class="big">✅</div><p>Todo hecho por hoy.</p></div>`;
-
-  const btnHechas = document.getElementById("btnHechas");
-  const cajaHechas = document.getElementById("listaHechas");
-  btnHechas.classList.toggle("oculto", !plegadas.length);
-  const partes = [];
-  if(hechas.length)   partes.push(hechas.length + (hechas.length===1? " ya hecha" : " ya hechas"));
-  if(pausadas.length) partes.push(pausadas.length + " en pausa");
-  document.getElementById("txtHechas").textContent = partes.join(" · ");
-  document.getElementById("flHechas").textContent = verHechas? "⌄" : "›";
-  cajaHechas.innerHTML = verHechas? plegadas.join("") : "";
-  cajaHechas.classList.toggle("oculto", !verHechas || !plegadas.length);
+  const todas = pendientes.concat(hechas, pausadas);
+  document.getElementById("listaMetas").innerHTML = todas.length
+    ? todas.join("")
+    : `<div class="vacio"><p>Agrega tus actividades en Ajustes.</p></div>`;
 
   const total = activas;                       // las pausadas no cuentan al día
   const pctDia = total? Math.round(sumaPct/total*100) : 0;
-  document.getElementById("contadorAct").textContent = total? logradas+" de "+total : "";
+  /* Sin actividades activas no hay día que medir: decirlo aquí evita que el
+     anillo en 0% parezca un reproche cuando en realidad no se exige nada. */
+  document.getElementById("contadorAct").textContent =
+    total? logradas+" de "+total : (datos.metas.length? "todas en pausa" : "");
   const circ = 2*Math.PI*31;
   const av = document.getElementById("miniAvance");
   av.style.strokeDasharray = circ;
