@@ -184,6 +184,30 @@ main{padding:0 16px}
   background:var(--grad);color:var(--sobre-verde);font-size:18px;font-weight:800;cursor:pointer;
   box-shadow:0 3px 10px rgba(34,197,94,.28)}
 .trio .tmas:active{transform:scale(.9)}
+/* El "−" junto al "+": los marcadores solo sabían sumar, así que una venta
+   apuntada por error se quedaba ahí para siempre. Va discreto, como el de las
+   actividades: quitar es el rescate, no la acción de todos los días. */
+.trio .tbotones{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:9px}
+.trio .tmas{margin:0}
+.trio .tmenos{width:32px;height:32px;border:none;border-radius:11px;background:var(--velo);
+  color:var(--ink-soft);font-size:17px;font-weight:800;cursor:pointer;font-family:inherit}
+.trio .tmenos:active{transform:scale(.9)}
+
+/* ---------- Ventas del mes: lo vendido y lo ganado ---------- */
+.totales{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px}
+.tot{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:12px 10px;text-align:center}
+.tot .tv{font-size:20px;font-weight:800;letter-spacing:-.6px;line-height:1.15;overflow-wrap:break-word}
+.tot .tv.oro{color:var(--gold)}
+.tot .tl{font-size:11px;font-weight:700;color:var(--ink-soft);margin-top:4px;line-height:1.3}
+.venta{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--line)}
+.venta:last-of-type{border-bottom:none}
+.venta .vf{flex:none;width:52px;font-size:11px;font-weight:800;color:var(--ink-soft);
+  text-transform:uppercase;letter-spacing:.3px}
+.venta .vi{flex:1;min-width:0}
+.venta .vm{font-size:15px;font-weight:700}
+.venta .vg{font-size:12px;font-weight:600;color:var(--gold);margin-top:2px;overflow-wrap:break-word}
+/* La moneda de cada campo, dicha donde se teclea y no en una nota al pie */
+.campo label .moneda{font-weight:800;color:var(--verde);text-transform:none;letter-spacing:0}
 
 /* ---------- Encabezado de tarjeta con acción ---------- */
 .card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
@@ -618,6 +642,13 @@ nav button.activa{color:var(--verde)}
     <h2 class="rotulo-suelto">Resultados del mes</h2>
     <div class="trio" id="trioInicio"></div>
 
+    <!-- Lo vendido y lo ganado. Solo aparece cuando hay ventas en el mes. -->
+    <div class="card oculto" id="cardVentas">
+      <h2 id="tituloVentas">Ventas del mes</h2>
+      <div class="totales" id="totalesVentas"></div>
+      <div id="listaVentas"></div>
+    </div>
+
     <div class="card">
       <h2>Agenda del día</h2>
       <div id="listaAgenda"></div>
@@ -832,6 +863,24 @@ nav button.activa{color:var(--verde)}
   <button class="btn btn-sec" onclick="cerrarDia()">Cerrar</button>
 </div>
 
+<!-- Hoja: nueva venta. Los dos campos son opcionales: si solo quieres que
+     cuente la venta, guardas en blanco y el marcador sube igual. -->
+<div class="hoja" id="hojaVenta">
+  <div class="asa"></div>
+  <h3>Nueva venta</h3>
+  <div class="campo">
+    <label for="vMonto">¿De cuánto fue la venta? <span class="moneda">pesos</span></label>
+    <input id="vMonto" type="number" inputmode="decimal" min="0" step="any" placeholder="Ej. 1200">
+  </div>
+  <div class="campo">
+    <label for="vGanancia">¿Cuánto ganas tú? <span class="moneda">dólares</span></label>
+    <input id="vGanancia" type="number" inputmode="decimal" min="0" step="any" placeholder="Ej. 60">
+    <p class="nota" style="margin-top:7px">Se convierte a pesos a $<span id="tasaTxt"></span> por dólar.</p>
+  </div>
+  <button class="btn btn-pri" onclick="guardarVenta()">Guardar venta</button>
+  <button class="btn btn-sec" onclick="cerrarVenta()">Cancelar</button>
+</div>
+
 <nav>
   <button class="activa" data-tab="hoy" onclick="irA('hoy',this)" aria-label="Hoy">
     <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
@@ -994,6 +1043,12 @@ function normalizar(d){
        venga de donde venga, porque `nubeAplicar` también pasa por aquí. */
   }
   if(!Array.isArray(d.agenda)) d.agenda = [];
+  /* Detalle de cada venta: cuánto se vendió y cuánto se ganó. El CONTEO sigue
+     viviendo donde siempre, en `dias[fecha].venta`, porque de ahí comen la meta
+     del mes, el marcador y el resumen que ve el líder. Esta lista solo le pone
+     dinero a cada una; las ventas registradas antes de que existiera siguen
+     contando, simplemente sin importe. */
+  if(!Array.isArray(d.ventas)) d.ventas = [];
   if(!Array.isArray(d.plantillas)) d.plantillas = PLANTILLAS_INICIALES.map(x=>({...x}));
   if(!d.metaMes) d.metaMes = {ventas:0, socios:0};
   // Prospectos anteriores al historial de etapas: se siembran con su etapa
@@ -1014,7 +1069,7 @@ function cargar(){
   return {
     metas: JSON.parse(JSON.stringify(METAS_INICIALES)),
     planVersion: PLAN_VERSION,
-    dias:{}, prospectos:[], agenda:[],
+    dias:{}, prospectos:[], agenda:[], ventas:[],
     plantillas: PLANTILLAS_INICIALES.map(x=>({...x})),
     metaMes: {ventas:0, socios:0}
   };
@@ -1536,31 +1591,160 @@ function mensajeDelDia({pctDia, logradas, total, conv, racha, hora, veterano}){
 function pintarTrio(){
   const mm = datos.metaMes||{ventas:0,socios:0};
   const v = sumaMes("venta"), s = sumaMes("socio");
-  const bloque = (num, meta, etiqueta, clase, accion, aria)=>{
+  const bloque = (num, meta, etiqueta, clase, id, mas, aria)=>{
     const cumplida = meta>0 && num>=meta;
     return `<div class="t ${cumplida? "verde" : clase}">
       <div class="tn">${num}${meta>0? `<small>/${meta}</small>` : ""}</div>
       <div class="tm">${etiqueta}</div>
-      ${accion? `<button class="tmas" onclick="${accion}" aria-label="${aria}">+</button>` : ""}
+      <div class="tbotones">
+        <button class="tmenos" onclick="bajarResultado('${id}')" aria-label="Quitar ${aria}">−</button>
+        <button class="tmas" onclick="${mas}" aria-label="Registrar ${aria}">+</button>
+      </div>
     </div>`;
   };
   document.getElementById("trioInicio").innerHTML =
     /* Nunca en rojo: son resultados. Pintar de rojo un 0 en ventas el día 2 del
        mes es exactamente el castigo que quisimos quitar de las actividades.
        En cero se quedan neutros; en cuanto hay algo, se celebran. */
-      bloque(v, +mm.ventas||0, "ventas del mes", v>0? "verde":"", "registrarVenta()", "Registrar una venta")
-    + bloque(s, +mm.socios||0, "socios del mes", s>0? "oro":"",  "registrarSocio()", "Registrar un socio nuevo");
+      bloque(v, +mm.ventas||0, "ventas del mes", v>0? "verde":"", "venta", "abrirVenta()", "una venta")
+    + bloque(s, +mm.socios||0, "socios del mes", s>0? "oro":"",  "socio", "registrarSocio()", "un socio nuevo");
+  pintarVentas();
+}
+
+/* ---- Dinero ----
+   La venta se apunta en PESOS y la ganancia en DÓLARES, que es como le pagan.
+   La tasa va fija a propósito: no tiene que teclearla en cada venta ni la app
+   sale a consultar un tipo de cambio que la dejaría sin funcionar sin señal.
+   Para moverla, se cambia este número y ya. */
+const TASA_USD = 17.5;
+function pesos(n){ return "$" + Math.round(n).toLocaleString("es-MX"); }
+function dolares(n){
+  const r = Math.round(n*100)/100;
+  // centavos solo cuando los hay: "$60 USD" se lee mejor que "$60.00 USD",
+  // pero "$252.5" no es una cantidad de dinero — ahí sí van los dos decimales
+  const dec = r % 1 === 0 ? 0 : 2;
+  return "$" + r.toLocaleString("es-MX",
+    {minimumFractionDigits:dec, maximumFractionDigits:dec}) + " USD";
+}
+function ventasDelMes(){
+  const f=new Date(), y=f.getFullYear(), m=f.getMonth()+1;
+  return datos.ventas
+    .filter(x=>{ const [ky,km]=(x.f||"").split("-").map(Number); return ky===y && km===m; })
+    .sort((a,b)=>(a.f||"").localeCompare(b.f||"") || (a.id||"").localeCompare(b.id||""));
 }
 
 /* Registro rápido desde el inicio. Suma al MISMO contador del día que las
    metas, así que no hay dos verdades: lo que se toca aquí se ve allá. */
-function registrarVenta(){
-  contar("venta", 1);
-  avisar("🎉 ¡Venta registrada!", "Deshacer", ()=>contar("venta", -1));
-}
 function registrarSocio(){
   contar("socio", 1);
   avisar("🎉 ¡Nuevo socio!", "Deshacer", ()=>contar("socio", -1));
+}
+
+/* ---- Alta de una venta, con lo que vendiste y lo que ganaste ---- */
+function abrirVenta(){
+  document.getElementById("vMonto").value = "";
+  document.getElementById("vGanancia").value = "";
+  document.getElementById("tasaTxt").textContent = TASA_USD;
+  document.getElementById("velo").classList.add("abierta");
+  document.getElementById("hojaVenta").classList.add("abierta");
+  setTimeout(()=>document.getElementById("vMonto").focus(), 250);
+}
+function cerrarVenta(){
+  document.getElementById("hojaVenta").classList.remove("abierta");
+  document.getElementById("velo").classList.remove("abierta");
+}
+function guardarVenta(){
+  const monto    = Math.max(0, parseFloat(document.getElementById("vMonto").value)||0);
+  const ganancia = Math.max(0, parseFloat(document.getElementById("vGanancia").value)||0);
+  datos.ventas.push({id:"v"+Date.now()+Math.floor(Math.random()*999), f:hoy(), monto, ganancia});
+  cerrarVenta();
+  contar("venta", 1);          // guarda y repinta; el conteo sigue siendo el de siempre
+  avisar(monto||ganancia
+    ? "🎉 ¡Venta registrada! "+pesos(monto)+(ganancia? " · ganas "+dolares(ganancia) : "")
+    : "🎉 ¡Venta registrada!");
+}
+function quitarVenta(id){
+  const i = datos.ventas.findIndex(x=>x.id===id);
+  if(i<0) return;
+  const v = datos.ventas[i];
+  datos.ventas.splice(i,1);
+  /* Se le baja el conteo al día de ESA venta, no al de hoy: si no, quitar una
+     venta de anteayer descuadraba los dos números para siempre. */
+  const dia = datos.dias[v.f];
+  if(dia && dia.venta) dia.venta = Math.max(0, dia.venta-1);
+  guardar(); pintarHoy();
+  avisar("Venta quitada", "Deshacer", ()=>{
+    datos.ventas.push(v);
+    const d = diaDe(v.f); d.venta = (d.venta||0)+1;
+    guardar(); pintarHoy();
+  });
+}
+
+/* El "−" de los marcadores. En ventas quita la última del mes CON su importe;
+   si solo quedan conteos viejos sin detalle, le baja al día más reciente que
+   tenga alguno — nunca al de hoy a ciegas, que dejaría el mes descuadrado. */
+function bajarResultado(id){
+  if(id==="venta"){
+    const mes = ventasDelMes();
+    if(mes.length) return quitarVenta(mes[mes.length-1].id);
+  }
+  const f=new Date(), y=f.getFullYear(), m=f.getMonth()+1;
+  const claves = Object.keys(datos.dias).filter(k=>{
+    const [ky,km] = k.split("-").map(Number);
+    return ky===y && km===m && (datos.dias[k][id]||0)>0;
+  }).sort();
+  if(!claves.length){
+    avisar(id==="venta"? "No hay ventas este mes" : "No hay socios este mes");
+    return;
+  }
+  const k = claves[claves.length-1];
+  datos.dias[k][id] = Math.max(0, datos.dias[k][id]-1);
+  guardar(); pintarHoy();
+  avisar(id==="venta"? "Venta quitada" : "Socio quitado", "Deshacer", ()=>{
+    const d = diaDe(k); d[id] = (d[id]||0)+1;
+    guardar(); pintarHoy();
+  });
+}
+
+/* ---- Lo vendido y lo ganado en el mes ---- */
+function pintarVentas(){
+  const card = document.getElementById("cardVentas");
+  const lista = ventasDelMes();
+  const conteo = sumaMes("venta");
+  // sin ninguna venta este mes no hay nada que totalizar: la tarjeta no aparece
+  card.classList.toggle("oculto", !conteo);
+  if(!conteo) return;
+
+  const totalMonto = lista.reduce((s,v)=>s+(+v.monto||0), 0);
+  const totalGan   = lista.reduce((s,v)=>s+(+v.ganancia||0), 0);
+  const mes = new Date().toLocaleDateString("es-MX",{month:"long"});
+  document.getElementById("tituloVentas").textContent = "Ventas de "+mes;
+  document.getElementById("totalesVentas").innerHTML = `
+    <div class="tot">
+      <div class="tv">${pesos(totalMonto)}</div>
+      <div class="tl">vendido</div>
+    </div>
+    <div class="tot">
+      <div class="tv oro">${dolares(totalGan)}</div>
+      <div class="tl">ganado${totalGan? " · "+pesos(totalGan*TASA_USD)+" MXN" : ""}</div>
+    </div>`;
+
+  /* Las ventas de antes de que existieran los importes se cuentan igual, pero
+     hay que decirlo: si no, el total parecería que se comió unas cuantas. */
+  const sinDetalle = conteo - lista.length;
+  document.getElementById("listaVentas").innerHTML =
+    lista.slice().reverse().map(v=>`
+      <div class="venta">
+        <div class="vf">${esc(fCorta(v.f))}</div>
+        <div class="vi">
+          <div class="vm">${v.monto? pesos(v.monto) : "sin importe"}</div>
+          ${v.ganancia? `<div class="vg">ganas ${dolares(v.ganancia)} · ${pesos(v.ganancia*TASA_USD)}</div>` : ""}
+        </div>
+        <button class="btn-quitar" onclick="quitarVenta('${v.id}')" aria-label="Quitar esta venta">✕</button>
+      </div>`).join("")
+    + (sinDetalle>0
+        ? `<p class="nota" style="margin-top:12px">Y ${sinDetalle} venta${sinDetalle>1?"s":""} más de antes de que se anotaran los importes: cuenta${sinDetalle>1?"n":""} en el marcador, pero no suma${sinDetalle>1?"n":""} al total.</p>`
+        : "");
 }
 
 /* Los ÚLTIMOS 7 días, con hoy al final. Antes iba de lunes a domingo: entre
@@ -1645,7 +1829,7 @@ function cerrarDia(){
   document.getElementById("velo").classList.remove("abierta");
 }
 function cerrarTodo(){
-  cerrarFormulario(); cerrarDia();
+  cerrarFormulario(); cerrarDia(); cerrarVenta();
 }
 
 /* =================== PLANTILLAS =================== */
