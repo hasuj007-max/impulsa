@@ -116,6 +116,17 @@ en `public/index.html` (qué paneles se ven) y `esAdmin()` en `firestore.rules`
   sube al punto que acabas de tocar y el segundo toque le suma a la actividad
   equivocada. Se reacomoda al abrir, al entrar a la pestaña, al cambiar de día,
   al sincronizar y al editar el plan.
+- **El festejo de "Día cerrado" sale solo en el toque que cruza la raya**
+  (`contar()` compara `diaCompleto()` antes y después). Abrir la app con el día
+  ya cerrado o recibir una sincronización NO festeja. Una vez por día y por
+  aparato (`impulsa_festejo` en localStorage, como el tema: no viaja a la nube).
+  `mejorRacha()` solo lee; lo que cuenta como día cerrado sigue siendo
+  `diaCompleto()` (9 de 9). Bajar ese umbral está propuesto pero **lo decide
+  él**, porque cambia la constancia que ve de su equipo.
+- **Tocar el número de una actividad abre una hoja para escribirlo** (+5, +10,
+  "Todas"). Existe porque el plan por defecto suma 145 unidades al día y el "+"
+  va de uno en uno. El campo no se autoenfoca a propósito: el teclado taparía
+  los atajos.
 
 ## Trampas (cada una costó datos o un día de depuración)
 

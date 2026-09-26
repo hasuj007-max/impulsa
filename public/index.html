@@ -232,6 +232,44 @@ main{padding:0 16px}
 .meta .barra{height:3px;background:var(--velo2);border-radius:2px;margin-top:7px;overflow:hidden}
 .meta .barra i{display:block;height:100%;background:var(--verde);border-radius:2px;transition:width .3s ease}
 .meta .conteo{font-size:13px;font-weight:800;color:var(--ink-soft);min-width:46px;text-align:right}
+/* El número se toca para escribirlo: fondo de pastilla para que se lea como
+   botón. Sin él nadie adivina que ahí se puede tocar. */
+.meta button.conteo{border:none;font-family:inherit;cursor:pointer;text-align:center;
+  padding:7px 9px;border-radius:10px;background:var(--velo);color:var(--ink)}
+.meta button.conteo:active{transform:scale(.94)}
+
+/* ---------- Hoja para escribir el conteo ---------- */
+.conteo-grande{font-size:30px!important;font-weight:800;text-align:center;letter-spacing:-.5px}
+.atajos{display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:8px;margin:2px 0 4px}
+.atajos button{padding:12px 6px;border:1px solid var(--line2);border-radius:13px;
+  background:var(--card2);color:var(--ink);font-family:inherit;font-size:15px;font-weight:800;cursor:pointer}
+.atajos button.todas{background:var(--green-soft);color:var(--verde);border-color:transparent}
+.atajos button:active{transform:scale(.96)}
+
+/* ---------- Festejo al cerrar el día ---------- */
+.festejo{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;
+  padding:24px;background:rgba(0,0,0,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.festejo-caja{position:relative;width:100%;max-width:340px;text-align:center;padding:30px 22px 20px;
+  background:var(--card);border:1px solid var(--line2);border-radius:26px;
+  animation:festejo-entra .45s cubic-bezier(.2,1.4,.4,1)}
+.festejo-sello{width:86px;height:86px;margin:0 auto 16px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--grad);color:var(--sobre-verde);box-shadow:var(--sombra);
+  animation:festejo-sello .6s .1s cubic-bezier(.2,1.6,.4,1) both}
+.festejo h2{font-size:26px;font-weight:800;letter-spacing:-.8px;margin-bottom:6px}
+.festejo-racha{font-size:17px;font-weight:800;color:var(--gold)}
+.festejo-txt{font-size:15px;font-weight:600;color:var(--ink-soft);line-height:1.45;margin:10px 0 4px;text-wrap:balance}
+.festejo-pie{font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-bottom:4px}
+.festejo .btn{margin-top:18px}
+.festejo-confeti{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.festejo-confeti i{position:absolute;top:-20px;width:8px;height:14px;border-radius:2px;
+  animation:festejo-cae linear forwards}
+@keyframes festejo-entra{from{opacity:0;transform:scale(.85) translateY(12px)}to{opacity:1;transform:none}}
+@keyframes festejo-sello{from{transform:scale(0)}to{transform:scale(1)}}
+@keyframes festejo-cae{to{top:110%;transform:rotate(540deg)}}
+/* sin movimiento, el confeti no tiene sentido: se va entero en vez de quedarse
+   congelado arriba de la pantalla */
+@media (prefers-reduced-motion:reduce){.festejo-confeti{display:none}}
 /* Cumplida: tachada y apagada, pero se queda a la vista al final de la lista.
    .55 y no .5 porque ya no es un estado de paso detrás de un pliegue — se lee
    el resto del día. */
@@ -869,6 +907,39 @@ nav button.activa{color:var(--verde)}
   <button class="btn btn-sec" onclick="cerrarDia()">Cerrar</button>
 </div>
 
+<!-- Hoja: escribir cuántas llevas de una actividad (se abre tocando el número) -->
+<div class="hoja" id="hojaConteo" role="dialog" aria-labelledby="conteoTitulo">
+  <div class="asa"></div>
+  <h3 id="conteoTitulo"></h3>
+  <p class="nota" id="conteoMeta" style="margin:-4px 0 14px"></p>
+  <div class="campo">
+    <label for="conteoValor">¿Cuántas llevas hoy?</label>
+    <input id="conteoValor" class="conteo-grande" type="number" inputmode="numeric" min="0" step="1">
+  </div>
+  <div class="atajos">
+    <button onclick="atajoConteo(5)">+5</button>
+    <button onclick="atajoConteo(10)">+10</button>
+    <button class="todas" id="btnTodas" onclick="atajoConteo('todas')">Todas</button>
+  </div>
+  <button class="btn btn-pri" onclick="guardarConteo()">Guardar</button>
+  <button class="btn btn-sec" onclick="cerrarConteo()">Cancelar</button>
+</div>
+
+<!-- Festejo al cerrar el día. Capa propia, encima de todo salvo la portada. -->
+<div class="festejo oculto" id="festejo" role="dialog" aria-modal="true" aria-labelledby="festejoTitulo" onclick="if(event.target===this) cerrarFestejo()">
+  <div class="festejo-confeti" id="festejoConfeti" aria-hidden="true"></div>
+  <div class="festejo-caja">
+    <div class="festejo-sello" aria-hidden="true">
+      <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+    </div>
+    <h2 id="festejoTitulo">Día cerrado</h2>
+    <p class="festejo-racha" id="festejoRacha"></p>
+    <p class="festejo-txt" id="festejoTxt"></p>
+    <p class="festejo-pie" id="festejoPie"></p>
+    <button class="btn btn-pri" id="festejoOk" onclick="cerrarFestejo()">¡Vamos!</button>
+  </div>
+</div>
+
 <!-- Hoja: nueva venta. Los dos campos son opcionales: si solo quieres que
      cuente la venta, guardas en blanco y el marcador sube igual. -->
 <div class="hoja" id="hojaVenta">
@@ -1288,8 +1359,15 @@ function acomodarMetas(){   // pendientes arriba, cumplidas, pausadas al final
 function reacomodarMetas(){ ordenMetas = null; }
 
 function contar(idMeta, delta){
-  const dia = diaDe(hoy());
+  const H = hoy();
+  const dia = diaDe(H);
   const antes = dia[idMeta]||0;
+  /* Para festejar hay que saber cómo estaba el día ANTES de este toque: el
+     festejo es por cruzar la raya, no por abrir la app con el día ya cerrado
+     ni por una sincronización que llega de otro aparato. El récord previo solo
+     se calcula cuando este toque puede cerrar el día. */
+  const cerradoAntes = diaCompleto(H);
+  const mejorAntes = (!cerradoAntes && delta>0) ? mejorRacha() : 0;
   dia[idMeta] = Math.max(0, antes+delta);
   guardar();
   pintarHoy();              // repinta en el MISMO orden: nada salta
@@ -1298,10 +1376,132 @@ function contar(idMeta, delta){
   clearTimeout(reacomodoPendiente);
   reacomodoPendiente = setTimeout(()=>{ reacomodarMetas(); pintarHoy(); }, 900);
   if(delta>0){
+    // cerrar el día se lleva el festejo grande y se come el aviso de la última
+    // actividad: dos celebraciones encimadas se sienten como ninguna
+    if(!cerradoAntes && diaCompleto(H)){ festejarDia(mejorAntes); return; }
     const m = datos.metas.find(x=>x.id===idMeta);
     if(m && m.objetivo>0 && antes<m.objetivo && dia[idMeta]>=m.objetivo)
       avisar("🎉 ¡Meta lograda: "+m.nombre+"!");
   }
+}
+
+/* ---- Escribir el número en vez de tocar el "+" veinticinco veces ----
+   El "+" suma de uno en uno y el plan por defecto pide 145 unidades al día:
+   solo "Seguir 50 nuevos en ig" eran 50 toques. Nadie publica en un grupo y
+   corre a apuntarlo; se trabaja en tanda y se registra al final. Tocar el
+   número abre esta hoja para escribir cuántas llevas, o sumar en bloque.
+   Todo pasa por contar(), así que el aviso, el festejo y el orden congelado
+   funcionan igual que con el "+". */
+let conteoAbierto = null;
+function abrirConteo(id){
+  const m = datos.metas.find(x=>x.id===id);
+  if(!m || !(m.objetivo>0)) return;
+  conteoAbierto = id;
+  const v = (datos.dias[hoy()]||{})[id] || 0;
+  document.getElementById("conteoTitulo").textContent = m.nombre;
+  document.getElementById("conteoMeta").textContent = "Tu meta de hoy: "+m.objetivo;
+  document.getElementById("conteoValor").value = v;
+  document.getElementById("btnTodas").textContent = "Todas ("+m.objetivo+")";
+  // sin enfocar el campo a propósito: en el teléfono abriría el teclado y
+  // taparía justo los atajos, que es lo que más se va a usar
+  document.getElementById("velo").classList.add("abierta");
+  document.getElementById("hojaConteo").classList.add("abierta");
+}
+function cerrarConteo(){
+  conteoAbierto = null;
+  document.getElementById("hojaConteo").classList.remove("abierta");
+  document.getElementById("velo").classList.remove("abierta");
+}
+function atajoConteo(cuanto){
+  const campo = document.getElementById("conteoValor");
+  const m = datos.metas.find(x=>x.id===conteoAbierto);
+  if(!m) return;
+  campo.value = cuanto==="todas" ? m.objetivo : (parseInt(campo.value)||0) + cuanto;
+}
+function guardarConteo(){
+  const id = conteoAbierto;
+  if(!id) return;
+  const n = Math.max(0, Math.min(9999, parseInt(document.getElementById("conteoValor").value)||0));
+  const antes = (datos.dias[hoy()]||{})[id] || 0;
+  cerrarConteo();
+  if(n !== antes) contar(id, n - antes);
+}
+document.getElementById("conteoValor").addEventListener("keydown", e=>{ if(e.key==="Enter") guardarConteo(); });
+document.addEventListener("keydown", e=>{
+  if(e.key==="Escape" && !document.getElementById("festejo").classList.contains("oculto")) cerrarFestejo();
+});
+
+/* ---- El festejo de cerrar el día ----
+   Antes, cerrar el día se sentía igual que tachar una actividad: un aviso
+   chiquito abajo y una frase que cambiaba arriba. Es el momento que la app
+   entera existe para producir, así que tiene su propia pantalla. */
+const CLAVE_FESTEJO = "impulsa_festejo";   // del aparato, como el tema: no viaja a la nube
+const HITOS = {
+  3:  "Esto ya no es suerte.",
+  7:  "Una semana entera sin fallar.",
+  14: "Dos semanas. Esto ya es costumbre.",
+  30: "Un mes completo. Muy pocos llegan aquí."
+};
+function festejarDia(mejorAntes){
+  /* Una vez por día. Quien tacha, se arrepiente con el "−" y vuelve a tachar
+     no tiene por qué ver la pantalla grande dos veces. */
+  try{
+    if(localStorage.getItem(CLAVE_FESTEJO) === hoy()){ avisar("✅ Día cerrado"); return; }
+    localStorage.setItem(CLAVE_FESTEJO, hoy());
+  }catch(e){ /* sin almacenamiento se festeja igual */ }
+
+  const racha = calcularRacha();
+  const record = racha >= 2 && racha > mejorAntes;
+  const mejor = Math.max(mejorAntes, racha);
+
+  document.getElementById("festejoRacha").textContent =
+    racha===1 ? "Primer día de tu racha" : "🔥 "+racha+" días seguidos";
+  document.getElementById("festejoTxt").textContent =
+    HITOS[racha] || (record ? "Nuevo récord personal." :
+                     racha===1 ? "Mañana va el segundo." : "Mañana, otra vez.");
+  const pie = document.getElementById("festejoPie");
+  // el récord solo se enseña si hay algo que perseguir: con uno nuevo ya se dijo
+  pie.textContent = (!record && mejor > racha) ? "Tu récord: "+mejor+" días" : "";
+  pie.classList.toggle("oculto", !pie.textContent);
+
+  const lluvia = document.getElementById("festejoConfeti");
+  const colores = ["var(--verde)","var(--gold)","var(--azul)","var(--et-interesado)","var(--et-socio)"];
+  lluvia.innerHTML = Array.from({length:22}, (_,i)=>
+    `<i style="left:${Math.round(Math.random()*100)}%;background:${colores[i%colores.length]};`
+    + `animation-delay:${(Math.random()*0.5).toFixed(2)}s;`
+    + `animation-duration:${(1.6+Math.random()*1.2).toFixed(2)}s;`
+    + `transform:rotate(${Math.round(Math.random()*360)}deg)"></i>`).join("");
+
+  document.getElementById("festejo").classList.remove("oculto");
+  document.getElementById("festejoOk").focus();
+  // la vibración solo con un toque de verdad detrás: sin él Chrome la bloquea
+  // y ensucia la consola. iPhone la ignora; en Android se siente el cierre.
+  const toco = !navigator.userActivation || navigator.userActivation.isActive;
+  if(navigator.vibrate && toco) try{ navigator.vibrate([30,60,30]); }catch(e){}
+}
+function cerrarFestejo(){
+  document.getElementById("festejo").classList.add("oculto");
+  document.getElementById("festejoConfeti").innerHTML = "";
+}
+
+/* La racha más larga de toda la historia. Solo lee: no cambia qué cuenta como
+   día cerrado — eso sigue siendo diaCompleto(), igual que para la racha. */
+function mejorRacha(){
+  let mejor=0, actual=0, ultima=null;
+  Object.keys(datos.dias).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).sort().forEach(k=>{
+    if(!diaCompleto(k)){ actual=0; ultima=null; return; }
+    // seguida solo si el día cerrado anterior fue AYER de calendario: un día
+    // sin abrir la app no aparece en `dias` y también corta la racha
+    actual = (ultima && diaSiguiente(ultima)===k) ? actual+1 : 1;
+    ultima = k;
+    if(actual>mejor) mejor=actual;
+  });
+  return mejor;
+}
+function diaSiguiente(clave){
+  const f = new Date(clave+"T12:00:00");
+  f.setDate(f.getDate()+1);
+  return claveDia(f);
 }
 
 /* Una actividad = un renglón. Se pinta igual esté cumplida o no; lo que cambia
@@ -1320,7 +1520,11 @@ function filaMeta(m, v){
       <div class="nombre">${esc(m.nombre)}</div>
       <div class="barra"><i style="width:${pct*100}%"></i></div>
     </div>
-    <div class="conteo">${pausada? (v? v+" · pausada" : "pausada") : v+"/"+m.objetivo}</div>
+    ${pausada
+      ? `<div class="conteo">${v? v+" · pausada" : "pausada"}</div>`
+      /* el número es un botón: tocarlo abre la hoja para escribir cuántas
+         llevas. Va con fondo de pastilla para que se lea como tocable. */
+      : `<button class="conteo" onclick="abrirConteo('${m.id}')" aria-label="Escribir cuántas llevas de ${esc(m.nombre)}">${v}/${m.objetivo}</button>`}
     ${pausada? "" : `<div class="botones">
       <button class="btn-cnt btn-menos" onclick="contar('${m.id}',-1)" aria-label="Restar 1 a ${esc(m.nombre)}">−</button>
       <button class="btn-cnt btn-mas" onclick="contar('${m.id}',1)" aria-label="Sumar 1 a ${esc(m.nombre)}">+</button>
@@ -1835,7 +2039,7 @@ function cerrarDia(){
   document.getElementById("velo").classList.remove("abierta");
 }
 function cerrarTodo(){
-  cerrarFormulario(); cerrarDia(); cerrarVenta();
+  cerrarFormulario(); cerrarDia(); cerrarVenta(); cerrarConteo();
 }
 
 /* =================== PLANTILLAS =================== */
