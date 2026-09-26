@@ -486,7 +486,13 @@ nav button.activa{color:var(--verde)}
   color:var(--red);font-size:12.5px;font-weight:700;line-height:1.5;max-width:340px}
 #portadaError.ver{display:block}
 /* Paso del código de invitación (solo para cuentas nuevas) */
-.oculto{display:none}
+/* !important porque esto es una utilidad: cuando algo lleva `oculto`, se
+   esconde y punto. Sin él dependía del orden de aparición y perdía contra
+   cualquier selector de ID — que es lo que pasaba justo aquí abajo:
+   `#panelCodigo` le ganaba por especificidad y el campo del código salía
+   SIEMPRE en la portada, junto al botón de Google y a "Usar otra cuenta",
+   aunque la cuenta no necesitara código. */
+.oculto{display:none!important}
 #panelCodigo{display:flex;flex-direction:column;align-items:center;width:100%;max-width:320px}
 #campoCodigo{width:100%;padding:15px;border:1px solid var(--line2);border-radius:14px;background:var(--card2);
   color:var(--ink);font-size:19px;font-weight:800;text-align:center;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:12px}

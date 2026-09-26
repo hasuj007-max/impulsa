@@ -153,19 +153,15 @@ falló.
 después revienta el script entero por temporal dead zone (pantalla en blanco).
 Lo mismo aplica a cualquier `let`/`const` nuevo que se lea desde `normalizar()`.
 
-⚠️ **Cascada CSS: `.oculto{display:none}` es frágil y ya hay una víctima.**
-Como es una sola clase (especificidad 0,1,0), solo le gana a otras clases por
-ir declarada después. Dos formas de romperlo:
-- un componente con `display:` propio declarado **después** de `.oculto`;
-- cualquier selector de **ID** con `display:`, que le gana siempre.
-
-🐛 **Bug vivo en producción:** `#panelCodigo{display:flex}` le gana a `.oculto`,
-así que el panel del código de invitación **nunca se oculta** y la portada
-enseña a la vez "Entrar con Google" y el campo del código con "Usar otra
-cuenta". Comprobado: el elemento lleva la clase `oculto` y su `display`
-calculado sigue siendo `flex`. Arreglo: quitar `display:flex` del selector de ID
-y ponerlo en una clase, o marcar `.oculto{display:none!important}`.
-`#panelEntrar` sí se oculta bien porque no tiene regla de `display` propia.
+⚠️ **Cascada CSS: `.oculto` lleva `!important` y tiene que seguir llevándolo.**
+Es una utilidad: cuando algo lleva esa clase, se esconde y punto. Sin el
+`!important` dependía del orden de aparición y perdía contra cualquier selector
+de ID. Eso ya pasó: `#panelCodigo{display:flex}` le ganaba por especificidad y
+el campo del código de invitación salía SIEMPRE en la portada, junto al botón de
+Google y a "Usar otra cuenta", aunque la cuenta no necesitara código. Estuvo así
+desde que se añadieron los códigos (30-07-2026) hasta el 25-09-2026, y dos
+revisiones de código no lo vieron porque el HTML y el JS eran correctos — el
+fallo estaba solo en la cascada.
 
 ## Publicar un plan de actividades nuevo a TODA la red
 
