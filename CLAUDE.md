@@ -116,13 +116,29 @@ en `public/index.html` (qué paneles se ven) y `esAdmin()` en `firestore.rules`
   sube al punto que acabas de tocar y el segundo toque le suma a la actividad
   equivocada. Se reacomoda al abrir, al entrar a la pestaña, al cambiar de día,
   al sincronizar y al editar el plan.
-- **El festejo de "Día cerrado" sale solo en el toque que cruza la raya**
-  (`contar()` compara `diaCompleto()` antes y después). Abrir la app con el día
-  ya cerrado o recibir una sincronización NO festeja. Una vez por día y por
-  aparato (`impulsa_festejo` en localStorage, como el tema: no viaja a la nube).
-  `mejorRacha()` solo lee; lo que cuenta como día cerrado sigue siendo
-  `diaCompleto()` (9 de 9). Bajar ese umbral está propuesto pero **lo decide
-  él**, porque cambia la constancia que ve de su equipo.
+- **La racha cuenta días con el anillo al 80% o más, con un comodín por
+  semana** (decisión suya, 25-09-2026). Antes exigía el 100% y para casi todos
+  estaba apagada. Las piezas:
+  - `UMBRAL_DIA = 80`; `pctDelDia(clave)` es el % del anillo de cualquier día y
+    **el anillo de Hoy se pinta con esa misma función**: la regla y lo que se
+    ve no pueden divergir. Redondea igual que el anillo (si ves 80%, cuenta).
+  - `diaTrabajado()` = llegó al 80% (cuenta para la racha).
+    `diaCompleto()` = 100%, ahora significa **día perfecto**.
+  - `rachaHasta(fin)` es la ÚNICA implementación de la regla: camina hacia
+    atrás; cada semana de lunes a domingo perdona un día bajo la raya (no suma,
+    no rompe); el día en curso no rompe ni gasta comodín. `calcularRacha()` y
+    `mejorRacha()` salen de ahí, así que el récord nunca queda bajo la racha.
+  - La constancia que se publica al líder mide **lo mismo que la racha** (días
+    al 80%); el comodín NO entra en la constancia. El resumen lleva `umbral`
+    para que el tablero marque a quien aún publica con la regla vieja.
+- **Dos festejos: "Día ganado" (80%) y "Día perfecto" (100%, sello dorado).**
+  Salen solo en el toque que cruza la raya (`contar()` compara antes y
+  después); abrir la app o sincronizar NO festeja. Una vez por día, tipo y
+  aparato (`impulsa_festejo` en localStorage, JSON `{f, t:[…]}`; no viaja a la
+  nube). Si un toque cruza las dos rayas sale el perfecto y marca ambas.
+- **Los mensajes de noche no pueden mentir sobre la racha**: por encima del 80%
+  ya está a salvo, y con el comodín libre un día flojo no la rompe — lo que se
+  pierde es el comodín. Ver el bloque "racha en riesgo" de `mensajeDelDia()`.
 - **Tocar el número de una actividad abre una hoja para escribirlo** (+5, +10,
   "Todas"). Existe porque el plan por defecto suma 145 unidades al día y el "+"
   va de uno en uno. El campo no se autoenfoca a propósito: el teclado taparía

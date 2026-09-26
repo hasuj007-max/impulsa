@@ -102,12 +102,18 @@ main{padding:0 16px}
 .sdia .pt{width:4px;height:4px;border-radius:50%;background:transparent;margin-top:2px}
 .sdia.activo{background:var(--velo2);border-color:var(--line2)}
 .sdia.completo .pt{background:var(--verde)}
-/* Día que se abrió pero no se cerró. Antes solo existía "completo" o nada, así
-   que un día a medias se veía igual que un día en que ni abriste la app.
+/* Día que se abrió pero no llegó al 80%. Antes solo existía "completo" o nada,
+   así que un día a medias se veía igual que un día en que ni abriste la app.
    Ámbar y no rojo a propósito: trabajaste, no fallaste — y una tira de siete
    puntos rojos cada mañana desanima a quien apenas está agarrando el hábito.
    Es el mismo ámbar de la leyenda de las barras en Números. */
 .sdia.flojo .pt{background:var(--gold)}
+/* Día perfecto (100%): el punto verde con un aro alrededor */
+.sdia.perfecto .pt{background:var(--verde);width:5px;height:5px;
+  box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px var(--verde)}
+/* Día que salvó el comodín: aro hueco. Sin marca, la racha que no se rompió
+   parecería un error de la app. */
+.sdia.comodin .pt{background:transparent;box-shadow:inset 0 0 0 1.5px var(--ink-soft);width:6px;height:6px}
 .sdia.fut{opacity:.35;cursor:default}
 
 /* ---------- Bloque de estado del día ----------
@@ -122,6 +128,9 @@ main{padding:0 16px}
 .anillo svg{transform:rotate(-90deg);display:block}
 .anillo .fondo{stroke:var(--velo2)}
 .anillo .avance{stroke-linecap:round;transition:stroke-dashoffset .4s ease}
+/* la marca del 80%: clara sobre la pista gris; al pasarla, se funde en verde */
+.anillo .raya{fill:var(--ink);stroke:var(--card);stroke-width:1.6}
+.anillo .raya.pasada{fill:var(--sobre-verde)}
 .anillo span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   font-size:17px;font-weight:800;letter-spacing:-.5px}
 .estado-txt{flex:1;min-width:0}
@@ -260,6 +269,13 @@ main{padding:0 16px}
 .festejo-racha{font-size:17px;font-weight:800;color:var(--gold)}
 .festejo-txt{font-size:15px;font-weight:600;color:var(--ink-soft);line-height:1.45;margin:10px 0 4px;text-wrap:balance}
 .festejo-pie{font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-bottom:4px}
+/* el siguiente escalón: cuánto falta para el perfecto, o cuántos van en el mes */
+.festejo-extra{font-size:13px;font-weight:800;color:var(--verde);margin-top:12px;padding:9px 12px;
+  border-radius:12px;background:var(--green-soft)}
+/* El día perfecto se distingue del ganado: sello dorado en vez de verde */
+.festejo-caja.perfecta .festejo-sello{background:linear-gradient(135deg,#F6B93F,#FFE08A);
+  color:#3A2600;box-shadow:0 0 30px rgba(246,185,63,.5)}
+.festejo-caja.perfecta .festejo-extra{color:var(--gold);background:var(--gold-soft)}
 .festejo .btn{margin-top:18px}
 .festejo-confeti{position:absolute;inset:0;overflow:hidden;pointer-events:none}
 .festejo-confeti i{position:absolute;top:-20px;width:8px;height:14px;border-radius:2px;
@@ -368,7 +384,10 @@ main{padding:0 16px}
 #grafica{display:flex;align-items:flex-end;gap:6px;height:145px}
 #grafica.densa{gap:2px}
 .cbar{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:5px;justify-content:flex-end;cursor:pointer}
-.cbar .pista{width:100%;max-width:28px;height:100px;background:var(--velo);border-radius:8px;overflow:hidden;display:flex;align-items:flex-end}
+.cbar .pista{width:100%;max-width:28px;height:100px;background:var(--velo);border-radius:8px;overflow:hidden;display:flex;align-items:flex-end;position:relative}
+/* la raya del 80% cruzando todas las barras: el mismo número que decide la racha */
+.cbar .pista::after{content:"";position:absolute;left:0;right:0;bottom:var(--umbral,80%);
+  border-top:1.5px dashed var(--ink-soft);opacity:.55;pointer-events:none}
 #grafica.densa .cbar .pista{border-radius:4px}
 .cbar .pista i{display:block;width:100%;background:var(--velo2)}
 .cbar.rojo    .pista i{background:rgba(255,107,107,.5)}
@@ -647,6 +666,8 @@ nav button.activa{color:var(--verde)}
             </defs>
             <circle class="fondo" cx="37" cy="37" r="31" fill="none" stroke-width="6"/>
             <circle class="avance" id="miniAvance" cx="37" cy="37" r="31" fill="none" stroke="url(#gAro)" stroke-width="6"/>
+            <!-- la raya del 80%: la coloca pintarHoy() desde UMBRAL_DIA -->
+            <circle class="raya" id="aroRaya" cx="37" cy="6" r="2.6"/>
           </svg>
           <span id="miniPct">0</span>
         </div>
@@ -732,16 +753,16 @@ nav button.activa{color:var(--verde)}
 
     <div class="card">
       <div class="card-top">
-        <h2>Metas logradas por día</h2>
+        <h2>Tu anillo, día por día</h2>
         <div class="rango">
           <button class="chip activa" id="r7" onclick="cambiarRango(7)">7 días</button>
           <button class="chip" id="r30" onclick="cambiarRango(30)">30 días</button>
         </div>
       </div>
-      <p class="sub-card">Cada barra es un día y muestra cuántas metas cerraste. Tócala para ver el detalle.</p>
+      <p class="sub-card">Cada barra es cómo cerró tu anillo ese día. De la raya punteada (80%) para arriba, el día contó para tu racha. Tócala para ver el detalle.</p>
       <div class="leyenda">
-        <span><i class="pt-verde"></i>75% o más</span>
-        <span><i class="pt-naranja"></i>50% a 74%</span>
+        <span><i class="pt-verde"></i>80% o más · contó</span>
+        <span><i class="pt-naranja"></i>50% a 79%</span>
         <span><i class="pt-rojo"></i>menos de 50%</span>
       </div>
       <div id="grafica"></div>
@@ -784,7 +805,7 @@ nav button.activa{color:var(--verde)}
 
     <div class="card oculto" id="cardEquipo">
       <h2>Constancia del equipo</h2>
-      <p class="sub-card">Ordenados por constancia: de los últimos 30 días, en cuántos cerraron todas sus actividades. A quien lleva días sin abrir es a quien hay que llamar.</p>
+      <p class="sub-card">Ordenados por constancia: de los últimos 30 días, en cuántos llegaron al 80% del día. A quien lleva días sin abrir es a quien hay que llamar.</p>
       <div id="listaEquipo"></div>
     </div>
 
@@ -932,10 +953,11 @@ nav button.activa{color:var(--verde)}
     <div class="festejo-sello" aria-hidden="true">
       <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
     </div>
-    <h2 id="festejoTitulo">Día cerrado</h2>
+    <h2 id="festejoTitulo">Día ganado</h2>
     <p class="festejo-racha" id="festejoRacha"></p>
     <p class="festejo-txt" id="festejoTxt"></p>
     <p class="festejo-pie" id="festejoPie"></p>
+    <p class="festejo-extra" id="festejoExtra"></p>
     <button class="btn btn-pri" id="festejoOk" onclick="cerrarFestejo()">¡Vamos!</button>
   </div>
 </div>
@@ -1260,10 +1282,80 @@ const IDS_RESULTADO = ["venta", "socio"];
 function metasActivas(clave){
   return metasDelDia(clave).filter(m=>m.objetivo>0 && !IDS_RESULTADO.includes(m.id));
 }
+/* Día PERFECTO: todas las actividades al 100%. Ya no es lo que pide la racha
+   (ver diaTrabajado), pero sigue existiendo con su propia marca y su festejo. */
 function diaCompleto(clave){
   const dia = datos.dias[clave]||{};
   const act = metasActivas(clave);
   return act.length>0 && act.every(m=>(dia[m.id]||0)>=m.objetivo);
+}
+
+/* ---- La racha ----
+   Un día CUENTA si el anillo llega al 80%. Antes la racha exigía el 100% —las
+   9 actividades completas— y para casi todos estaba apagada: un día con 8 de 9
+   valía lo mismo que no abrir la app, volvía a 0, y en 0 ni se mostraba. Lo
+   decidió él el 25-09-2026: la raya en 80% y un comodín por semana. */
+const UMBRAL_DIA = 80;
+/* El % del anillo de cualquier día, con las metas que regían ESE día. Hoy el
+   anillo se pinta con esta misma función, así que la regla y lo que ves en
+   pantalla no pueden decir cosas distintas. Redondeado igual que el anillo: si
+   ves 80%, cuenta. */
+function pctDelDia(clave){
+  const dia = datos.dias[clave] || {};
+  const act = metasActivas(clave);
+  if(!act.length) return 0;
+  const suma = act.reduce((s,m)=>s + Math.min(1, (dia[m.id]||0)/m.objetivo), 0);
+  return Math.round(suma/act.length*100);
+}
+function diaTrabajado(clave){ return !!datos.dias[clave] && pctDelDia(clave) >= UMBRAL_DIA; }
+
+function semanaDe(clave){                  // el lunes de la semana de ese día
+  const f = new Date(clave+"T12:00:00");
+  f.setDate(f.getDate() - ((f.getDay()+6)%7));
+  return claveDia(f);
+}
+/* La racha que termina en `fin`, caminando hacia atrás. Cada semana, de lunes a
+   domingo, perdona UN día bajo la raya: no suma, pero tampoco la tumba — para
+   que fallar un día no lleve al "ya la perdí, qué más da". El último día puede
+   seguir en curso, así que si aún no llega no rompe nada ni gasta el comodín.
+   Devuelve también qué días salvó el comodín, para pintarlos en la tira: un
+   perdón invisible parece un error. */
+function rachaHasta(fin, trabajado = diaTrabajado){
+  let racha = 0;
+  const semanas = new Set(), salvados = [];
+  let enEspera = [];   // comodines que solo cuentan si detrás hay un día trabajado
+  const f = new Date(fin+"T12:00:00");
+  for(let i=0; i<400; i++){
+    const k = claveDia(f);
+    if(trabajado(k)){
+      racha++;
+      salvados.push(...enEspera); enEspera = [];
+    }else if(i>0){
+      const s = semanaDe(k);
+      if(semanas.has(s)) break;             // segundo día flojo de la semana
+      semanas.add(s); enEspera.push(k);
+    }
+    f.setDate(f.getDate()-1);
+  }
+  // lo que quedó en espera es la orilla de la racha: no salvó nada
+  return { racha, salvados };
+}
+/* La racha más larga de la historia, con la MISMA regla que la actual: es el
+   máximo de rachaHasta() sobre todos los días trabajados, así que nunca puede
+   quedar por debajo de la racha que se está viendo. */
+function mejorRacha(){
+  const H = hoy();
+  const trabajados = new Set(Object.keys(datos.dias)
+    .filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k) && k<=H && diaTrabajado(k)));
+  const es = k => trabajados.has(k);
+  let mejor = 0;
+  trabajados.forEach(k=>{ const r = rachaHasta(k, es).racha; if(r>mejor) mejor=r; });
+  return mejor;
+}
+/* ¿Le queda el comodín de esta semana? Si ya salvó un día de esta semana, no. */
+function comodinLibre(){
+  const s = semanaDe(hoy());
+  return !rachaHasta(hoy()).salvados.some(k=>semanaDe(k)===s);
 }
 /* Solo el día en curso sigue el ritmo de los cambios de configuración. */
 function resellarHoy(){
@@ -1366,8 +1458,9 @@ function contar(idMeta, delta){
      festejo es por cruzar la raya, no por abrir la app con el día ya cerrado
      ni por una sincronización que llega de otro aparato. El récord previo solo
      se calcula cuando este toque puede cerrar el día. */
-  const cerradoAntes = diaCompleto(H);
-  const mejorAntes = (!cerradoAntes && delta>0) ? mejorRacha() : 0;
+  const ganadoAntes   = diaTrabajado(H);    // ya contaba para la racha (80%)
+  const perfectoAntes = diaCompleto(H);     // ya estaba al 100%
+  const mejorAntes = (!perfectoAntes && delta>0) ? mejorRacha() : 0;
   dia[idMeta] = Math.max(0, antes+delta);
   guardar();
   pintarHoy();              // repinta en el MISMO orden: nada salta
@@ -1376,9 +1469,16 @@ function contar(idMeta, delta){
   clearTimeout(reacomodoPendiente);
   reacomodoPendiente = setTimeout(()=>{ reacomodarMetas(); pintarHoy(); }, 900);
   if(delta>0){
-    // cerrar el día se lleva el festejo grande y se come el aviso de la última
-    // actividad: dos celebraciones encimadas se sienten como ninguna
-    if(!cerradoAntes && diaCompleto(H)){ festejarDia(mejorAntes); return; }
+    /* Dos rayas: 80% gana el día (cuenta para la racha) y 100% lo hace
+       perfecto. Si un solo toque cruza las dos, sale el perfecto, que ya
+       incluye lo de la racha. El festejo se come el aviso de la última
+       actividad: dos celebraciones encimadas se sienten como ninguna. */
+    const perfectoAhora = !perfectoAntes && diaCompleto(H);
+    const ganadoAhora   = !ganadoAntes && diaTrabajado(H);
+    if(perfectoAhora || ganadoAhora){
+      festejarDia(perfectoAhora ? "perfecto" : "ganado", mejorAntes);
+      return;
+    }
     const m = datos.metas.find(x=>x.id===idMeta);
     if(m && m.objetivo>0 && antes<m.objetivo && dia[idMeta]>=m.objetivo)
       avisar("🎉 ¡Meta lograda: "+m.nombre+"!");
@@ -1442,27 +1542,71 @@ const HITOS = {
   14: "Dos semanas. Esto ya es costumbre.",
   30: "Un mes completo. Muy pocos llegan aquí."
 };
-function festejarDia(mejorAntes){
-  /* Una vez por día. Quien tacha, se arrepiente con el "−" y vuelve a tachar
-     no tiene por qué ver la pantalla grande dos veces. */
+/* Qué festejos ya salieron hoy en este aparato: {f:"YYYY-MM-DD", t:["ganado",…]}.
+   Un valor viejo (de cuando solo había uno) no se puede leer y cuenta como
+   ninguno. */
+function festejosDeHoy(){
   try{
-    if(localStorage.getItem(CLAVE_FESTEJO) === hoy()){ avisar("✅ Día cerrado"); return; }
-    localStorage.setItem(CLAVE_FESTEJO, hoy());
+    const x = JSON.parse(localStorage.getItem(CLAVE_FESTEJO) || "null");
+    return (x && x.f===hoy() && Array.isArray(x.t)) ? x.t : [];
+  }catch(e){ return []; }
+}
+function marcarFestejo(...tipos){
+  try{
+    const t = festejosDeHoy();
+    tipos.forEach(x=>{ if(!t.includes(x)) t.push(x); });
+    localStorage.setItem(CLAVE_FESTEJO, JSON.stringify({f:hoy(), t}));
   }catch(e){ /* sin almacenamiento se festeja igual */ }
+}
+
+/* tipo "ganado": el anillo llegó al 80% y el día ya cuenta para la racha.
+   tipo "perfecto": las actividades completas, todas. */
+function festejarDia(tipo, mejorAntes){
+  /* Una vez por día y por tipo. Quien tacha, se arrepiente con el "−" y vuelve
+     a tachar no tiene por qué ver la pantalla grande dos veces. */
+  const yaSalieron = festejosDeHoy();
+  if(yaSalieron.includes(tipo)){
+    avisar(tipo==="perfecto" ? "✨ Día perfecto" : "✅ Día ganado");
+    return;
+  }
+  // el perfecto incluye al ganado: si llegó de golpe al 100%, no se repite a los 80
+  marcarFestejo(...(tipo==="perfecto" ? ["perfecto","ganado"] : ["ganado"]));
 
   const racha = calcularRacha();
   const record = racha >= 2 && racha > mejorAntes;
   const mejor = Math.max(mejorAntes, racha);
+  const perfecto = tipo === "perfecto";
 
+  document.querySelector(".festejo-caja").classList.toggle("perfecta", perfecto);
+  document.getElementById("festejoTitulo").textContent = perfecto ? "Día perfecto" : "Día ganado";
   document.getElementById("festejoRacha").textContent =
-    racha===1 ? "Primer día de tu racha" : "🔥 "+racha+" días seguidos";
-  document.getElementById("festejoTxt").textContent =
-    HITOS[racha] || (record ? "Nuevo récord personal." :
-                     racha===1 ? "Mañana va el segundo." : "Mañana, otra vez.");
+    racha===1 ? "Primer día de tu racha" : "🔥 "+racha+" días de racha";
+  /* Si el día ya se había ganado antes (80% → 100% después), la frase del
+     hito ya salió en ese festejo: aquí toca hablar del día perfecto. */
+  const yaGanadoAntes = perfecto && yaSalieron.includes("ganado");
+  document.getElementById("festejoTxt").textContent = yaGanadoAntes
+    ? "Todas completas. Así se ve un día perfecto."
+    : (HITOS[racha] || (record ? "Nuevo récord personal." :
+                        racha===1 ? "Mañana va el segundo." : "Mañana, otra vez."));
   const pie = document.getElementById("festejoPie");
   // el récord solo se enseña si hay algo que perseguir: con uno nuevo ya se dijo
   pie.textContent = (!record && mejor > racha) ? "Tu récord: "+mejor+" días" : "";
   pie.classList.toggle("oculto", !pie.textContent);
+
+  /* La línea de abajo empuja al siguiente escalón: con el día ganado, cuánto
+     falta para el perfecto; con el perfecto, cuántos van en el mes. */
+  const extra = document.getElementById("festejoExtra");
+  if(perfecto){
+    const n = diasPerfectosDelMes();
+    extra.textContent = "✨ " + (n===1 ? "Tu primer día perfecto del mes" : n+" días perfectos este mes");
+  }else{
+    const H = hoy(), dia = datos.dias[H] || {};
+    const faltan = metasActivas(H).filter(m=>(dia[m.id]||0) < m.objetivo).length;
+    extra.textContent = faltan
+      ? "Te falta"+(faltan>1?"n ":" ")+faltan+" actividad"+(faltan>1?"es":"")+" para el día perfecto ✨"
+      : "";
+  }
+  extra.classList.toggle("oculto", !extra.textContent);
 
   const lluvia = document.getElementById("festejoConfeti");
   const colores = ["var(--verde)","var(--gold)","var(--azul)","var(--et-interesado)","var(--et-socio)"];
@@ -1483,25 +1627,9 @@ function cerrarFestejo(){
   document.getElementById("festejo").classList.add("oculto");
   document.getElementById("festejoConfeti").innerHTML = "";
 }
-
-/* La racha más larga de toda la historia. Solo lee: no cambia qué cuenta como
-   día cerrado — eso sigue siendo diaCompleto(), igual que para la racha. */
-function mejorRacha(){
-  let mejor=0, actual=0, ultima=null;
-  Object.keys(datos.dias).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).sort().forEach(k=>{
-    if(!diaCompleto(k)){ actual=0; ultima=null; return; }
-    // seguida solo si el día cerrado anterior fue AYER de calendario: un día
-    // sin abrir la app no aparece en `dias` y también corta la racha
-    actual = (ultima && diaSiguiente(ultima)===k) ? actual+1 : 1;
-    ultima = k;
-    if(actual>mejor) mejor=actual;
-  });
-  return mejor;
-}
-function diaSiguiente(clave){
-  const f = new Date(clave+"T12:00:00");
-  f.setDate(f.getDate()+1);
-  return claveDia(f);
+function diasPerfectosDelMes(){
+  const f = new Date(), pref = f.getFullYear()+"-"+String(f.getMonth()+1).padStart(2,"0")+"-";
+  return Object.keys(datos.dias).filter(k=>k.startsWith(pref) && diaCompleto(k)).length;
 }
 
 /* Una actividad = un renglón. Se pinta igual esté cumplida o no; lo que cambia
@@ -1556,7 +1684,8 @@ function pintarHoy(){
     : `<div class="vacio"><p>Agrega tus actividades en Ajustes.</p></div>`;
 
   const total = activas;                       // las pausadas no cuentan al día
-  const pctDia = total? Math.round(sumaPct/total*100) : 0;
+  // la MISMA función que decide la racha: el anillo no puede decir otra cosa
+  const pctDia = pctDelDia(hoy());
   /* Sin actividades activas no hay día que medir: decirlo aquí evita que el
      anillo en 0% parezca un reproche cuando en realidad no se exige nada. */
   document.getElementById("contadorAct").textContent =
@@ -1577,14 +1706,33 @@ function pintarHoy(){
      mensaje puede ser duro sin riesgo de espantar a quien apenas empieza. */
   const diasConRegistro = Object.values(datos.dias).filter(d=>
     tieneRegistro(d)).length;
+  const comodin = comodinLibre();
   document.getElementById("heroTxt").innerHTML =
-    mensajeDelDia({pctDia, logradas, total, conv, racha, hora, veterano: diasConRegistro>=7});
+    mensajeDelDia({pctDia, logradas, total, conv, racha, hora, comodin, veterano: diasConRegistro>=7});
 
-  /* El pie sustituye a los chips sueltos: la misma información, sin cuatro
-     pastillas compitiendo debajo del mensaje. */
+  /* La marca del 80% sobre el anillo: la raya que hay que pasar, a la vista
+     en el mismo lugar donde se ve el avance. Se coloca desde UMBRAL_DIA para
+     que no pueda quedar en otro sitio que la regla. */
+  const ang = UMBRAL_DIA/100 * 2*Math.PI;
+  const raya = document.getElementById("aroRaya");
+  raya.setAttribute("cx", (37 + 31*Math.cos(ang)).toFixed(2));
+  raya.setAttribute("cy", (37 + 31*Math.sin(ang)).toFixed(2));
+  raya.classList.toggle("pasada", pctDia >= UMBRAL_DIA);
+
+  /* El pie dice primero cómo va HOY respecto a la raya —un número que baja
+     mientras trabajas—, luego la racha y el récord a perseguir. El comodín
+     solo sale cuando importa: con racha que cuidar y el día todavía abajo. */
   const pendAgenda = datos.agenda.filter(t=>!t.hecha && t.fecha<=H).length;
   const piezas = [];
-  if(racha) piezas.push("🔥 "+(racha===1? "1 día seguido" : racha+" días seguidos"));
+  if(total){
+    if(pctDia >= 100)             piezas.push("✨ día perfecto");
+    else if(pctDia >= UMBRAL_DIA) piezas.push("✅ día ganado");
+    else                          piezas.push("🎯 "+(UMBRAL_DIA-pctDia)+"% para ganar el día");
+  }
+  if(racha) piezas.push("🔥 "+racha+(racha===1? " día" : " días")+" de racha");
+  const mejor = mejorRacha();
+  if(mejor > racha) piezas.push("récord "+mejor);
+  if(racha && pctDia < UMBRAL_DIA && comodin) piezas.push("🛡 comodín libre");
   if(pendAgenda) piezas.push("📋 "+pendAgenda+" en tu agenda");
   document.getElementById("estadoPie").textContent = piezas.join("  ·  ");
 
@@ -1690,7 +1838,7 @@ function abrirGente(filtro){
    3. Arriba del 40% NUNCA se reprocha. Ni "vas lento", ni "te falta". Se
       reconoce lo hecho y se empuja a cerrar. */
 const UMBRAL_MOTIVA = 40;
-function mensajeDelDia({pctDia, logradas, total, conv, racha, hora, veterano}){
+function mensajeDelDia({pctDia, logradas, total, conv, racha, hora, comodin, veterano}){
   if(total===0)
     return `Configura tus metas en <b class="a">Ajustes</b> para empezar a medir tu día.`;
 
@@ -1700,13 +1848,23 @@ function mensajeDelDia({pctDia, logradas, total, conv, racha, hora, veterano}){
   const m = faltan>1? "metas" : "meta";
   const n = faltan>1? "n" : "";     // falta / faltan, según cuántas queden
 
-  // La racha en riesgo pesa más que cualquier otra cosa: se pierde hoy o no.
-  if(racha>=2 && pctDia<100 && franja==="noche"){
+  /* La racha en riesgo pesa más que cualquier otra cosa. Con la raya en 80% y
+     el comodín semanal hay que decir la verdad exacta: por encima del 80% la
+     racha ya está a salvo, y con el comodín libre un día flojo no la rompe —
+     lo que se pierde es el comodín. Decir "se rompe" cuando no se rompe es la
+     forma más rápida de que dejen de creerle a la app. */
+  const alaRaya = UMBRAL_DIA - pctDia;
+  if(racha>=2 && pctDia<UMBRAL_DIA && franja==="noche"){
+    if(comodin) return elige([
+      `Si hoy no llegas al ${UMBRAL_DIA}%, <b class="o">se te va el comodín</b> de la semana.`,
+      `Te falta <b class="o">${alaRaya}%</b> para no gastar el comodín. Guárdalo para un día que de verdad lo necesites.`,
+      `Tus <b class="o">${racha} días</b> aguantan un día flojo por semana. ¿Lo quieres gastar hoy?`
+    ]);
     return elige([
-      `<b class="o">${racha} días</b> construyendo. Se rompen hoy si no cierras.`,
-      `¿Vas a tirar <b class="o">${racha} días</b> por ${faltan} ${m}?`,
-      `Falta${n} ${faltan} para mantener tus <b class="o">${racha} días</b>. Ve por ${faltan>1?"ellas":"ella"}.`,
-      `<b class="o">${racha} días seguidos</b> y solo ${faltan} ${m} de por medio. Ciérralo.`
+      `<b class="r">${racha} días</b> construyendo. Se rompen hoy si no llegas al ${UMBRAL_DIA}%.`,
+      `¿Vas a tirar <b class="r">${racha} días</b>? Te falta ${alaRaya}% para salvarlos.`,
+      `Ya usaste el comodín de la semana. <b class="r">Hoy sí o sí.</b>`,
+      `<b class="r">${racha} días seguidos</b> y un ${alaRaya}% de por medio. Ve por él.`
     ]);
   }
 
@@ -1721,22 +1879,32 @@ function mensajeDelDia({pctDia, logradas, total, conv, racha, hora, veterano}){
       `Día cerrado al <b class="v">100%</b>. Mañana empiezas otra vez desde arriba.`,
       `<b class="v">Las ${total}</b> hechas. Hoy sí te ganaste el día.`,
       `Completo. Ahora <b class="v">hazlo otra vez mañana</b>.`,
-      `<b class="v">Día perfecto.</b> Uno más y ya es racha.`
+      `<b class="v">Día perfecto.</b> Todas, sin dejar ni una.`
     ]);
   }
 
-  /* ---- Del 75% para arriba: ya casi. Solo empuje para rematar. ---- */
+  /* ---- Pasó la raya (80%) sin llegar al 100: el día ya es suyo. Aquí no se
+     empuja a "cerrar" —ya contó para la racha— sino a ir por el perfecto. ---- */
+  if(pctDia>=UMBRAL_DIA) return elige([
+    `<b class="v">Día ganado.</b> Ya cuenta para tu racha. ¿Vas por el perfecto?`,
+    `Ya pasaste la raya. Falta${n} <b class="v">${faltan}</b> para el día perfecto.`,
+    `<b class="v">${pctDia}%</b>: el día ya es tuyo. Remátalo al 100.`
+  ]);
+
+  /* ---- Del 75% al 79%: a un paso de la raya. Solo empuje para pasarla. ---- */
   if(pctDia>=75) return elige({
     manana: [`<b class="v">${logradas} de ${total}</b> y apenas empieza el día. Vas volando.`,
              `A este paso cierras antes de comer. <b class="v">Sigue.</b>`,
              `<b class="v">${logradas} de ${total}</b> temprano. Así se ve un día ganado.`,
              `Ya hiciste lo difícil. <b class="v">Remátalo.</b>`],
+    // aquí para ganar el día ya no hace falta acabar actividades: basta con
+    // subir ese poquito que falta para la raya, y eso es lo que se dice
     tarde:  [`<b class="v">${logradas} de ${total}</b>. Está a tiro, ciérralo.`,
-             `Falta${n} <b class="v">${faltan}</b>. Nada más. Ve por ${faltan>1?"ellas":"ella"}.`,
-             `Ya casi es tuyo. <b class="v">${faltan} ${m}</b> y listo.`,
+             `Te falta <b class="v">${alaRaya}%</b> para ganar el día. Nada más.`,
+             `Ya casi es tuyo: <b class="v">${alaRaya}%</b> y el día cuenta.`,
              `<b class="v">${logradas} de ${total}</b> y todavía hay tarde. Termínalo.`],
-    noche:  [`Falta${n} <b class="v">${faltan}</b>. No se abandona en la última.`,
-             `<b class="v">${faltan} ${m}</b> entre tú y un día completo. Ve por ${faltan>1?"ellas":"ella"}.`,
+    noche:  [`Te falta <b class="v">${alaRaya}%</b>. No se abandona en la última.`,
+             `Un <b class="v">${alaRaya}%</b> entre tú y un día ganado. Ve por él.`,
              `Llegaste hasta aquí. <b class="v">Ciérralo y duerme tranquilo.</b>`,
              `<b class="v">${logradas} de ${total}</b>. El que remata de noche es el que crece.`]
   }[franja]);
@@ -1964,16 +2132,19 @@ function pintarVentas(){
 function pintarSemana(){
   const letras=["D","L","M","M","J","V","S"];
   const H = hoy();
+  const salvados = new Set(rachaHasta(H).salvados);
   let html="";
   ultimosDias(7).forEach(d=>{
     const clave=claveDia(d);
     const registro = !!datos.dias[clave] && tieneRegistro(datos.dias[clave]);
-    const completo = !!datos.dias[clave] && diaCompleto(clave);
     const esHoy = clave===H;
+    /* Cuatro estados, los mismos que la regla: perfecto (100%), contó para la
+       racha (80%+), lo salvó el comodín, o se abrió sin llegar a la raya. */
     let cls="";
     if(esHoy) cls+=" activo";
-    if(completo) cls+=" completo";
-    else if(registro && !esHoy) cls+=" flojo";   // se abrió pero no se cerró
+    if(diaTrabajado(clave)) cls += diaCompleto(clave) ? " completo perfecto" : " completo";
+    else if(salvados.has(clave)) cls+=" comodin";
+    else if(registro && !esHoy) cls+=" flojo";
     html += `<div class="sdia${cls}" onclick="verDia('${clave}')">
       <span class="l">${esHoy? "HOY" : letras[d.getDay()]}</span>
       <span class="n">${d.getDate()}</span><span class="pt"></span></div>`;
@@ -1981,19 +2152,9 @@ function pintarSemana(){
   document.getElementById("tiraSemana").innerHTML = html;
 }
 
-function calcularRacha(){
-  // Días consecutivos (incluyendo hoy si aplica) con TODAS las metas logradas
-  let racha=0; const f=new Date();
-  for(let i=0;i<365;i++){
-    const clave = claveDia(f);
-    // solo cuentan días con registro: no abrir la app no es "día cumplido"
-    const completo = !!datos.dias[clave] && diaCompleto(clave);
-    if(completo){ racha++; }
-    else{ if(i===0){ f.setDate(f.getDate()-1); continue; } break; } // hoy incompleto no rompe la racha de ayer
-    f.setDate(f.getDate()-1);
-  }
-  return racha;
-}
+/* Días trabajados (80% o más) hasta hoy, con el comodín semanal. La regla vive
+   en rachaHasta(); esto es solo "la de hoy". */
+function calcularRacha(){ return rachaHasta(hoy()).racha; }
 
 function verDia(clave){
   const dia = datos.dias[clave]||{};
@@ -2027,9 +2188,25 @@ function verDia(clave){
   }else{
     aviso = `<div class="cerrado">${ICONO_RELOJ}<span>Día en curso. Sigue contando hasta la medianoche.</span></div>`;
   }
+  /* Qué fue ese día para la racha, dicho con la misma regla que la tira:
+     perfecto, contó, lo salvó el comodín, o no llegó a la raya. */
+  let estado = "";
+  if(hayRegistro){
+    const pct = pctDelDia(clave);
+    estado = diaCompleto(clave)        ? `✨ Día perfecto (${pct}%).`
+           : diaTrabajado(clave)       ? `✅ Contó para tu racha (${pct}%).`
+           : rachaHasta(hoy()).salvados.includes(clave)
+                                        ? `🛡 No llegó al ${UMBRAL_DIA}% (${pct}%), pero lo salvó el comodín de esa semana.`
+           : clave===hoy()              ? `Vas en ${pct}%. Desde el ${UMBRAL_DIA}% el día cuenta para tu racha.`
+           :                              `No llegó al ${UMBRAL_DIA}% (${pct}%): no contó para la racha.`;
+  }
+  // un día sin abrir la app también puede haberlo salvado el comodín
+  const salvadoSinAbrir = !hayRegistro && rachaHasta(hoy()).salvados.includes(clave);
   const pie = hayRegistro
-    ? `<p class="nota">Metas logradas ese día: ${logradas}/${nActivas}</p>`
-    : `<p class="nota">Este día no cuenta para tu racha ni para tus promedios.</p>`;
+    ? `<p class="nota">${estado}<br>Actividades completas ese día: ${logradas}/${nActivas}</p>`
+    : salvadoSinAbrir
+      ? `<p class="nota">🛡 No abriste la app ese día, pero el comodín de esa semana salvó tu racha.</p>`
+      : `<p class="nota">Este día no cuenta para tu racha ni para tus promedios.</p>`;
   document.getElementById("diaDetalle").innerHTML = aviso + html + pie;
   document.getElementById("velo").classList.add("abierta");
   document.getElementById("hojaDia").classList.add("abierta");
@@ -2445,19 +2622,9 @@ function cambiarRango(n){
   document.getElementById("r30").classList.toggle("activa", n===30);
   pintarGrafica();
 }
-/* Cuenta metas cerradas ese día contra las metas que regían ESE día — no
-   promedia porcentajes: una meta cuenta solo si se alcanzó el objetivo completo. */
-function resumenDia(clave){
-  const dia = datos.dias[clave];
-  const metas = metasActivas(clave);          // las pausadas no entran al conteo
-  const total = metas.length;
-  const logradas = metas.filter(m=>((dia && dia[m.id])||0)>=m.objetivo).length;
-  return { logradas, total, pct: total? logradas/total*100 : 0, usado: !!dia };
-}
 function colorBarra(pct){
-  if(pct>=100) return "full";
-  if(pct>=75)  return "verde";
-  if(pct>=50)  return "naranja";
+  if(pct>=UMBRAL_DIA) return "verde";   // contó para la racha
+  if(pct>=50)         return "naranja";
   return "rojo";
 }
 function pintarGrafica(){
@@ -2466,15 +2633,20 @@ function pintarGrafica(){
   const denso = rangoGrafica>7;
   const cont = document.getElementById("grafica");
   cont.classList.toggle("densa", denso);
+  /* Cada barra es el ANILLO de ese día (pctDelDia), no el conteo de
+     actividades completas: si midiera otra cosa que la regla, un día que sí
+     contó para la racha podía salir en naranja. La raya punteada es el 80%. */
+  cont.style.setProperty("--umbral", UMBRAL_DIA+"%");
   cont.innerHTML = dias.map((d,i)=>{
     const clave = claveDia(d);
-    const { logradas, total, pct, usado } = resumenDia(clave);
+    const usado = !!datos.dias[clave];
+    const pct = usado ? pctDelDia(clave) : 0;
     // Días en los que nunca abriste la app quedan en gris, no en rojo
-    const color = usado? colorBarra(pct) : "";
+    const color = !usado ? "" : diaCompleto(clave) ? "full" : colorBarra(pct);
     const esHoy = clave===hoy();
     const etq = denso? ((i%5===0 || i===dias.length-1)? d.getDate() : "") : nombresDia[d.getDay()];
     return `<div class="cbar ${color} ${esHoy?"hoy":""}" onclick="verDia('${clave}')">
-      <span class="v">${usado? logradas+"/"+total : ""}</span>
+      <span class="v">${usado? pct+"%" : ""}</span>
       <div class="pista"><i style="height:${Math.max(pct,2)}%"></i></div>
       <span class="d">${etq}</span>
     </div>`;
@@ -2624,7 +2796,7 @@ function pintarMetaMes(){
    el trabajo del mes. */
 function calcularConstancia(){
   const dias = 30;
-  let activos = 0, completos = 0, conv = 0;
+  let activos = 0, trabajados = 0, perfectos = 0, conv = 0;
   let ultima = "";
   const f = new Date();
   for(let i=0; i<dias; i++){
@@ -2636,7 +2808,8 @@ function calcularConstancia(){
         activos++;
         if(clave > ultima) ultima = clave;
       }
-      if(diaCompleto(clave)) completos++;
+      if(diaTrabajado(clave)) trabajados++;
+      if(diaCompleto(clave)) perfectos++;
       conv += d["conv"] || 0;
     }
     f.setDate(f.getDate()-1);
@@ -2644,9 +2817,15 @@ function calcularConstancia(){
   return {
     racha: calcularRacha(),
     diasActivos: activos,
-    diasCompletos: completos,
-    // La constancia de verdad: de los últimos 30 días, en cuántos cerró todo.
-    constancia: Math.round(completos / dias * 100),
+    /* La constancia mide lo MISMO que la racha: días que llegaron al 80%. Si
+       siguiera midiendo el 100%, el líder vería "10%" de alguien con racha de
+       12 y no sabría a cuál creerle. El comodín NO entra aquí: salva la
+       racha, pero un día flojo sigue sin ser un día trabajado. */
+    diasTrabajados: trabajados,
+    diasPerfectos: perfectos,
+    diasCompletos: perfectos,     // nombre de antes, por si lo lee un tablero viejo
+    umbral: UMBRAL_DIA,           // con esto el tablero distingue la regla nueva de la vieja
+    constancia: Math.round(trabajados / dias * 100),
     conversaciones: conv,
     ventasMes: sumaMes("venta"),
     sociosMes: sumaMes("socio"),
@@ -3153,11 +3332,18 @@ function escucharEquipo(){
           : d===0 ? "activo hoy" : d===1 ? "activo ayer" : `sin abrir hace ${d} días`;
         const c = g.constancia||0;
         const clase = c>=50? "v" : c>=25? "o" : "r";
+        /* Quien no ha abierto la versión nueva sigue publicando la constancia
+           con la regla vieja (100%), que sale mucho más baja. Se marca para
+           no confundir "no ha actualizado" con "no está trabajando". Se arregla
+           solo en cuanto abre la app. */
+        const vieja = g.umbral === undefined;
+        const perfectos = g.diasPerfectos ?? g.diasCompletos ?? 0;
         return `<div class="eqf ${dormido?"alerta":""}">
           <div class="eqpos">${i+1}</div>
           <div class="eqi">
             <div class="eqn">${esc(g.nombre || g.correo || "—")}</div>
-            <div class="eqd ${dormido?"mal":""}">${esc(cuando)} · racha ${g.racha||0} · ${g.diasActivos||0}/30 días</div>
+            <div class="eqd ${dormido?"mal":""}">${esc(cuando)} · racha ${g.racha||0} · ${g.diasActivos||0}/30 días${vieja? "" : " · "+perfectos+" perfecto"+(perfectos===1?"":"s")}</div>
+            ${vieja? `<div class="eqd">⚠︎ Con la app sin actualizar: su % aún mide días al 100%</div>` : ""}
             <div class="eqd">${g.conversaciones||0} conversaciones · ${g.ventasMes||0} venta${g.ventasMes===1?"":"s"} · ${g.sociosMes||0} socio${g.sociosMes===1?"":"s"} este mes</div>
           </div>
           <div class="eqc ${clase}">${c}%</div>
