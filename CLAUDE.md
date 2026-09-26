@@ -111,11 +111,21 @@ en `public/index.html` (qué paneles se ven) y `esAdmin()` en `firestore.rules`
   por decisión suya (no consultar un tipo de cambio en vivo: la app tiene que
   funcionar sin señal). El CONTEO de ventas sigue en `dias[fecha].venta`;
   `datos.ventas` solo le pone dinero encima.
-- **El orden de las actividades se congela mientras cuentas** (`ordenMetas`):
-  si la lista se reacomoda en el mismo toque que completó una, la fila de abajo
-  sube al punto que acabas de tocar y el segundo toque le suma a la actividad
-  equivocada. Se reacomoda al abrir, al entrar a la pestaña, al cambiar de día,
-  al sincronizar y al editar el plan.
+- ☠️ **Regla de oro de la pantalla Hoy: mientras alguien cuenta, NADA puede
+  mover la lista de actividades.** Si algo encima de ella cambia de alto, o una
+  fila cambia de tamaño o de sitio, la fila de abajo sube al punto que acaban
+  de tocar y el siguiente toque le suma a la actividad equivocada — y ese número
+  se guarda y se sincroniza. Pasó dos veces. Lo que lo sostiene:
+  - `ordenMetas` congela el orden; la lista se reacomoda 900 ms después del
+    último toque (y al abrir, entrar a la pestaña, cambiar de día, sincronizar o
+    editar el plan).
+  - `pintarHoy({vivo:true})` —lo que usa `contar()`— NO toca el mensaje ni el
+    pie, que están encima de la lista y cambian de renglones (medido: el primer
+    toque del día la subía 23 px). Se ponen al día al asentarse.
+  - El "empujón" (la actividad más cerca de tacharse) es una etiqueta con
+    `position:absolute` y un tinte con `box-shadow`: no ocupan espacio.
+  **Cualquier cosa nueva en Hoy tiene que respetar esto.** Medirlo: contar de 0
+  a 79% con `contar()` y comprobar que `#listaMetas` no cambia de `top`.
 - **La racha cuenta días con el anillo al 80% o más, con un comodín por
   semana** (decisión suya, 25-09-2026). Antes exigía el 100% y para casi todos
   estaba apagada. Las piezas:
@@ -139,6 +149,10 @@ en `public/index.html` (qué paneles se ven) y `esAdmin()` en `firestore.rules`
 - **Los mensajes de noche no pueden mentir sobre la racha**: por encima del 80%
   ya está a salvo, y con el comodín libre un día flojo no la rompe — lo que se
   pierde es el comodín. Ver el bloque "racha en riesgo" de `mensajeDelDia()`.
+- **La guía de primera vez** (3 pantallas) sale una vez por aparato
+  (`impulsa_guia` en localStorage). **Si cambia cómo funciona algo que la guía
+  explica, subir `GUIA_VERSION`** y la vuelve a ver toda la red. Se reabre
+  desde Ajustes.
 - **Tocar el número de una actividad abre una hoja para escribirlo** (+5, +10,
   "Todas"). Existe porque el plan por defecto suma 145 unidades al día y el "+"
   va de uno en uno. El campo no se autoenfoca a propósito: el teclado taparía

@@ -227,7 +227,15 @@ main{padding:0 16px}
    nombre: lo que importa es el nombre y el botón, no la barra. Las cumplidas se
    pliegan al final (ver pintarHoy), así la lista se acorta conforme avanza el
    día en vez de crecer. */
-.meta{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.meta{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);position:relative}
+/* La más cerca de tacharse: tinte verde que se extiende con box-shadow (no con
+   margen ni relleno) y etiqueta flotante. Ninguno de los dos cambia el tamaño
+   de la fila: si el resaltado salta de una fila a otra, nada se mueve. */
+.meta.cerca{background:var(--green-soft);box-shadow:0 0 0 8px var(--green-soft);
+  border-radius:4px;border-bottom-color:transparent}
+.meta .empujon{position:absolute;top:-7px;right:0;z-index:1;pointer-events:none;
+  font-size:10.5px;font-weight:800;line-height:1;white-space:nowrap;
+  padding:4px 9px;border-radius:999px;background:var(--verde);color:var(--sobre-verde)}
 .meta:last-child{border-bottom:none}
 .meta .info{flex:1;min-width:0}
 /* line-clamp en vez de una sola línea con puntos suspensivos: un nombre largo
@@ -283,6 +291,42 @@ main{padding:0 16px}
 @keyframes festejo-entra{from{opacity:0;transform:scale(.85) translateY(12px)}to{opacity:1;transform:none}}
 @keyframes festejo-sello{from{transform:scale(0)}to{transform:scale(1)}}
 @keyframes festejo-cae{to{top:110%;transform:rotate(540deg)}}
+/* ---------- Guía de primera vez ---------- */
+.guia{position:fixed;inset:0;z-index:85;display:flex;align-items:center;justify-content:center;
+  padding:24px;background:rgba(0,0,0,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.guia-caja{width:100%;max-width:340px;text-align:center;padding:26px 22px 14px;
+  background:var(--card);border:1px solid var(--line2);border-radius:26px;
+  animation:festejo-entra .35s ease}
+.guia-ilus{min-height:128px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:6px;margin-bottom:14px;position:relative}
+.guia-num{position:absolute;top:50%;left:50%;transform:translate(-50%,-68%);font-size:20px;font-weight:800;letter-spacing:-.5px}
+.guia h2{font-size:22px;font-weight:800;letter-spacing:-.6px;margin-bottom:8px}
+/* cuatro renglones reservados: con textos de distinto largo la tarjeta
+   cambiaría de alto entre pantallas y el botón de avanzar se movería */
+.guia-txt{font-size:14.5px;line-height:1.5;color:var(--ink-soft);text-wrap:pretty;min-height:6em}
+.guia-puntos{display:flex;justify-content:center;gap:6px;margin:16px 0 2px}
+.guia-puntos i{width:7px;height:7px;border-radius:50%;background:var(--velo2)}
+.guia-puntos i.on{background:var(--verde);width:18px;border-radius:4px}
+.guia .btn{margin-top:14px}
+.guia-saltar{display:block;width:100%;margin-top:6px;padding:10px;border:none;background:none;
+  font-family:inherit;font-size:13px;font-weight:700;color:var(--ink-soft);cursor:pointer}
+/* la fila de muestra imita una actividad real, con la pastilla del número */
+.guia-fila{display:flex;align-items:center;gap:8px;width:100%;padding:12px;border-radius:14px;background:var(--card2);border:1px solid var(--line)}
+.guia-fila .gf-nombre{flex:1;text-align:left;font-size:13.5px;font-weight:700}
+.guia-fila .gf-pastilla{padding:7px 9px;border-radius:10px;background:var(--velo);font-size:13px;font-weight:800;
+  box-shadow:0 0 0 2px var(--verde)}
+.guia-fila .gf-mas{width:34px;height:34px;border-radius:11px;background:var(--grad);color:var(--sobre-verde);
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px}
+.guia-dedo{align-self:flex-end;margin-right:44px;font-size:12px;font-weight:800;color:var(--verde)}
+/* la leyenda usa los mismos puntos que la tira semanal de Hoy */
+.guia-leyenda{display:grid;grid-template-columns:1fr 1fr;gap:12px 18px;padding:14px 18px;border-radius:14px;
+  background:var(--card2);border:1px solid var(--line);font-size:13.5px;font-weight:700;text-align:left}
+.guia-leyenda span{display:flex;align-items:center;gap:9px}
+.guia-leyenda i{width:6px;height:6px;border-radius:50%;flex:none}
+.gl-verde{background:var(--verde)}
+.gl-perfecto{background:var(--verde);box-shadow:0 0 0 2px var(--card2),0 0 0 3.5px var(--verde)}
+.gl-comodin{background:transparent;box-shadow:inset 0 0 0 1.5px var(--ink-soft);width:7px!important;height:7px!important}
+.gl-flojo{background:var(--gold)}
 /* sin movimiento, el confeti no tiene sentido: se va entero en vez de quedarse
    congelado arriba de la pantalla */
 @media (prefers-reduced-motion:reduce){.festejo-confeti{display:none}}
@@ -883,6 +927,8 @@ nav button.activa{color:var(--verde)}
         <button class="btn btn-peligro" onclick="borrarTodo()">Borrar todos los datos</button>
       </div>
     </details>
+
+    <button class="btn btn-sec" onclick="abrirGuia()">¿Cómo funciona? Ver la guía</button>
   </section>
 </main>
 
@@ -959,6 +1005,18 @@ nav button.activa{color:var(--verde)}
     <p class="festejo-pie" id="festejoPie"></p>
     <p class="festejo-extra" id="festejoExtra"></p>
     <button class="btn btn-pri" id="festejoOk" onclick="cerrarFestejo()">¡Vamos!</button>
+  </div>
+</div>
+
+<!-- Guía: tres pantallas la primera vez (y a mano desde Ajustes) -->
+<div class="guia oculto" id="guia" role="dialog" aria-modal="true" aria-labelledby="guiaTitulo">
+  <div class="guia-caja">
+    <div class="guia-ilus" id="guiaIlus" aria-hidden="true"></div>
+    <h2 id="guiaTitulo"></h2>
+    <p class="guia-txt" id="guiaTxt"></p>
+    <div class="guia-puntos" id="guiaPuntos" aria-hidden="true"></div>
+    <button class="btn btn-pri" id="guiaSig" onclick="guiaSiguiente()">Siguiente</button>
+    <button class="guia-saltar" id="guiaSaltar" onclick="cerrarGuia()">Saltar</button>
   </div>
 </div>
 
@@ -1463,7 +1521,7 @@ function contar(idMeta, delta){
   const mejorAntes = (!perfectoAntes && delta>0) ? mejorRacha() : 0;
   dia[idMeta] = Math.max(0, antes+delta);
   guardar();
-  pintarHoy();              // repinta en el MISMO orden: nada salta
+  pintarHoy({vivo:true});   // repinta en el MISMO orden y sin tocar el mensaje: nada salta
   /* ...y la lista se asienta cuando dejas de tocar. Cada toque reinicia la
      espera, así que contando rápido no se mueve nada. */
   clearTimeout(reacomodoPendiente);
@@ -1627,6 +1685,76 @@ function cerrarFestejo(){
   document.getElementById("festejo").classList.add("oculto");
   document.getElementById("festejoConfeti").innerHTML = "";
 }
+/* ---- La guía ----
+   Tres pantallas: el anillo y la raya del 80%, registrar de un jalón tocando
+   el número, y la racha con su comodín. Sale una vez por aparato; al subir
+   GUIA_VERSION la vuelve a ver todo el mundo, que es lo que hay que hacer
+   cuando cambia cómo funciona algo. Desde Ajustes se puede volver a abrir. */
+const GUIA_VERSION = "1";
+const CLAVE_GUIA = "impulsa_guia";
+const PASOS_GUIA = [
+  { titulo: "Tu anillo",
+    texto: "Cada actividad que haces llena tu anillo. Cuando llega a la marquita del 80%, ganas el día y tu racha crece. Si llegas al 100%, es un día perfecto.",
+    ilus: () => `<svg width="110" height="110" viewBox="0 0 74 74" style="transform:rotate(-90deg)">
+        <circle cx="37" cy="37" r="31" fill="none" stroke="var(--velo2)" stroke-width="6"/>
+        <circle cx="37" cy="37" r="31" fill="none" stroke="var(--verde)" stroke-width="6" stroke-linecap="round"
+                stroke-dasharray="${(2*Math.PI*31).toFixed(1)}" stroke-dashoffset="${(2*Math.PI*31*(1-UMBRAL_DIA/100)).toFixed(1)}"/>
+        <circle cx="${(37+31*Math.cos(UMBRAL_DIA/100*2*Math.PI)).toFixed(2)}" cy="${(37+31*Math.sin(UMBRAL_DIA/100*2*Math.PI)).toFixed(2)}"
+                r="3.2" fill="var(--ink)" stroke="var(--card)" stroke-width="1.6"/>
+      </svg><div class="guia-num">${UMBRAL_DIA}%</div>` },
+  { titulo: "Regístralo de un jalón",
+    texto: "Toca el número de una actividad para escribir cuántas hiciste, o usa +5, +10 y Todas. El + de al lado suma de una en una.",
+    ilus: () => `<div class="guia-fila">
+        <span class="gf-nombre">Seguir 50 nuevos en ig</span>
+        <span class="gf-pastilla">20/50</span>
+        <span class="gf-mas">+</span>
+      </div><div class="guia-dedo">☝︎ toca aquí</div>` },
+  { titulo: "Tu racha y el comodín",
+    texto: "Cada semana tienes un comodín: un día flojo no rompe tu racha. Arriba, en tu semana, cada punto te dice cómo te fue.",
+    ilus: () => `<div class="guia-leyenda">
+        <span><i class="gl-verde"></i>contó</span>
+        <span><i class="gl-perfecto"></i>perfecto</span>
+        <span><i class="gl-comodin"></i>comodín</span>
+        <span><i class="gl-flojo"></i>no llegó</span>
+      </div>` }
+];
+let pasoGuia = 0;
+function mostrarGuiaSiToca(){
+  try{ if(localStorage.getItem(CLAVE_GUIA) === GUIA_VERSION) return; }catch(e){ return; }
+  abrirGuia();
+}
+function abrirGuia(){
+  pasoGuia = 0;
+  pintarGuia();
+  document.getElementById("guia").classList.remove("oculto");
+  document.getElementById("guiaSig").focus();
+}
+function pintarGuia(){
+  const p = PASOS_GUIA[pasoGuia], ultimo = pasoGuia === PASOS_GUIA.length-1;
+  document.getElementById("guiaIlus").innerHTML = p.ilus();
+  document.getElementById("guiaTitulo").textContent = p.titulo;
+  document.getElementById("guiaTxt").textContent = p.texto;
+  document.getElementById("guiaPuntos").innerHTML =
+    PASOS_GUIA.map((_,i)=>`<i class="${i===pasoGuia?"on":""}"></i>`).join("");
+  document.getElementById("guiaSig").textContent = ultimo ? "Empezar" : "Siguiente";
+  /* visibility y no display: "Saltar" deja su hueco en la última pantalla. Si
+     desapareciera, la tarjeta se encogería y el botón de avanzar se movería
+     justo debajo del dedo de quien va tocando "Siguiente". */
+  document.getElementById("guiaSaltar").style.visibility = ultimo ? "hidden" : "visible";
+}
+function guiaSiguiente(){
+  if(pasoGuia < PASOS_GUIA.length-1){ pasoGuia++; pintarGuia(); }
+  else cerrarGuia();
+}
+function cerrarGuia(){
+  document.getElementById("guia").classList.add("oculto");
+  // "Saltar" también cuenta como vista: quien la salta ya decidió no verla
+  try{ localStorage.setItem(CLAVE_GUIA, GUIA_VERSION); }catch(e){}
+}
+document.addEventListener("keydown", e=>{
+  if(e.key==="Escape" && !document.getElementById("guia").classList.contains("oculto")) cerrarGuia();
+});
+
 function diasPerfectosDelMes(){
   const f = new Date(), pref = f.getFullYear()+"-"+String(f.getMonth()+1).padStart(2,"0")+"-";
   return Object.keys(datos.dias).filter(k=>k.startsWith(pref) && diaCompleto(k)).length;
@@ -1634,7 +1762,33 @@ function diasPerfectosDelMes(){
 
 /* Una actividad = un renglón. Se pinta igual esté cumplida o no; lo que cambia
    es dónde queda en el orden (ver acomodarMetas). */
-function filaMeta(m, v){
+/* ---- El empujón: la actividad más cerca de tacharse ----
+   La gente acelera cuando ve la meta cerca. Se resalta la pendiente con más
+   avance (desde la mitad para arriba); si ninguna va a la mitad, una de las
+   que se tachan de un toque (objetivo 1) — empezar por lo fácil también es
+   empezar. Y si con esa sola se gana el día o queda perfecto, se dice. */
+function empujonDelDia(){
+  const H = hoy(), dia = datos.dias[H] || {}, act = metasActivas(H);
+  const lleva = m => dia[m.id] || 0;
+  const pend = act.filter(m => lleva(m) < m.objetivo);
+  if(!pend.length) return null;
+  const frac = m => lleva(m)/m.objetivo;
+  const faltanDe = m => m.objetivo - lleva(m);
+  const elegida =
+       pend.filter(m => frac(m) >= 0.5).sort((a,b)=> frac(b)-frac(a) || faltanDe(a)-faltanDe(b))[0]
+    || pend.find(m => faltanDe(m) === 1);
+  if(!elegida) return null;
+  const faltan = faltanDe(elegida);
+  // el anillo si esta sola se completara
+  const suma = act.reduce((s,m)=>s + Math.min(1, frac(m)), 0);
+  const conEsta = Math.round((suma - frac(elegida) + 1) / act.length * 100);
+  const texto = !diaTrabajado(H) && conEsta >= UMBRAL_DIA ? faltan+" más y ganas el día"
+              : pend.length === 1                         ? faltan+" más y es día perfecto"
+              :                                             faltan+" más y la tachas";
+  return { id: elegida.id, texto };
+}
+
+function filaMeta(m, v, empujon = ""){
   const pausada = !(m.objetivo>0);
   const pct = pausada? 0 : Math.min(1, v/m.objetivo);
   const ok = !pausada && v>=m.objetivo;
@@ -1643,7 +1797,11 @@ function filaMeta(m, v){
      así que tocabas el "+" y no pasaba nada a la vista mientras el número sí
      se guardaba y salía después en "Actividad de la semana". Si quedó un conteo
      de antes de pausarla, se enseña en vez de esconderlo. */
-  return `<div class="meta ${ok?"lograda":""} ${pausada?"pausada":""}">
+  /* El empujón va en una etiqueta flotante y la fila solo cambia de tinte: ni
+     una ni otro ocupan espacio, así que cuando el resaltado salta de una fila a
+     otra nada se mueve bajo el dedo. */
+  return `<div class="meta ${ok?"lograda":""} ${pausada?"pausada":""} ${empujon?"cerca":""}">
+    ${empujon? `<span class="empujon" aria-hidden="true">${esc(empujon)}</span>` : ""}
     <div class="info">
       <div class="nombre">${esc(m.nombre)}</div>
       <div class="barra"><i style="width:${pct*100}%"></i></div>
@@ -1652,7 +1810,7 @@ function filaMeta(m, v){
       ? `<div class="conteo">${v? v+" · pausada" : "pausada"}</div>`
       /* el número es un botón: tocarlo abre la hoja para escribir cuántas
          llevas. Va con fondo de pastilla para que se lea como tocable. */
-      : `<button class="conteo" onclick="abrirConteo('${m.id}')" aria-label="Escribir cuántas llevas de ${esc(m.nombre)}">${v}/${m.objetivo}</button>`}
+      : `<button class="conteo" onclick="abrirConteo('${m.id}')" aria-label="Escribir cuántas llevas de ${esc(m.nombre)}${empujon? ". "+esc(empujon) : ""}">${v}/${m.objetivo}</button>`}
     ${pausada? "" : `<div class="botones">
       <button class="btn-cnt btn-menos" onclick="contar('${m.id}',-1)" aria-label="Restar 1 a ${esc(m.nombre)}">−</button>
       <button class="btn-cnt btn-mas" onclick="contar('${m.id}',1)" aria-label="Sumar 1 a ${esc(m.nombre)}">+</button>
@@ -1660,7 +1818,7 @@ function filaMeta(m, v){
   </div>`;
 }
 
-function pintarHoy(){
+function pintarHoy(op = {}){
   const dia = diaDe(hoy());
   let logradas=0, sumaPct=0, activas=0;
   datos.metas.forEach(m=>{
@@ -1679,8 +1837,10 @@ function pintarHoy(){
   if(ordenMetas && (ordenMetas.length !== datos.metas.length
                     || ordenMetas.some(id => !porId[id]))) ordenMetas = null;
   if(!ordenMetas) ordenMetas = acomodarMetas();
+  const empujon = empujonDelDia();
   document.getElementById("listaMetas").innerHTML = ordenMetas.length
-    ? ordenMetas.map(id => filaMeta(porId[id], dia[id]||0)).join("")
+    ? ordenMetas.map(id => filaMeta(porId[id], dia[id]||0,
+        empujon && empujon.id===id ? empujon.texto : "")).join("")
     : `<div class="vacio"><p>Agrega tus actividades en Ajustes.</p></div>`;
 
   const total = activas;                       // las pausadas no cuentan al día
@@ -1706,10 +1866,6 @@ function pintarHoy(){
      mensaje puede ser duro sin riesgo de espantar a quien apenas empieza. */
   const diasConRegistro = Object.values(datos.dias).filter(d=>
     tieneRegistro(d)).length;
-  const comodin = comodinLibre();
-  document.getElementById("heroTxt").innerHTML =
-    mensajeDelDia({pctDia, logradas, total, conv, racha, hora, comodin, veterano: diasConRegistro>=7});
-
   /* La marca del 80% sobre el anillo: la raya que hay que pasar, a la vista
      en el mismo lugar donde se ve el avance. Se coloca desde UMBRAL_DIA para
      que no pueda quedar en otro sitio que la regla. */
@@ -1719,22 +1875,33 @@ function pintarHoy(){
   raya.setAttribute("cy", (37 + 31*Math.sin(ang)).toFixed(2));
   raya.classList.toggle("pasada", pctDia >= UMBRAL_DIA);
 
-  /* El pie dice primero cómo va HOY respecto a la raya —un número que baja
-     mientras trabajas—, luego la racha y el récord a perseguir. El comodín
-     solo sale cuando importa: con racha que cuidar y el día todavía abajo. */
-  const pendAgenda = datos.agenda.filter(t=>!t.hecha && t.fecha<=H).length;
-  const piezas = [];
-  if(total){
-    if(pctDia >= 100)             piezas.push("✨ día perfecto");
-    else if(pctDia >= UMBRAL_DIA) piezas.push("✅ día ganado");
-    else                          piezas.push("🎯 "+(UMBRAL_DIA-pctDia)+"% para ganar el día");
+  /* El mensaje y el pie están ENCIMA de la lista, así que si cambian de número
+     de renglones la lista entera se mueve bajo el dedo. Medido: el primer toque
+     del día la subía 23 px (el mensaje pasaba de 3 a 2 renglones). Mientras se
+     cuenta (`vivo`) se quedan quietos; el anillo y los números sí van al
+     momento, y el texto se pone al día cuando la lista se asienta. */
+  if(!op.vivo){
+    const comodin = comodinLibre();
+    document.getElementById("heroTxt").innerHTML =
+      mensajeDelDia({pctDia, logradas, total, conv, racha, hora, comodin, veterano: diasConRegistro>=7});
+
+    /* El pie dice primero cómo va HOY respecto a la raya —un número que baja
+       mientras trabajas—, luego la racha y el récord a perseguir. El comodín
+       solo sale cuando importa: con racha que cuidar y el día todavía abajo. */
+    const pendAgenda = datos.agenda.filter(t=>!t.hecha && t.fecha<=H).length;
+    const piezas = [];
+    if(total){
+      if(pctDia >= 100)             piezas.push("✨ día perfecto");
+      else if(pctDia >= UMBRAL_DIA) piezas.push("✅ día ganado");
+      else                          piezas.push("🎯 "+(UMBRAL_DIA-pctDia)+"% para ganar el día");
+    }
+    if(racha) piezas.push("🔥 "+racha+(racha===1? " día" : " días")+" de racha");
+    const mejor = mejorRacha();
+    if(mejor > racha) piezas.push("récord "+mejor);
+    if(racha && pctDia < UMBRAL_DIA && comodin) piezas.push("🛡 comodín libre");
+    if(pendAgenda) piezas.push("📋 "+pendAgenda+" en tu agenda");
+    document.getElementById("estadoPie").textContent = piezas.join("  ·  ");
   }
-  if(racha) piezas.push("🔥 "+racha+(racha===1? " día" : " días")+" de racha");
-  const mejor = mejorRacha();
-  if(mejor > racha) piezas.push("récord "+mejor);
-  if(racha && pctDia < UMBRAL_DIA && comodin) piezas.push("🛡 comodín libre");
-  if(pendAgenda) piezas.push("📋 "+pendAgenda+" en tu agenda");
-  document.getElementById("estadoPie").textContent = piezas.join("  ·  ");
 
   /* El aviso de atrasados ya no es un adorno: lleva a esa gente. */
   const aviso = document.getElementById("avisoAtrasados");
@@ -3430,6 +3597,8 @@ async function entrar(user){
   }
 
   portada.classList.add("oculta");
+  // la guía, si este aparato no la ha visto: con la app ya pintada detrás
+  setTimeout(()=>{ if(typeof mostrarGuiaSiToca === "function") mostrarGuiaSiToca(); }, 450);
   /* Solo se sube si se pudo LEER la nube. Si la lectura falló (un bache de red
      justo al entrar) lo de aquí puede estar en blanco —cerrar sesión deja el
      aparato limpio— y subirlo borraría la cuenta entera. Sin lectura, no se
