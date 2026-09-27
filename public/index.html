@@ -179,7 +179,7 @@ main{padding:0 16px}
 .rotulo-suelto{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;
   color:var(--ink-soft);margin:0 0 8px 3px}
 /* Dos, no tres: "en seguimiento" no es un resultado del mes — es trabajo
-   pendiente, y ahora vive en su propia tarjeta con nombres y botón de chat. */
+   pendiente, y ahora vive en su propia tarjeta con nombres y palomita. */
 .trio{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
 .trio .t{background:var(--brillo),var(--card);
   border:1px solid var(--line);border-radius:17px;padding:14px 10px;text-align:center}
@@ -228,14 +228,25 @@ main{padding:0 16px}
    pliegan al final (ver pintarHoy), así la lista se acorta conforme avanza el
    día en vez de crecer. */
 .meta{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);position:relative}
-/* La más cerca de tacharse: tinte verde que se extiende con box-shadow (no con
-   margen ni relleno) y etiqueta flotante. Ninguno de los dos cambia el tamaño
-   de la fila: si el resaltado salta de una fila a otra, nada se mueve. */
+/* La recomendada (ver #reco): tinte verde que se extiende con box-shadow, no
+   con margen ni relleno. No cambia el tamaño de la fila: si el resaltado salta
+   de una fila a otra, nada se mueve. */
 .meta.cerca{background:var(--green-soft);box-shadow:0 0 0 8px var(--green-soft);
   border-radius:4px;border-bottom-color:transparent}
-.meta .empujon{position:absolute;top:-7px;right:0;z-index:1;pointer-events:none;
-  font-size:10.5px;font-weight:800;line-height:1;white-space:nowrap;
-  padding:4px 9px;border-radius:999px;background:var(--verde);color:var(--sobre-verde)}
+/* La recomendación, arriba de la lista. Está ENCIMA de las filas, así que su
+   alto no puede depender del texto: nombre a 1 renglón, el porqué reservado a
+   2 y la cuenta a 1. Cambie lo que cambie adentro, la lista no se mueve. */
+.reco{margin:2px 0 12px;padding:12px 14px;border-radius:14px;
+  background:var(--green-soft);border:1px solid rgba(74,222,128,.28)}
+.reco-kicker{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--verde)}
+.reco-nombre{font-size:16px;font-weight:800;line-height:1.25;margin-top:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reco-porque{font-size:13px;line-height:1.35;color:var(--ink-soft);margin-top:3px;
+  height:2.7em;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.reco-pie{display:flex;align-items:center;gap:10px;margin-top:8px}
+.reco-meta{flex:1;min-width:0;font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reco-btn{flex:none;border:none;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;
+  padding:8px 14px;border-radius:999px;background:var(--verde);color:var(--sobre-verde)}
 .meta:last-child{border-bottom:none}
 .meta .info{flex:1;min-width:0}
 /* line-clamp en vez de una sola línea con puntos suspensivos: un nombre largo
@@ -402,14 +413,14 @@ main{padding:0 16px}
 .prospecto .sub .hoy{color:var(--verde);font-weight:800}
 .plegable{display:block;width:100%;margin-top:12px;padding:12px;border:none;border-radius:14px;
   background:var(--velo);color:var(--ink-soft);font-family:inherit;font-size:13px;font-weight:800;cursor:pointer}
-.btn-chat{flex:none;width:36px;height:36px;border-radius:11px;background:var(--green-soft);color:var(--green);display:flex;align-items:center;justify-content:center;text-decoration:none}
+/* La palomita del seguimiento: aro vacío mientras se debe, se llena al tocarla
+   y la fila se desvanece antes de irse de la lista. */
+.btn-seg{flex:none;width:36px;height:36px;border-radius:50%;border:2px solid var(--line2);background:none;
+  color:var(--ink-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;
+  transition:background .2s,border-color .2s,color .2s}
+.prospecto.seg-hecho .btn-seg{background:var(--verde);border-color:var(--verde);color:var(--sobre-verde)}
+.prospecto.seg-hecho{opacity:.45;transition:opacity .35s ease .15s}
 .etiqueta{flex:none;font-size:11px;font-weight:800;padding:4px 10px;border-radius:999px}
-.et-Nuevo{background:var(--azul-soft);color:var(--et-nuevo)}
-.et-Contactado{background:rgba(140,100,255,.16);color:var(--et-contactado)}
-.et-EnConversacion{background:var(--gold-soft);color:var(--gold)}
-.et-Interesado{background:rgba(255,105,180,.14);color:var(--et-interesado)}
-.et-Cliente{background:var(--green-soft);color:var(--green)}
-.et-Socio{background:rgba(56,189,248,.15);color:var(--et-socio)}
 .et-Descartado{background:var(--velo);color:var(--ink-soft)}
 .aviso-seg{font-size:11px;font-weight:800;color:var(--red)}
 .vacio{text-align:center;padding:34px 16px;color:var(--ink-soft)}
@@ -732,6 +743,18 @@ nav button.activa{color:var(--verde)}
       <!-- Las cumplidas NO se esconden: se tachan y bajan al final de la lista.
            Verlas tachadas es parte de la recompensa del día; plegarlas hacía
            desaparecer la prueba del trabajo hecho. -->
+      <!-- Una sola actividad recomendada, con su porqué: decidir por dónde
+           empezar es lo que más frena. La fila de esa actividad lleva el mismo
+           tinte, para que se vea cuál es. -->
+      <div class="reco oculto" id="reco">
+        <div class="reco-kicker">💡 Te recomiendo</div>
+        <div class="reco-nombre" id="recoNombre"></div>
+        <div class="reco-porque" id="recoPorque"></div>
+        <div class="reco-pie">
+          <span class="reco-meta" id="recoMeta"></span>
+          <button class="reco-btn" id="recoBtn" onclick="recoHacer()"></button>
+        </div>
+      </div>
       <div id="listaMetas"></div>
     </div>
 
@@ -1442,29 +1465,12 @@ function avisar(msg, accion, fn){
   t.classList.add("ver");
   clearTimeout(_toastT); _toastT=setTimeout(()=>t.classList.remove("ver"), accion?5000:1800);
 }
-const MAPA_ETAPA={"Nuevo":"et-Nuevo","Contactado":"et-Contactado","En conversación":"et-EnConversacion","Interesado":"et-Interesado","Cliente":"et-Cliente","Socio":"et-Socio","Descartado":"et-Descartado"};
-function claseEtapa(e){ return MAPA_ETAPA[e]||"et-Nuevo"; }
 function iniciales(n){ return n.trim().split(/\s+/).slice(0,2).map(p=>p[0]).join("").toUpperCase(); }
 const MESES_C=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
 function fCorta(c){ const p=c.split("-"); return +p[2]+" "+(MESES_C[+p[1]-1]||""); }
-const ICONO_CHAT='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.5L4 20l1.2-4A8.5 8.5 0 1 1 21 11.5z"/></svg>';
+const ICONO_PALOMITA='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 const ICONO_CANDADO='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
 const ICONO_RELOJ='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
-
-/* Enlace directo al chat según red y contacto */
-function enlaceContacto(p){
-  const c=(p.contacto||"").trim(); if(!c) return "";
-  if(/^\+?[\d\s().-]{7,}$/.test(c)) return "https://wa.me/"+c.replace(/\D/g,"");
-  const user=encodeURIComponent(c.replace(/^@/,""));
-  if(p.red==="Instagram") return "https://instagram.com/"+user;
-  if(p.red==="TikTok") return "https://tiktok.com/@"+user;
-  if(p.red==="Facebook"||p.red==="Grupo FB"||p.red==="Marketplace") return "https://m.me/"+user;
-  return "";
-}
-function botonChat(p){
-  const link=enlaceContacto(p);
-  return link? '<a class="btn-chat" href="'+esc(link)+'" target="_blank" rel="noopener" aria-label="Abrir chat con '+esc(p.nombre)+'" onclick="event.stopPropagation()">'+ICONO_CHAT+'</a>' : "";
-}
 
 /* =================== Navegación =================== */
 let tabActiva="hoy";
@@ -1762,30 +1768,58 @@ function diasPerfectosDelMes(){
 
 /* Una actividad = un renglón. Se pinta igual esté cumplida o no; lo que cambia
    es dónde queda en el orden (ver acomodarMetas). */
-/* ---- El empujón: la actividad más cerca de tacharse ----
-   La gente acelera cuando ve la meta cerca. Se resalta la pendiente con más
+/* ---- La recomendación: qué hacer ahora ----
+   La gente acelera cuando ve la meta cerca. Se recomienda la pendiente con más
    avance (desde la mitad para arriba); si ninguna va a la mitad, una de las
    que se tachan de un toque (objetivo 1) — empezar por lo fácil también es
-   empezar. Y si con esa sola se gana el día o queda perfecto, se dice. */
-function empujonDelDia(){
+   empezar —; si no, las conversaciones, que son las que traen ventas; y si ya
+   van, la más avanzada. Y si con esa sola se gana el día o queda perfecto, se
+   dice. `fija` sostiene la misma actividad mientras se cuenta (ver pintarHoy). */
+const POR_QUE = {
+  conv:     "Más conversaciones, más ventas: es la ley de promedios.",
+  fbgr:     "Cada publicación sigue trabajando por ti aunque ya estés dormido.",
+  mkt:      "En Marketplace la gente ya anda buscando qué comprar.",
+  tiktok:   "Un solo video puede llegarle a miles de personas.",
+  addfb:    "Más amigos es más gente viendo lo que publicas.",
+  segig:    "Muchos te siguen de vuelta: son prospectos que llegan solos.",
+  hist:     "Tus historias le recuerdan a todos que sigues activo.",
+  gruposfb: "Cada grupo nuevo es público nuevo para tus publicaciones.",
+  producto: "Tú eres la prueba: si lo usas, lo recomiendas con ganas."
+};
+function empujonDelDia(fija){
   const H = hoy(), dia = datos.dias[H] || {}, act = metasActivas(H);
   const lleva = m => dia[m.id] || 0;
   const pend = act.filter(m => lleva(m) < m.objetivo);
-  if(!pend.length) return null;
   const frac = m => lleva(m)/m.objetivo;
   const faltanDe = m => m.objetivo - lleva(m);
-  const elegida =
-       pend.filter(m => frac(m) >= 0.5).sort((a,b)=> frac(b)-frac(a) || faltanDe(a)-faltanDe(b))[0]
-    || pend.find(m => faltanDe(m) === 1);
-  if(!elegida) return null;
+  let elegida = fija && act.find(m => m.id === fija);
+  if(!elegida){
+    if(!pend.length) return null;
+    elegida =
+         pend.filter(m => frac(m) >= 0.5).sort((a,b)=> frac(b)-frac(a) || faltanDe(a)-faltanDe(b))[0]
+      || pend.find(m => faltanDe(m) === 1)
+      || pend.find(m => m.id === "conv")
+      || pend.slice().sort((a,b)=> frac(b)-frac(a))[0];
+  }
   const faltan = faltanDe(elegida);
   // el anillo si esta sola se completara
   const suma = act.reduce((s,m)=>s + Math.min(1, frac(m)), 0);
-  const conEsta = Math.round((suma - frac(elegida) + 1) / act.length * 100);
-  const texto = !diaTrabajado(H) && conEsta >= UMBRAL_DIA ? faltan+" más y ganas el día"
+  const conEsta = Math.round((suma - Math.min(1, frac(elegida)) + 1) / act.length * 100);
+  const texto = faltan <= 0                                ? "✓ La tachaste"
+              : !diaTrabajado(H) && conEsta >= UMBRAL_DIA ? faltan+" más y ganas el día"
               : pend.length === 1                         ? faltan+" más y es día perfecto"
               :                                             faltan+" más y la tachas";
-  return { id: elegida.id, texto };
+  return { id: elegida.id, nombre: elegida.nombre, objetivo: elegida.objetivo, faltan, texto,
+           porque: POR_QUE[elegida.id] || "Cada una que tachas te acerca a ganar el día." };
+}
+let recoFija = null;   // la actividad recomendada que se sostiene mientras cuentas
+
+/* El botón de la tarjeta: la de un toque se tacha ahí mismo; las de muchas
+   abren la hoja para escribir cuántas llevas. */
+function recoHacer(){
+  const r = empujonDelDia(recoFija);
+  if(!r || r.faltan <= 0) return;
+  if(r.objetivo === 1) contar(r.id, 1); else abrirConteo(r.id);
 }
 
 function filaMeta(m, v, empujon = ""){
@@ -1797,11 +1831,10 @@ function filaMeta(m, v, empujon = ""){
      así que tocabas el "+" y no pasaba nada a la vista mientras el número sí
      se guardaba y salía después en "Actividad de la semana". Si quedó un conteo
      de antes de pausarla, se enseña en vez de esconderlo. */
-  /* El empujón va en una etiqueta flotante y la fila solo cambia de tinte: ni
-     una ni otro ocupan espacio, así que cuando el resaltado salta de una fila a
-     otra nada se mueve bajo el dedo. */
+  /* La recomendada solo cambia de tinte (el texto va en la tarjeta de arriba):
+     el tinte no ocupa espacio, así que cuando salta de una fila a otra nada se
+     mueve bajo el dedo. */
   return `<div class="meta ${ok?"lograda":""} ${pausada?"pausada":""} ${empujon?"cerca":""}">
-    ${empujon? `<span class="empujon" aria-hidden="true">${esc(empujon)}</span>` : ""}
     <div class="info">
       <div class="nombre">${esc(m.nombre)}</div>
       <div class="barra"><i style="width:${pct*100}%"></i></div>
@@ -1837,7 +1870,21 @@ function pintarHoy(op = {}){
   if(ordenMetas && (ordenMetas.length !== datos.metas.length
                     || ordenMetas.some(id => !porId[id]))) ordenMetas = null;
   if(!ordenMetas) ordenMetas = acomodarMetas();
-  const empujon = empujonDelDia();
+  /* Mientras cuentas (`vivo`) la recomendación se sostiene en la misma
+     actividad y la tarjeta ni aparece ni desaparece: está encima de la lista.
+     Se elige de nuevo cuando la lista se asienta. */
+  const empujon = empujonDelDia(op.vivo ? recoFija : null);
+  recoFija = empujon && empujon.id;
+  const reco = document.getElementById("reco");
+  if(!op.vivo) reco.classList.toggle("oculto", !empujon);
+  if(empujon){
+    document.getElementById("recoNombre").textContent = empujon.nombre;
+    document.getElementById("recoPorque").textContent = empujon.porque;
+    document.getElementById("recoMeta").textContent = empujon.texto;
+    const btn = document.getElementById("recoBtn");
+    btn.textContent = empujon.faltan <= 0 ? "Hecho" : empujon.objetivo === 1 ? "Ya la hice" : "Registrar";
+    btn.disabled = empujon.faltan <= 0;
+  }
   document.getElementById("listaMetas").innerHTML = ordenMetas.length
     ? ordenMetas.map(id => filaMeta(porId[id], dia[id]||0,
         empujon && empujon.id===id ? empujon.texto : "")).join("")
@@ -1941,16 +1988,18 @@ function pintarSeguimientos(seg){
 }
 
 /* Fila de persona compartida por los seguimientos del inicio y la lista de
-   Gente: una sola forma de dibujar a alguien en toda la app. */
+   Gente: una sola forma de dibujar a alguien en toda la app. La palomita va
+   al final para que quede en columna: las etiquetas miden distinto. */
 function filaPersona(p, H){
+  const toca = p.fecha && p.fecha <= H && p.etapa !== "Descartado";
   return `<div class="prospecto" onclick="abrirFormulario('${p.id}')">
     <div class="avatar">${esc(iniciales(p.nombre))}</div>
     <div class="datos">
       <div class="nom">${esc(p.nombre)}</div>
       <div class="sub">${esc(p.red)} · ${textoSeguimiento(p, H)}</div>
     </div>
-    ${botonChat(p)}
-    <span class="etiqueta ${claseEtapa(p.etapa)}">${esc(etiquetaCorta(p.etapa))}</span>
+    ${toca? `<button class="btn-seg" onclick="event.stopPropagation(); seguimientoHecho('${p.id}', this)"
+      aria-label="Ya le di seguimiento a ${esc(p.nombre)}">${ICONO_PALOMITA}</button>` : ""}
   </div>`;
 }
 /* "hoy" y "2 días tarde" dicen más que "seg: 14 sep", y son cortos: la frase
@@ -1966,11 +2015,35 @@ function textoSeguimiento(p, H){
   return esc(fCorta(p.fecha));
 }
 
-/* Solo para pintar: el dato guardado sigue siendo "En conversación" (lo usan
-   hist, las métricas y el formulario). La etiqueta larga empujaba el nombre a
-   dos renglones y hacía filas de distinta altura. */
-const ETAPA_CORTA = {"En conversación":"Conversando"};
-function etiquetaCorta(e){ return ETAPA_CORTA[e] || e; }
+/* La palomita: "ya le escribí". Queda anotado en su historial (y cuenta como
+   movimiento, así no se enfría) y el siguiente recordatorio se agenda solo a
+   DIAS_SEGUIMIENTO días: nadie se queda sin fecha y se le sigue escribiendo
+   hasta que tú decidas otra cosa en su ficha. Se puede deshacer desde el aviso. */
+const DIAS_SEGUIMIENTO = 3;
+function seguimientoHecho(id, btn){
+  const p = datos.prospectos.find(x=>x.id===id);
+  const fila = btn && btn.closest(".prospecto");
+  if(!p || (fila && fila.classList.contains("seg-hecho"))) return;   // doble toque
+  if(fila) fila.classList.add("seg-hecho");
+  const toco = !navigator.userActivation || navigator.userActivation.isActive;
+  if(navigator.vibrate && toco) try{ navigator.vibrate(15); }catch(e){}
+  const antes = p.fecha;
+  const d = new Date(); d.setDate(d.getDate()+DIAS_SEGUIMIENTO);
+  const nueva = claveDia(d);
+  // se ve la palomita llena un momento y luego la fila se va
+  setTimeout(()=>{
+    if(!p.log) p.log = [];
+    const nota = {f:hoy(), t:"Seguimiento hecho ✓"};
+    p.log.push(nota);
+    p.fecha = nueva;
+    guardar(); repintarTodo();
+    avisar("✓ Listo. Te lo recuerdo el "+fCorta(nueva), "Deshacer", ()=>{
+      p.fecha = antes;
+      p.log = p.log.filter(l=>l!==nota);
+      guardar(); repintarTodo();
+    });
+  }, 450);
+}
 
 /* Desde el aviso del inicio: salta a Gente ya filtrado por quien espera. */
 function verAtrasados(){ abrirGente("atrasados"); }
@@ -2132,7 +2205,7 @@ function mensajeDelDia({pctDia, logradas, total, conv, racha, hora, comodin, vet
 
 /* Ventas y socios del MES, porque así se mide el negocio. Antes había un tercer
    cuadro con "en seguimiento", que no es un resultado del mes sino trabajo
-   pendiente: ahora tiene su propia tarjeta, con nombres y botón de chat. */
+   pendiente: ahora tiene su propia tarjeta, con nombres y palomita. */
 function pintarTrio(){
   const mm = datos.metaMes||{ventas:0,socios:0};
   const v = sumaMes("venta"), s = sumaMes("socio");
@@ -2604,8 +2677,6 @@ function filaPersonaFria(p){
       <div class="nom">${esc(p.nombre)}</div>
       <div class="sub">${esc(p.red)} · <span class="aviso-seg">${d} días sin moverse</span></div>
     </div>
-    ${botonChat(p)}
-    <span class="etiqueta ${claseEtapa(p.etapa)}">${esc(etiquetaCorta(p.etapa))}</span>
   </div>`;
 }
 

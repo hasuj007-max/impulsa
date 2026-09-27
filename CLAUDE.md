@@ -170,8 +170,11 @@ en `public/index.html` (qué paneles se ven) y `esAdmin()` en `firestore.rules`
   - `pintarHoy({vivo:true})` —lo que usa `contar()`— NO toca el mensaje ni el
     pie, que están encima de la lista y cambian de renglones (medido: el primer
     toque del día la subía 23 px). Se ponen al día al asentarse.
-  - El "empujón" (la actividad más cerca de tacharse) es una etiqueta con
-    `position:absolute` y un tinte con `box-shadow`: no ocupan espacio.
+  - La tarjeta "💡 Te recomiendo" (`#reco`, arriba de la lista) tiene alto
+    fijo: nombre a 1 renglón, porqué reservado a 2, cuenta a 1 (medido: 141 px
+    con cualquier actividad). En `vivo` sostiene la misma actividad
+    (`recoFija`) y no se muestra ni se oculta. La fila recomendada solo lleva
+    tinte con `box-shadow`, que no ocupa espacio.
   **Cualquier cosa nueva en Hoy tiene que respetar esto.** Medirlo: contar de 0
   a 79% con `contar()` y comprobar que `#listaMetas` no cambia de `top`.
 - **La racha cuenta días con el anillo al 80% o más, con un comodín por
@@ -201,6 +204,19 @@ en `public/index.html` (qué paneles se ven) y `esAdmin()` en `firestore.rules`
   (`impulsa_guia` en localStorage). **Si cambia cómo funciona algo que la guía
   explica, subir `GUIA_VERSION`** y la vuelve a ver toda la red. Se reabre
   desde Ajustes.
+- **Recomendación del día** (`empujonDelDia()`, 27-09-2026, pedida por él):
+  una sola actividad, con su porqué en `POR_QUE` por id (las actividades que
+  cree un socio caen en un texto general). Orden: la más avanzada desde la
+  mitad → una de un toque → `conv` → la más avanzada. Botón: "Ya la hice" en
+  las de objetivo 1, "Registrar" (abre la hoja de conteo) en las demás. Se
+  quitó el "tu día al X%": completar una sola actividad sube 2-3% y desanimaba.
+- **Palomita de seguimiento** (27-09-2026): a quien se le debe mensaje
+  (`fecha <= hoy`) le sale un ✓ en `filaPersona()`. Al tocarla: nota "Seguimiento
+  hecho ✓" en `p.log` (cuenta como movimiento para "fríos") y `fecha` = hoy +
+  `DIAS_SEGUIMIENTO` (3), así el recordatorio vuelve solo. Aviso con Deshacer.
+- **Las filas de gente no llevan botón de chat ni etiqueta de etapa**: él los
+  pidió fuera ("ya sé por dónde lo voy a contactar"). No volver a ponerlos ni
+  meter el chat en la ficha. La etapa se ve en la ficha y en el filtro.
 - **Tocar el número de una actividad abre una hoja para escribirlo** (+5, +10,
   "Todas"). Existe porque el plan por defecto suma 145 unidades al día y el "+"
   va de uno en uno. El campo no se autoenfoca a propósito: el teclado taparía
