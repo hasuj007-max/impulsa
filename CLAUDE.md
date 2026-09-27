@@ -8,11 +8,44 @@ Escribe y comenta **en español**: el código, los comentarios y los mensajes de
 
 PWA de prospección diaria para la red de mercadeo del usuario. La usa él y las
 personas de su red. Sin framework, sin dependencias, sin paso de build: **toda
-la app vive en `public/index.html`** (HTML + CSS + JS en un archivo, ~3100
-líneas). `public/sw.js` es el service worker.
+la app vive en `public/index.html`** (HTML + CSS + JS en un archivo, ~3700
+líneas). `public/sw.js` es el service worker. En vivo en
+**https://impulsa-d9262.firebaseapp.com** (Firebase Hosting).
 
 ⚠️ **El `README.md` está desactualizado** (dice GitHub Pages y "no hay servidor
 ni cuenta"; hoy es Firebase Hosting con cuentas de Google). Este archivo manda.
+
+## Estado y pendientes (al 27-09-2026)
+
+Lo último desplegado es `impulsa-v33`. Pendiente, en el orden propuesto:
+
+1. **Subir a GitHub**: hay commits locales sin subir (`git status -sb`). Todo el
+   rediseño y lo posterior solo existe en su Mac. `git push` no afecta el
+   redirect viejo de GitHub Pages (es el `index.html` de la raíz).
+2. **Respaldo de datos fresco** con `herramientas/respaldar.sh`: el último en
+   `respaldos/` es del 02-09-2026, y desde entonces cambiaron las ventas y la
+   regla de la racha.
+3. **Ventas: rediseñar el modelo.** Él dijo que "venta en pesos + ganancia en
+   dólares" está mal planteado y tiene otra idea que **aún no ha contado**.
+   Preguntársela antes de tocar nada de ventas.
+4. **Recordatorios.** Versión barata: en el tablero del líder, junto a quien va
+   atrasado, un botón que abra `https://wa.me/?text=…` con el mensaje escrito.
+   Notificaciones de verdad: plan Blaze + Cloud Function + FCM, y en iPhone solo
+   con la app instalada e iOS 16.4+.
+5. **Que el socio vea a su equipo** ("7 de 10 ya cerraron hoy"). Es decisión
+   suya: hoy la app promete que la constancia de cada uno solo la ve el líder.
+   Tendría que ser opcional y cambiar las reglas de `resumenes/`.
+6. README desactualizado (menor).
+
+## Cómo trabaja él
+
+- Habla español de México, informal y directo. Respuestas cortas; si hay que
+  decidir, `AskUserQuestion` con la opción recomendada primero le funciona bien.
+- **Cambios grandes de diseño: primero un prototipo que pueda tocar** (así se
+  hizo el rediseño). Cambios chicos o arreglos: los hace directo cuando dice "haz".
+- **Siempre preguntar antes de desplegar** — cada despliegue le llega a toda la
+  red. Suele contestar "sí, despliega". Después de desplegar, verificar en vivo.
+- Quiere gastar pocos tokens: leer este archivo en vez de re-explorar.
 
 ## Comandos
 
@@ -41,26 +74,34 @@ neutralizar `window.Nube`.** El 05-08-2026 unas pruebas en `localhost:8791`
 escribieron datos falsos en una cuenta real con la sesión abierta.
 
 Usar el puerto **8799** (`impulsa-aislado`): es otro origen, así que no puede
-haber sesión. Receta que funciona:
+haber sesión. **Para tener la app llena de datos de ejemplo, leer y pegar
+`herramientas/demo-navegador.js` en `javascript_tool`**: neutraliza la nube,
+oculta la portada y siembra racha, prospectos, ventas y agenda. Lo mínimo, si
+solo hace falta la app vacía:
 
 ```js
-window.Nube = null;                       // corta cualquier subida a la nube
-const p = document.getElementById('portada');
-p.classList.add('oculta');                // la portada vuelve tras resolver auth
-new MutationObserver(()=>{ if(!p.classList.contains('oculta')) p.classList.add('oculta'); })
-  .observe(p, {attributes:true});
-// ...sembrar datos en `datos`, luego repintarTodo()
-localStorage.clear();                     // AL TERMINAR
+window.Nube = null;                                          // nada sube a la nube
+document.getElementById('portada').classList.add('oculto');  // basta: .oculto es !important
+localStorage.clear();                                        // AL TERMINAR
 ```
 
 Si el navegador sirve una copia vieja pese a recargar, es el service worker:
 desregistrarlo y borrar cachés (`navigator.serviceWorker.getRegistrations()`,
-`caches.keys()`).
+`caches.keys()`). Antes de probar un cambio, `node --check` sobre los scripts
+extraídos del HTML atrapa errores de sintaxis sin abrir el navegador.
 
 ## Arquitectura
 
 **Un solo objeto `datos`**, serializado a `localStorage` bajo la clave
 `impulsa_v1`. Las secciones del script van marcadas con `/* ====== NOMBRE ====== */`.
+
+Las pestañas se llaman en pantalla **Hoy · Gente · Números · Ajustes**, pero en
+el código conservan sus ids de antes: `hoy`, `prospectos`, `metricas`, `ajustes`
+(`irA()`, `#tab-…`, `pintarProspectos()`, `pintarMetricas()`). La pantalla Hoy,
+de arriba abajo: tira de los últimos 7 días → bloque de estado (anillo con la
+marca del 80%, mensaje, pie, aviso de atrasados) → actividades → "Hoy le
+escribes a" (seguimientos) → resultados del mes (ventas/socios con − y +) →
+"Ventas de <mes>" → agenda.
 
 ```
 datos = {
@@ -78,6 +119,10 @@ datos = {
 **localStorage manda; la nube va detrás.** Cada cambio se guarda local al
 instante y sube a Firestore 2.5 s después del último cambio (debounce). En
 conflicto entre aparatos gana el `actualizado` más alto.
+
+Tres claves van aparte, **del aparato y no de la cuenta** (nunca suben a la
+nube): `impulsa_tema` (claro/oscuro), `impulsa_festejo` (qué festejos ya salieron
+hoy) e `impulsa_guia` (si ya vio la guía). No meterlas en `datos`.
 
 **Firestore** (proyecto `impulsa-d9262`, plan Spark):
 - `usuarios/{uid}` — un solo documento con `datos` serializado. Solo el dueño lo
@@ -107,10 +152,13 @@ en `public/index.html` (qué paneles se ven) y `esAdmin()` en `firestore.rules`
   cliente Y socio cuenta como UNA persona cerrada, no dos.
 - **El mensaje del inicio golpea al día flojo, nunca a la persona**, y del 40%
   para arriba nunca reprocha. Las reglas están escritas sobre `mensajeDelDia()`.
-- **La venta va en pesos y la ganancia en dólares**, con `TASA_USD = 17.5` fija
-  por decisión suya (no consultar un tipo de cambio en vivo: la app tiene que
-  funcionar sin señal). El CONTEO de ventas sigue en `dias[fecha].venta`;
-  `datos.ventas` solo le pone dinero encima.
+- **Ventas, tal como están hoy (él quiere rediseñarlas, ver Pendientes):** la
+  venta en pesos y la ganancia en dólares, con `TASA_USD = 17.5` fija por
+  decisión suya (no consultar un tipo de cambio en vivo: la app tiene que
+  funcionar sin señal). El CONTEO de ventas vive en `dias[fecha].venta` —de ahí
+  comen la meta del mes, el marcador y el resumen del líder— y `datos.ventas`
+  solo le pone dinero encima. Quitar una venta le baja el conteo al día DE ESA
+  venta, no al de hoy. El dinero nunca sale al tablero del líder.
 - ☠️ **Regla de oro de la pantalla Hoy: mientras alguien cuenta, NADA puede
   mover la lista de actividades.** Si algo encima de ella cambia de alto, o una
   fila cambia de tamaño o de sitio, la fila de abajo sube al punto que acaban
@@ -184,6 +232,10 @@ con el estado pendiente → `getRedirectResult` vuelve vacío y el usuario cae e
 la portada en bucle.
 
 ⚠️ **Al desplegar, subir `VERSION` en `sw.js`** o la caché vieja se queda pegada.
+Y en `firebase.json` la regla de `Cache-Control: no-cache` tiene que cubrir
+**`/` Y `/index.html`**: la app abre en `/`, y con la regla solo en
+`/index.html` quedaba con el `max-age=3600` por defecto — los despliegues
+tardaban una hora en verse.
 
 ⚠️ **Al verificar un despliegue, pedir con `?cb=$(date +%s)`**: sin eso el propio
 curl puede traer una copia vieja de una caché intermedia y parecer que el deploy
