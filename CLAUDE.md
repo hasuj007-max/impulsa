@@ -17,7 +17,7 @@ ni cuenta"; hoy es Firebase Hosting con cuentas de Google). Este archivo manda.
 
 ## Estado y pendientes (al 27-09-2026)
 
-Lo último desplegado es `impulsa-v33`. Pendiente, en el orden propuesto:
+Lo último desplegado es `impulsa-v34`. Pendiente, en el orden propuesto:
 
 1. **Subir a GitHub**: hay commits locales sin subir (`git status -sb`). Todo el
    rediseño y lo posterior solo existe en su Mac. `git push` no afecta el
