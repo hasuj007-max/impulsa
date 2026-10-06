@@ -99,7 +99,9 @@ Las pestañas se llaman en pantalla **Hoy · Gente · Números · Ajustes**, per
 el código conservan sus ids de antes: `hoy`, `prospectos`, `metricas`, `ajustes`
 (`irA()`, `#tab-…`, `pintarProspectos()`, `pintarMetricas()`). La pantalla Hoy,
 de arriba abajo: tira de los últimos 7 días → bloque de estado (anillo con la
-marca del 80%, mensaje, pie, aviso de atrasados) → actividades → "Hoy le
+marca del 80%, mensaje, pie, aviso de atrasados) → actividades (tarjeta "Te
+recomiendo" y luego la lista: empezadas, sin empezar, cumplidas tachadas,
+pausadas; ver `acomodarMetas()`) → "Hoy le
 escribes a" (seguimientos) → resultados del mes (ventas/socios con − y +) →
 "Ventas de <mes>" → agenda.
 

@@ -1501,14 +1501,17 @@ function irA(nombre, btn){
 let ordenMetas = null;
 let reacomodoPendiente = null;
 
-function acomodarMetas(){   // pendientes arriba, cumplidas, pausadas al final
+/* Orden: las que ya empezaste (lo que tienes en la mano, pedido por él), las
+   que no has tocado, las cumplidas y las pausadas. Dentro de cada grupo, el
+   orden del plan. Como todo reacomodo, se aplica cuando la lista se asienta. */
+function acomodarMetas(){
   const dia = datos.dias[hoy()] || {};
-  const pend=[], hech=[], paus=[];
+  const empez=[], sinEmp=[], hech=[], paus=[];
   datos.metas.forEach(m=>{
     const v = dia[m.id]||0;
-    (!(m.objetivo>0)? paus : (v>=m.objetivo? hech : pend)).push(m.id);
+    (!(m.objetivo>0)? paus : v>=m.objetivo? hech : v>0? empez : sinEmp).push(m.id);
   });
-  return pend.concat(hech, paus);
+  return empez.concat(sinEmp, hech, paus);
 }
 /* Se llama cuando el orden puede cambiar sin que haya un dedo encima: al abrir
    la app, al entrar a la pestaña, al cambiar el día y al editar el plan. */
