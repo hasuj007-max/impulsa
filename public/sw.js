@@ -3,8 +3,13 @@
    - Navegación (el HTML): red primero, caché de respaldo. Así una versión nueva
      llega en cuanto hay internet, y sin internet la app sigue abriendo.
    - Recursos (iconos, manifest): caché primero, con refresco en segundo plano.
+   - Otros orígenes (Firebase, Google) y las rutas reservadas de Firebase
+     (/__/auth/… del login): ni se tocan, van directo a la red.
    Sube VERSION en cada despliegue para desalojar la caché anterior. */
-const VERSION = "impulsa-v35";
+const VERSION = "impulsa-v36";
+// Las dos rutas que SÍ son la app; ninguna otra navegación se guarda como index.html
+const RAIZ = new URL("./", self.location).pathname;
+const RUTAS_APP = [RAIZ, RAIZ + "index.html"];
 const ESENCIALES = [
   "./",
   "./index.html",
@@ -35,6 +40,11 @@ self.addEventListener("activate", e=>{
 self.addEventListener("fetch", e=>{
   const req = e.request;
   if(req.method !== "GET") return;
+  const url = new URL(req.url);
+  // Solo archivos de la app. La ventana del login de Google navega a
+  // /__/auth/handler en este mismo origen: antes se guardaba como si fuera la
+  // app y sin internet Impulsa podía abrir esa página en su lugar.
+  if(url.origin !== self.location.origin || url.pathname.startsWith("/__/")) return;
 
   // El documento: red primero para que las actualizaciones lleguen solas
   if(req.mode === "navigate"){
@@ -44,8 +54,10 @@ self.addEventListener("fetch", e=>{
       // estrategia de red-primero sin que se notara.
       fetch(req, { cache: "no-cache" })
         .then(res => {
-          const copia = res.clone();
-          caches.open(VERSION).then(c => c.put("./index.html", copia));
+          if(res.ok && res.type === "basic" && RUTAS_APP.includes(url.pathname)){
+            const copia = res.clone();
+            caches.open(VERSION).then(c => c.put("./index.html", copia));
+          }
           return res;
         })
         .catch(() => caches.match("./index.html").then(r => r || caches.match("./")))

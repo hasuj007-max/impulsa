@@ -15,27 +15,24 @@ líneas). `public/sw.js` es el service worker. En vivo en
 ⚠️ **El `README.md` está desactualizado** (dice GitHub Pages y "no hay servidor
 ni cuenta"; hoy es Firebase Hosting con cuentas de Google). Este archivo manda.
 
-## Estado y pendientes (al 27-09-2026)
+## Estado y pendientes (al 06-10-2026)
 
-Lo último desplegado es `impulsa-v35`. Pendiente, en el orden propuesto:
+Lo último desplegado es `impulsa-v36` (06-10-2026: el service worker ya no guarda la ventana del login ni toca otros orígenes). Pendiente, en el orden propuesto:
 
-1. **Subir a GitHub**: hay commits locales sin subir (`git status -sb`). Todo el
-   rediseño y lo posterior solo existe en su Mac. `git push` no afecta el
-   redirect viejo de GitHub Pages (es el `index.html` de la raíz).
-2. **Respaldo de datos fresco** con `herramientas/respaldar.sh`: el último en
+1. **Respaldo de datos fresco** con `herramientas/respaldar.sh`: el último en
    `respaldos/` es del 02-09-2026, y desde entonces cambiaron las ventas y la
    regla de la racha.
-3. **Ventas: rediseñar el modelo.** Él dijo que "venta en pesos + ganancia en
+2. **Ventas: rediseñar el modelo.** Él dijo que "venta en pesos + ganancia en
    dólares" está mal planteado y tiene otra idea que **aún no ha contado**.
    Preguntársela antes de tocar nada de ventas.
-4. **Recordatorios.** Versión barata: en el tablero del líder, junto a quien va
+3. **Recordatorios.** Versión barata: en el tablero del líder, junto a quien va
    atrasado, un botón que abra `https://wa.me/?text=…` con el mensaje escrito.
    Notificaciones de verdad: plan Blaze + Cloud Function + FCM, y en iPhone solo
    con la app instalada e iOS 16.4+.
-5. **Que el socio vea a su equipo** ("7 de 10 ya cerraron hoy"). Es decisión
+4. **Que el socio vea a su equipo** ("7 de 10 ya cerraron hoy"). Es decisión
    suya: hoy la app promete que la constancia de cada uno solo la ve el líder.
    Tendría que ser opcional y cambiar las reglas de `resumenes/`.
-6. README desactualizado (menor).
+5. README desactualizado (menor).
 
 ## Cómo trabaja él
 
