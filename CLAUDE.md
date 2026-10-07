@@ -95,12 +95,24 @@ extraídos del HTML atrapa errores de sintaxis sin abrir el navegador.
 Las pestañas se llaman en pantalla **Hoy · Gente · Números · Ajustes**, pero en
 el código conservan sus ids de antes: `hoy`, `prospectos`, `metricas`, `ajustes`
 (`irA()`, `#tab-…`, `pintarProspectos()`, `pintarMetricas()`). La pantalla Hoy,
-de arriba abajo: tira de los últimos 7 días → bloque de estado (anillo con la
-marca del 80%, mensaje, pie, aviso de atrasados) → actividades (tarjeta "Te
-recomiendo" y luego la lista: empezadas, sin empezar, cumplidas tachadas,
-pausadas; ver `acomodarMetas()`) → "Hoy le
-escribes a" (seguimientos) → resultados del mes (ventas/socios con − y +) →
-"Ventas de <mes>" → agenda.
+de arriba abajo: encabezado `.hero` (saludo, fecha y mensaje del día a la
+izquierda, anillo grande a la derecha, chips del pie debajo) → tira de los
+últimos 7 días en anillos chicos (`pintarSemana()`) → aviso de atrasados →
+actividades (tarjeta "Te recomiendo" y luego una tarjeta por actividad:
+empezadas, sin empezar, cumplidas tachadas, pausadas; ver `acomodarMetas()`) →
+"Hoy le escribes a" (seguimientos) → resultados del mes (ventas/socios con − y
++) → "Ventas de <mes>" → agenda.
+
+**Interfaz (07-10-2026, él la pidió a partir de una captura que le gustó):**
+letra Outfit (títulos y cifras, `--f-display`) + Manrope (texto, `--f-body`)
+de Google Fonts; sin señal cae a la del sistema. Colores: los verdes de
+siempre (él pidió no cambiarlos). Cada actividad tiene ícono y color en
+`ESTILO_ACT` (las creadas por un socio caen en `estiloAct()` por hash); el "+"
+va dentro de un aro que muestra el avance. Las demás pestañas llevan su
+nombre en grande (`#cabecera`/`#tituloTab`, oculto en Hoy). Agregar prospecto
+es el botón central de la barra de abajo (`.nav-fab`); ya no hay `.fab`
+flotante. La hoja del detalle de un día sigue con la fila `.meta` sencilla:
+el estilo de tarjeta está acotado a `#listaMetas`.
 
 ```
 datos = {
