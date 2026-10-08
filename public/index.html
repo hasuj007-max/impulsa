@@ -77,7 +77,7 @@ body{min-height:100%;
     radial-gradient(70% 35% at 90% -5%, rgba(34,197,94,.14), transparent 65%),
     var(--bg);
   color:var(--ink);
-  padding-bottom:calc(112px + env(safe-area-inset-bottom));
+  padding-bottom:calc(100px + env(safe-area-inset-bottom));
   -webkit-font-smoothing:antialiased;
 }
 /* Título grande de pestaña (Gente, Números, Ajustes). En Hoy no sale: ahí
@@ -643,14 +643,15 @@ main{padding:0 16px}
 .btn-log{width:42px;border:none;border-radius:12px;background:var(--grad);color:var(--sobre-verde);font-size:19px;font-weight:800;cursor:pointer;flex:none}
 
 /* ---------- Navegación ----------
-   Barra flotante con las cuatro pestañas y, al centro, el botón grande para
-   agregar un prospecto. */
-nav{position:fixed;left:0;right:0;bottom:0;z-index:30;pointer-events:none;
-  padding:0 12px calc(10px + env(safe-area-inset-bottom))}
-.nav-in{pointer-events:auto;max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);align-items:end;
-  height:70px;border-radius:28px;background:var(--nav);border:1px solid var(--line2);
-  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 10px 30px rgba(0,0,0,.25)}
-nav button{background:none;border:none;padding:0 0 11px;display:flex;flex-direction:column;align-items:center;gap:5px;
+   Barra pegada al fondo, de orilla a orilla y con fondo sólido, con las cuatro
+   pestañas y, al centro, el botón grande para agregar un prospecto. Flotante
+   (despegada del borde y translúcida) se asomaba el contenido por debajo y
+   alrededor, y en el teléfono parecía que la barra se iba a caer. */
+nav{position:fixed;left:0;right:0;bottom:0;z-index:30;
+  background:var(--bg);border-top:1px solid var(--line2);
+  padding-bottom:env(safe-area-inset-bottom)}
+.nav-in{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);align-items:end;height:64px}
+nav button{background:none;border:none;padding:0 0 10px;display:flex;flex-direction:column;align-items:center;gap:5px;
   font-family:inherit;font-size:11px;font-weight:700;color:var(--ink-soft);cursor:pointer}
 nav button svg{display:block}
 nav button.activa{color:var(--verde)}
@@ -658,7 +659,7 @@ nav button.activa{color:var(--verde)}
 .nav-fab .bola{width:62px;height:62px;margin-top:-30px;border-radius:50%;background:var(--grad);color:var(--sobre-verde);
   display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 6px var(--bg),0 12px 26px -6px rgba(34,197,94,.65)}
 .nav-fab:active .bola{transform:scale(.94)}
-.toast{position:fixed;left:50%;transform:translateX(-50%) translateY(20px);bottom:calc(104px + env(safe-area-inset-bottom));background:#1B2130;border:1px solid var(--line2);color:#fff;padding:11px 20px;border-radius:999px;font-size:13px;font-weight:700;opacity:0;transition:.25s;z-index:60;pointer-events:none;white-space:nowrap;display:flex;align-items:center;gap:12px}
+.toast{position:fixed;left:50%;transform:translateX(-50%) translateY(20px);bottom:calc(92px + env(safe-area-inset-bottom));background:#1B2130;border:1px solid var(--line2);color:#fff;padding:11px 20px;border-radius:999px;font-size:13px;font-weight:700;opacity:0;transition:.25s;z-index:60;pointer-events:none;white-space:nowrap;display:flex;align-items:center;gap:12px}
 .toast.ver{opacity:1;transform:translateX(-50%) translateY(0)}
 .toast.con-accion{pointer-events:auto}
 .toast-btn{background:none;border:none;color:var(--verde);font-size:13px;font-weight:800;cursor:pointer;text-decoration:underline}
