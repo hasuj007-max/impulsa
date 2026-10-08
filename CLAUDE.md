@@ -115,7 +115,7 @@ solo adorno: `snapshotMetas()` no lo copia, así que no toca los planes sellados
 ni la racha. El "+"
 va dentro de un aro que muestra el avance. Las demás pestañas llevan su
 nombre en grande (`#cabecera`/`#tituloTab`, oculto en Hoy). Agregar prospecto
-es el botón central de la barra de abajo (`.nav-fab`); ya no hay `.fab`
+es el botón central de la barra de abajo (`.nav-fab`), que es FLOTANTE a propósito (07-10: se probó pegarla al fondo y él la quiso de vuelta flotante); ya no hay `.fab`
 flotante. La hoja del detalle de un día sigue con la fila `.meta` sencilla:
 el estilo de tarjeta está acotado a `#listaMetas`.
 
