@@ -17,7 +17,7 @@ ni cuenta"; hoy es Firebase Hosting con cuentas de Google). Este archivo manda.
 
 ## Estado y pendientes (al 06-10-2026)
 
-Lo último desplegado es `impulsa-v36` (06-10-2026: el service worker ya no guarda la ventana del login ni toca otros orígenes). Pendiente, en el orden propuesto:
+Lo último desplegado es `impulsa-v37` (07-10-2026: interfaz nueva e íconos por actividad; la v36 del 06-10 fue el service worker sin la ventana del login). Pendiente, en el orden propuesto:
 
 1. **Respaldo de datos fresco** con `herramientas/respaldar.sh`: el último en
    `respaldos/` es del 02-09-2026, y desde entonces cambiaron las ventas y la

@@ -6,7 +6,7 @@
    - Otros orígenes (Firebase, Google) y las rutas reservadas de Firebase
      (/__/auth/… del login): ni se tocan, van directo a la red.
    Sube VERSION en cada despliegue para desalojar la caché anterior. */
-const VERSION = "impulsa-v36";
+const VERSION = "impulsa-v37";
 // Las dos rutas que SÍ son la app; ninguna otra navegación se guarda como index.html
 const RAIZ = new URL("./", self.location).pathname;
 const RUTAS_APP = [RAIZ, RAIZ + "index.html"];
