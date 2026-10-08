@@ -595,6 +595,17 @@ main{padding:0 16px}
    a la mitad y no había forma de leer lo que estabas editando. */
 .ajuste-meta{padding:10px 0;border-bottom:1px solid var(--line)}
 .ajuste-meta:last-child{border-bottom:none}
+.am-nombre{display:flex;align-items:center;gap:10px}
+.am-nombre input[type=text]{flex:1;min-width:0}
+.tile.am-icono{width:42px;height:42px;border-radius:13px;flex:none;cursor:pointer;padding:0}
+.tile.am-icono svg{width:20px;height:20px}
+.rejilla-iconos{display:grid;grid-template-columns:repeat(4,1fr);gap:8px 6px;margin-bottom:6px}
+.icono-op{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 2px;border:1px solid transparent;
+  border-radius:16px;background:none;color:var(--ink-soft);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;line-height:1.2}
+.icono-op .tile{width:46px;height:46px;border-radius:15px}
+.icono-op .tile svg{width:22px;height:22px}
+.icono-op.elegido{border-color:var(--verde);background:var(--green-soft);color:var(--ink)}
+#btnIconoAuto.activa{border-color:var(--verde);color:var(--verde)}
 .ajuste-meta input[type=text]{display:block;width:100%;padding:10px;border:1px solid var(--line);border-radius:12px;font-size:14px;background:var(--card2);color:var(--ink)}
 .ajuste-meta .bajo{display:flex;align-items:center;gap:8px;margin-top:7px}
 .ajuste-meta .bajo label{font-size:11.5px;font-weight:800;letter-spacing:.5px;
@@ -1120,6 +1131,16 @@ nav button.activa{color:var(--verde)}
   </div>
   <button class="btn btn-pri" onclick="guardarConteo()">Guardar</button>
   <button class="btn btn-sec" onclick="cerrarConteo()">Cancelar</button>
+</div>
+
+<!-- Hoja: escoger el ícono de una actividad (desde Ajustes → Mi plan diario) -->
+<div class="hoja" id="hojaIcono" role="dialog" aria-labelledby="iconoTitulo">
+  <div class="asa"></div>
+  <h3 id="iconoTitulo">Escoge un ícono</h3>
+  <p class="nota" style="margin:-6px 0 14px">Para <b id="iconoPara"></b></p>
+  <div class="rejilla-iconos" id="rejillaIconos"></div>
+  <button class="btn btn-sec" id="btnIconoAuto" onclick="elegirIcono('')">Automático, según el nombre</button>
+  <button class="btn btn-sec" onclick="cerrarIconos()">Cancelar</button>
 </div>
 
 <!-- Festejo al cerrar el día. Capa propia, encima de todo salvo la portada. -->
@@ -1941,20 +1962,52 @@ function recoHacer(){
 }
 
 /* Cada actividad lleva su ícono y su color, sacados de la paleta de la app.
-   Las que crea un socio caen en un ícono general y un color de la lista,
-   siempre el mismo para la misma actividad. */
+   Quien crea o edita una actividad puede escoger el ícono (Ajustes → Mi plan
+   diario, tocando el ícono); si no escoge, se adivina por el nombre ("Video en
+   vivo" → cámara) y, si nada coincide, sale la estrella con un color fijo para
+   esa actividad. El ícono escogido vive en `m.icono` y es solo de adorno: no
+   entra en el plan sellado de cada día (snapshotMetas) ni en ninguna cuenta. */
 const ICONOS_ACT = {
   chat:'<path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.5L4 20l1.2-4A8.5 8.5 0 1 1 21 11.5z"/>',
+  whatsapp:'<path d="M3 21l1.6-4.6A8.5 8.5 0 1 1 8 19.6z"/><path d="M9.2 8.6c.4 2.9 3 5.6 6 6.1l.9-1.7-2-1-1 .9c-1-.5-1.8-1.3-2.3-2.3l.9-1-1-2z"/>',
   ig:'<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".6"/>',
+  facebook:'<path d="M14 8h3V4h-3a4 4 0 0 0-4 4v3H7v4h3v6h4v-6h3l1-4h-4V8z"/>',
   musica:'<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>',
-  grupos:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  video:'<rect x="2" y="6" width="14" height="12" rx="3"/><path d="M16 10l6-3v10l-6-3z"/>',
+  foto:'<path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/>',
   historia:'<circle cx="12" cy="12" r="9" stroke-dasharray="4 3"/><path d="M12 8v8M8 12h8"/>',
-  producto:'<path d="M10 2h4v4l2 3v11a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V9l2-3z"/><path d="M8 13h8"/>',
   megafono:'<path d="M3 11v2a1 1 0 0 0 1 1h3l6 4V6L7 10H4a1 1 0 0 0-1 1z"/><path d="M17 9a4 4 0 0 1 0 6"/>',
   etiqueta:'<path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/>',
+  grupos:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
   amigo:'<path d="M15 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/>',
+  llamada:'<path d="M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A18 18 0 0 1 3 5a2 2 0 0 1 2-2z"/>',
+  correo:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
+  producto:'<path d="M10 2h4v4l2 3v11a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V9l2-3z"/><path d="M8 13h8"/>',
+  dinero:'<circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1-1.6-1.5-3-1.5-1.7 0-3 .8-3 2s1.3 1.7 3 2 3 .8 3 2-1.3 2-3 2c-1.4 0-2.5-.5-3-1.5M12 6v12"/>',
+  corazon:'<path d="M12 20s-7-4.5-9-9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c-2 4.5-9 9-9 9z"/>',
+  junta:'<rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+  libro:'<path d="M2 5h6a4 4 0 0 1 4 4v11a3 3 0 0 0-3-3H2z"/><path d="M22 5h-6a4 4 0 0 0-4 4v11a3 3 0 0 1 3-3h7z"/>',
+  idea:'<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/>',
+  pesa:'<path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12"/>',
   estrella:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>'
 };
+/* El catálogo que se ve al escoger: nombre y color de cada ícono. El orden es
+   el de la rejilla: primero lo de redes, luego lo de vender, luego lo demás. */
+const CATALOGO_ICONOS = [
+  ['chat','Mensajes','var(--verde)'],      ['whatsapp','WhatsApp','var(--green)'],
+  ['ig','Instagram','var(--et-interesado)'],['facebook','Facebook','var(--azul)'],
+  ['musica','TikTok','var(--et-socio)'],   ['video','Video','var(--et-socio)'],
+  ['foto','Foto','var(--gold)'],           ['historia','Historias','var(--et-nuevo)'],
+  ['megafono','Publicar','var(--azul)'],   ['etiqueta','Vender','var(--gold)'],
+  ['grupos','Grupos','var(--et-contactado)'],['amigo','Agregar gente','var(--et-contactado)'],
+  ['llamada','Llamar','var(--verde)'],     ['correo','Correo','var(--azul)'],
+  ['producto','Producto','var(--green)'],  ['dinero','Dinero','var(--gold)'],
+  ['corazon','Clientes','var(--et-interesado)'],['junta','Junta o evento','var(--et-nuevo)'],
+  ['libro','Leer','var(--et-nuevo)'],      ['idea','Aprender','var(--gold)'],
+  ['pesa','Ejercicio','var(--et-interesado)'],['estrella','Otra','var(--verde)']
+];
+const COLOR_ICONO = Object.fromEntries(CATALOGO_ICONOS.map(([k,,c])=>[k,c]));
+/* El plan de la app, con su ícono y color de siempre */
 const ESTILO_ACT = {
   conv:['chat','var(--verde)'],          fbgr:['megafono','var(--azul)'],
   mkt:['etiqueta','var(--gold)'],        tiktok:['musica','var(--et-socio)'],
@@ -1962,11 +2015,51 @@ const ESTILO_ACT = {
   hist:['historia','var(--et-nuevo)'],   gruposfb:['grupos','var(--et-contactado)'],
   producto:['producto','var(--green)']
 };
+/* Palabras del nombre → ícono. Gana la PRIMERA que coincida, así que lo más
+   específico va arriba: "Conversaciones por Facebook" es un mensaje antes que
+   Facebook, y "Grupos de FB" es grupos. Se compara sin acentos. */
+const PISTAS_ICONO = [
+  [/whats|wpp|wasap/, 'whatsapp'],
+  [/tik ?tok/, 'musica'],
+  [/histori|stor/, 'historia'],
+  [/video|reel|en vivo|live|transmi/, 'video'],
+  [/foto|selfie/, 'foto'],
+  [/grupo/, 'grupos'],
+  [/llama|telefon|marcar/, 'llamada'],
+  [/mensaje|conversa|chat|escrib|platic|\bdm\b|inbox/, 'chat'],
+  [/dinero|cobr|pago|ahorr|deposit/, 'dinero'],
+  [/market|vend|venta|catalogo|pedido/, 'etiqueta'],
+  [/public|post|anunci|compart/, 'megafono'],
+  [/agreg|amig|segui|contacto/, 'amigo'],
+  [/insta|\big\b/, 'ig'],
+  [/face|\bfb\b/, 'facebook'],
+  [/correo|mail/, 'correo'],
+  [/producto|suplement|toma tu|tomar/, 'producto'],
+  [/junta|reuni|evento|cita|zoom|capacitacion|presentacion/, 'junta'],
+  [/leer|libro|lectura/, 'libro'],
+  [/aprend|curso|estudi|idea/, 'idea'],
+  [/ejercicio|gym|gimnasio|entren|camin|correr/, 'pesa'],
+  [/cliente|recompra|seguimiento/, 'corazon']
+];
+function adivinarIcono(nombre){
+  const t = (nombre||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+  const p = PISTAS_ICONO.find(([re]) => re.test(t));
+  return p ? p[1] : null;
+}
 const COLORES_ACT = ['var(--verde)','var(--azul)','var(--gold)','var(--et-socio)','var(--et-interesado)','var(--et-contactado)'];
-function estiloAct(m){
+/* [ícono, color] de una actividad. `nombre` permite previsualizar mientras se
+   escribe en el editor, antes de guardar. */
+function estiloAct(m, nombre = m.nombre){
+  if(m.icono && ICONOS_ACT[m.icono]) return [m.icono, COLOR_ICONO[m.icono]];
   if(ESTILO_ACT[m.id]) return ESTILO_ACT[m.id];
+  const k = adivinarIcono(nombre);
+  if(k) return [k, COLOR_ICONO[k]];
   let h = 0; for(const c of m.id) h = (h*31 + c.charCodeAt(0)) >>> 0;
   return ['estrella', COLORES_ACT[h % COLORES_ACT.length]];
+}
+function tileAct(m, nombre){
+  const [k] = estiloAct(m, nombre);
+  return `<svg viewBox="0 0 24 24">${ICONOS_ACT[k]}</svg>`;
 }
 const C_ARO_MAS = 2*Math.PI*26;
 
@@ -2625,7 +2718,7 @@ function cerrarDia(){
   document.getElementById("velo").classList.remove("abierta");
 }
 function cerrarTodo(){
-  cerrarFormulario(); cerrarDia(); cerrarVenta(); cerrarConteo();
+  cerrarFormulario(); cerrarDia(); cerrarVenta(); cerrarConteo(); cerrarIconos();
 }
 
 /* =================== PLANTILLAS =================== */
@@ -3256,7 +3349,11 @@ function pintarAjustes(){
      forma de leer lo que estabas editando. */
   document.getElementById("editorMetas").innerHTML = datos.metas.map((m,i)=>`
     <div class="ajuste-meta">
-      <input type="text" value="${esc(m.nombre)}" data-i="${i}" data-campo="nombre" aria-label="Nombre de la actividad">
+      <div class="am-nombre">
+        <button class="tile am-icono" id="amIcono${i}" style="--h:${estiloAct(m)[1]}" onclick="abrirIconos(${i})"
+          aria-label="Cambiar el ícono de ${esc(m.nombre)}">${tileAct(m)}</button>
+        <input type="text" value="${esc(m.nombre)}" data-i="${i}" data-campo="nombre" aria-label="Nombre de la actividad">
+      </div>
       <div class="bajo">
         <label>Objetivo al día</label>
         <input type="number" min="0" value="${m.objetivo}" data-i="${i}" data-campo="objetivo" aria-label="Objetivo diario de ${esc(m.nombre)}">
@@ -3326,6 +3423,51 @@ function quitarMeta(i){
   datos.metas.splice(i,1); resellarHoy(); reacomodarMetas();
   guardar(); pintarAjustes(); pintarHoy();
 }
+/* ---- Escoger el ícono de una actividad ---- */
+let iconoPara = null;   // índice en datos.metas de la actividad que se edita
+function abrirIconos(i){
+  const m = datos.metas[i]; if(!m) return;
+  iconoPara = i;
+  // el nombre que esté tecleado ahora, aunque todavía no se haya guardado
+  const campo = document.querySelector(`#editorMetas input[data-i="${i}"][data-campo="nombre"]`);
+  const nombre = (campo && campo.value.trim()) || m.nombre;
+  const [actual] = estiloAct(m, nombre);
+  document.getElementById("iconoPara").textContent = nombre;
+  document.getElementById("rejillaIconos").innerHTML = CATALOGO_ICONOS.map(([k, etiqueta, color])=>`
+    <button class="icono-op ${k===actual?"elegido":""}" onclick="elegirIcono('${k}')" aria-pressed="${k===actual}">
+      <span class="tile" style="--h:${color}"><svg viewBox="0 0 24 24">${ICONOS_ACT[k]}</svg></span>
+      <span>${etiqueta}</span></button>`).join("");
+  document.getElementById("btnIconoAuto").classList.toggle("activa", !m.icono);
+  document.getElementById("velo").classList.add("abierta");
+  document.getElementById("hojaIcono").classList.add("abierta");
+}
+function cerrarIconos(){
+  iconoPara = null;
+  document.getElementById("hojaIcono").classList.remove("abierta");
+  document.getElementById("velo").classList.remove("abierta");
+}
+/* '' = automático: se vuelve a adivinar por el nombre. Se guarda al momento,
+   como agregar o quitar una actividad, para no perder lo ya tecleado. */
+function elegirIcono(k){
+  const m = datos.metas[iconoPara]; if(!m) return;
+  leerEditorMetas();
+  if(k) m.icono = k; else delete m.icono;
+  resellarHoy(); reacomodarMetas(); guardar();
+  cerrarIconos(); pintarAjustes(); pintarHoy();
+  avisar(k ? "Ícono cambiado ✓" : "El ícono se elige solo por el nombre ✓");
+}
+/* Mientras se escribe el nombre de una actividad sin ícono escogido, el ícono
+   se va adivinando en vivo: "Video en vivo" pasa a la cámara al teclearlo. */
+document.getElementById("editorMetas").addEventListener("input", e=>{
+  const inp = e.target;
+  if(inp.dataset.campo !== "nombre") return;
+  const i = +inp.dataset.i, m = datos.metas[i], tile = document.getElementById("amIcono"+i);
+  if(!m || !tile || m.icono) return;
+  const [, color] = estiloAct(m, inp.value);
+  tile.style.setProperty("--h", color);
+  tile.innerHTML = tileAct(m, inp.value);
+});
+
 function guardarMetas(){
   leerEditorMetas();
   resellarHoy();  // solo hoy adopta los cambios; los días cerrados no se tocan

@@ -106,8 +106,13 @@ empezadas, sin empezar, cumplidas tachadas, pausadas; ver `acomodarMetas()`) →
 **Interfaz (07-10-2026, él la pidió a partir de una captura que le gustó):**
 letra Outfit (títulos y cifras, `--f-display`) + Manrope (texto, `--f-body`)
 de Google Fonts; sin señal cae a la del sistema. Colores: los verdes de
-siempre (él pidió no cambiarlos). Cada actividad tiene ícono y color en
-`ESTILO_ACT` (las creadas por un socio caen en `estiloAct()` por hash); el "+"
+siempre (él pidió no cambiarlos). Ícono de cada actividad, en este orden
+(`estiloAct()`): el que el socio escogió (`m.icono`, desde Ajustes → Mi plan
+diario tocando el ícono; catálogo de 22 en `CATALOGO_ICONOS`) → el del plan de
+la app (`ESTILO_ACT` por id) → adivinado por el nombre (`PISTAS_ICONO`, gana la
+primera palabra que coincide) → estrella con color fijo por hash. `m.icono` es
+solo adorno: `snapshotMetas()` no lo copia, así que no toca los planes sellados
+ni la racha. El "+"
 va dentro de un aro que muestra el avance. Las demás pestañas llevan su
 nombre en grande (`#cabecera`/`#tituloTab`, oculto en Hoy). Agregar prospecto
 es el botón central de la barra de abajo (`.nav-fab`); ya no hay `.fab`
