@@ -95,29 +95,22 @@ extraídos del HTML atrapa errores de sintaxis sin abrir el navegador.
 Las pestañas se llaman en pantalla **Hoy · Gente · Números · Ajustes**, pero en
 el código conservan sus ids de antes: `hoy`, `prospectos`, `metricas`, `ajustes`
 (`irA()`, `#tab-…`, `pintarProspectos()`, `pintarMetricas()`). La pantalla Hoy,
-de arriba abajo: encabezado `.hero` (saludo, fecha y mensaje del día a la
-izquierda, anillo grande a la derecha, chips del pie debajo) → tira de los
-últimos 7 días en anillos chicos (`pintarSemana()`) → aviso de atrasados →
-actividades (tarjeta "Te recomiendo" y luego una tarjeta por actividad:
-empezadas, sin empezar, cumplidas tachadas, pausadas; ver `acomodarMetas()`) →
-"Hoy le escribes a" (seguimientos) → resultados del mes (ventas/socios con − y
-+) → "Ventas de <mes>" → agenda.
+de arriba abajo: tira de los últimos 7 días → bloque de estado (anillo con la
+marca del 80%, mensaje, pie, aviso de atrasados) → actividades (tarjeta "Te
+recomiendo" y luego la lista: empezadas, sin empezar, cumplidas tachadas,
+pausadas; ver `acomodarMetas()`) → "Hoy le
+escribes a" (seguimientos) → resultados del mes (ventas/socios con − y +) →
+"Ventas de <mes>" → agenda.
 
-**Interfaz (07-10-2026, él la pidió a partir de una captura que le gustó):**
-letra Outfit (títulos y cifras, `--f-display`) + Manrope (texto, `--f-body`)
-de Google Fonts; sin señal cae a la del sistema. Colores: los verdes de
-siempre (él pidió no cambiarlos). Ícono de cada actividad, en este orden
-(`estiloAct()`): el que el socio escogió (`m.icono`, desde Ajustes → Mi plan
-diario tocando el ícono; catálogo de 22 en `CATALOGO_ICONOS`) → el del plan de
-la app (`ESTILO_ACT` por id) → adivinado por el nombre (`PISTAS_ICONO`, gana la
-primera palabra que coincide) → estrella con color fijo por hash. `m.icono` es
-solo adorno: `snapshotMetas()` no lo copia, así que no toca los planes sellados
-ni la racha. El "+"
-va dentro de un aro que muestra el avance. Las demás pestañas llevan su
-nombre en grande (`#cabecera`/`#tituloTab`, oculto en Hoy). Agregar prospecto
-es el botón central de la barra de abajo (`.nav-fab`), que es FLOTANTE a propósito (07-10: se probó pegarla al fondo y él la quiso de vuelta flotante); ya no hay `.fab`
-flotante. La hoja del detalle de un día sigue con la fila `.meta` sencilla:
-el estilo de tarjeta está acotado a `#listaMetas`.
+**Este diseño es el que él quiere.** Del 07 al 10-10-2026 estuvo publicada
+(v37) una interfaz nueva copiada de una captura que le gustó: encabezado con
+anillo grande, semana en anillos, una tarjeta por actividad con ícono de color
+y catálogo de íconos, letra Outfit + Manrope y barra flotante con botón
+central. Después de usarla dijo "me gustaba la interfaz anterior" y se regresó
+toda (v38). El código está en los commits `62c043d` (interfaz) y `d29240c`
+(íconos) por si un día quiere recuperar alguna pieza; no volver a proponerla
+entera. Puede que algunas actividades traigan `icono` de esos días: el código
+actual lo ignora.
 
 ```
 datos = {
@@ -219,7 +212,8 @@ en `public/index.html` (qué paneles se ven) y `esAdmin()` en `firestore.rules`
 - **La guía de primera vez** (3 pantallas) sale una vez por aparato
   (`impulsa_guia` en localStorage). **Si cambia cómo funciona algo que la guía
   explica, subir `GUIA_VERSION`** y la vuelve a ver toda la red. Se reabre
-  desde Ajustes.
+  desde Ajustes. La comparación es numérica (`>=`): la "2" ya se usó en la
+  interfaz que se retiró, así que la próxima subida tiene que ser "3".
 - **Recomendación del día** (`empujonDelDia()`, 27-09-2026, pedida por él):
   una sola actividad, con su porqué en `POR_QUE` por id (las actividades que
   cree un socio caen en un texto general). Orden: la más avanzada desde la
