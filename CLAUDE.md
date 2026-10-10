@@ -43,6 +43,10 @@ Lo último desplegado es `impulsa-v38` (10-10-2026: regreso al diseño anterior;
 - **Siempre preguntar antes de desplegar** — cada despliegue le llega a toda la
   red. Suele contestar "sí, despliega". Después de desplegar, verificar en vivo.
 - Quiere gastar pocos tokens: leer este archivo en vez de re-explorar.
+- Cuando pida "mejoras", "pulir" o "busca bugs", existe el subagente
+  `pulidor-impulsa` (`.claude/agents/`): revisa y propone una lista priorizada,
+  sin editar ni desplegar. Lo que el dueño apruebe lo implementa el agente
+  principal.
 
 ## Comandos
 
