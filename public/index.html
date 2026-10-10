@@ -1500,6 +1500,7 @@ function irA(nombre, btn){
    sitio y la lista se acomoda sola un momento después del último toque. */
 let ordenMetas = null;
 let reacomodoPendiente = null;
+const ESPERA_REACOMODO = 4000;   // ms sin tocar antes de reacomodar la lista
 
 /* Orden: las que ya empezaste (lo que tienes en la mano, pedido por él), las
    que no has tocado, las cumplidas y las pausadas. Dentro de cada grupo, el
@@ -1532,9 +1533,13 @@ function contar(idMeta, delta){
   guardar();
   pintarHoy({vivo:true});   // repinta en el MISMO orden y sin tocar el mensaje: nada salta
   /* ...y la lista se asienta cuando dejas de tocar. Cada toque reinicia la
-     espera, así que contando rápido no se mueve nada. */
+     espera, así que contando seguido no se mueve nada. Eran 900 ms y no
+     alcanzaba a quien cuenta con calma: con las empezadas arriba, el primer
+     "+" de una actividad sin empezar la subía casi al segundo, otra quedaba en
+     su lugar y el siguiente toque le sumaba a la equivocada. Con 4 s el dedo
+     ya se fue antes de que algo cambie de sitio. */
   clearTimeout(reacomodoPendiente);
-  reacomodoPendiente = setTimeout(()=>{ reacomodarMetas(); pintarHoy(); }, 900);
+  reacomodoPendiente = setTimeout(()=>{ reacomodarMetas(); pintarHoy(); }, ESPERA_REACOMODO);
   if(delta>0){
     /* Dos rayas: 80% gana el día (cuenta para la racha) y 100% lo hace
        perfecto. Si un solo toque cruza las dos, sale el perfecto, que ya
@@ -2795,15 +2800,14 @@ function guardarProspecto(){
     sellarEtapa(registro, registro.etapa);
     datos.prospectos.push(registro);
   }
-  // Llegar por primera vez a Contactado/En conversación suma 1 conversación
-  let extra="";
-  const abreConv = ["Contactado","En conversación"].includes(registro.etapa);
-  if(abreConv && !yaConversado){
-    const dia=diaDe(hoy()); dia["conv"]=(dia["conv"]||0)+1;
-    extra=" · +1 conversación";
-  }
+  /* Llegar por primera vez a Contactado/En conversación suma 1 conversación.
+     Pasa por contar(), igual que el "+": antes se sumaba a mano y, si esa
+     conversación era la que llevaba el día al 80% o al 100%, el festejo no
+     salía — y como ya no había raya que cruzar, no salía en todo el día. */
+  const sumaConv = ["Contactado","En conversación"].includes(registro.etapa) && !yaConversado;
   guardar(); cerrarFormulario(true); pintarProspectos(); pintarHoy();
-  avisar("Guardado ✓"+extra);
+  avisar("Guardado ✓"+(sumaConv? " · +1 conversación" : ""));
+  if(sumaConv) contar("conv", 1);
 }
 function eliminarProspecto(){
   if(!editandoId) return;
@@ -3163,6 +3167,16 @@ function quitarMeta(i){
   datos.metas.splice(i,1); resellarHoy(); reacomodarMetas();
   guardar(); pintarAjustes(); pintarHoy();
 }
+/* Lo que se escribe en el plan se guarda al salir de cada campo (el evento
+   `change`), sin depender del botón: antes, cambiar un objetivo y salirse de
+   Ajustes lo perdía sin avisar, y el botón "Guardar metas" quedaba hasta abajo
+   de toda la lista. */
+document.getElementById("editorMetas").addEventListener("change", ()=>{
+  leerEditorMetas();
+  resellarHoy(); reacomodarMetas(); guardar();
+  pintarHoy(); pintarAjustes();
+  avisar("Guardado ✓");
+});
 function guardarMetas(){
   leerEditorMetas();
   resellarHoy();  // solo hoy adopta los cambios; los días cerrados no se tocan

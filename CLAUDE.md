@@ -15,24 +15,21 @@ líneas). `public/sw.js` es el service worker. En vivo en
 ⚠️ **El `README.md` está desactualizado** (dice GitHub Pages y "no hay servidor
 ni cuenta"; hoy es Firebase Hosting con cuentas de Google). Este archivo manda.
 
-## Estado y pendientes (al 06-10-2026)
+## Estado y pendientes (al 10-10-2026)
 
-Lo último desplegado es `impulsa-v38` (10-10-2026: regreso al diseño anterior; la v37 del 07-10 fue la interfaz nueva que se retiró). Pendiente, en el orden propuesto:
+Lo último desplegado es `impulsa-v38` (10-10-2026: regreso al diseño anterior; la v37 del 07-10 fue la interfaz nueva que se retiró). Último respaldo en `respaldos/`: 10-10-2026 (17 cuentas, ninguna perdió datos contra el del 02-09). Pendiente, en el orden propuesto:
 
-1. **Respaldo de datos fresco** con `herramientas/respaldar.sh`: el último en
-   `respaldos/` es del 02-09-2026, y desde entonces cambiaron las ventas y la
-   regla de la racha.
-2. **Ventas: rediseñar el modelo.** Él dijo que "venta en pesos + ganancia en
+1. **Ventas: rediseñar el modelo.** Él dijo que "venta en pesos + ganancia en
    dólares" está mal planteado y tiene otra idea que **aún no ha contado**.
    Preguntársela antes de tocar nada de ventas.
-3. **Recordatorios.** Versión barata: en el tablero del líder, junto a quien va
+2. **Recordatorios.** Versión barata: en el tablero del líder, junto a quien va
    atrasado, un botón que abra `https://wa.me/?text=…` con el mensaje escrito.
    Notificaciones de verdad: plan Blaze + Cloud Function + FCM, y en iPhone solo
    con la app instalada e iOS 16.4+.
-4. **Que el socio vea a su equipo** ("7 de 10 ya cerraron hoy"). Es decisión
+3. **Que el socio vea a su equipo** ("7 de 10 ya cerraron hoy"). Es decisión
    suya: hoy la app promete que la constancia de cada uno solo la ve el líder.
    Tendría que ser opcional y cambiar las reglas de `resumenes/`.
-5. README desactualizado (menor).
+4. README desactualizado (menor).
 
 ## Cómo trabaja él
 
@@ -177,9 +174,13 @@ en `public/index.html` (qué paneles se ven) y `esAdmin()` en `firestore.rules`
   fila cambia de tamaño o de sitio, la fila de abajo sube al punto que acaban
   de tocar y el siguiente toque le suma a la actividad equivocada — y ese número
   se guarda y se sincroniza. Pasó dos veces. Lo que lo sostiene:
-  - `ordenMetas` congela el orden; la lista se reacomoda 900 ms después del
-    último toque (y al abrir, entrar a la pestaña, cambiar de día, sincronizar o
-    editar el plan).
+  - `ordenMetas` congela el orden; la lista se reacomoda `ESPERA_REACOMODO`
+    (4 s) después del último toque (y al abrir, entrar a la pestaña, cambiar de
+    día, sincronizar o editar el plan). Eran 900 ms y no alcanzaba: con las
+    empezadas arriba, contar con calma movía la lista bajo el dedo (10-10-2026).
+  - Todo lo que sume a una actividad pasa por `contar()` (el "+", la hoja de
+    conteo, la conversación que suma un prospecto nuevo): ahí viven el festejo
+    y el orden congelado. Sumar a mano en `dia[...]` se salta el festejo.
   - `pintarHoy({vivo:true})` —lo que usa `contar()`— NO toca el mensaje ni el
     pie, que están encima de la lista y cambian de renglones (medido: el primer
     toque del día la subía 23 px). Se ponen al día al asentarse.
@@ -231,6 +232,9 @@ en `public/index.html` (qué paneles se ven) y `esAdmin()` en `firestore.rules`
 - **Las filas de gente no llevan botón de chat ni etiqueta de etapa**: él los
   pidió fuera ("ya sé por dónde lo voy a contactar"). No volver a ponerlos ni
   meter el chat en la ficha. La etapa se ve en la ficha y en el filtro.
+- **El plan diario (Ajustes) se guarda solo** al salir de cada campo (evento
+  `change` en `#editorMetas`); el botón "Guardar metas" sigue, pero ya no hace
+  falta.
 - **Tocar el número de una actividad abre una hoja para escribirlo** (+5, +10,
   "Todas"). Existe porque el plan por defecto suma 145 unidades al día y el "+"
   va de uno en uno. El campo no se autoenfoca a propósito: el teclado taparía
