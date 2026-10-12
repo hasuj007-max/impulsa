@@ -186,8 +186,10 @@ en `public/index.html` (qué paneles se ven) y `esAdmin()` en `firestore.rules`
     toque del día la subía 23 px). Se ponen al día al asentarse.
   - La tarjeta "💡 Te recomiendo" (`#reco`, arriba de la lista) tiene alto
     fijo: nombre a 1 renglón, porqué reservado a 2, cuenta a 1 (medido: 141 px
-    con cualquier actividad). En `vivo` sostiene la misma actividad
-    (`recoFija`) y no se muestra ni se oculta. La fila recomendada solo lleva
+    con cualquier actividad). Su texto se recalcula en cada toque
+    (cambiarlo no mueve nada); lo que NO puede pasar en `vivo` es que se
+    muestre u oculte: si ya no queda nada pendiente, sostiene la última
+    (`recoFija`) con "La tachaste" hasta asentarse. La fila recomendada solo lleva
     tinte con `box-shadow`, que no ocupa espacio.
   **Cualquier cosa nueva en Hoy tiene que respetar esto.** Medirlo: contar de 0
   a 79% con `contar()` y comprobar que `#listaMetas` no cambia de `top`.

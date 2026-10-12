@@ -1881,10 +1881,14 @@ function pintarHoy(op = {}){
   if(ordenMetas && (ordenMetas.length !== datos.metas.length
                     || ordenMetas.some(id => !porId[id]))) ordenMetas = null;
   if(!ordenMetas) ordenMetas = acomodarMetas();
-  /* Mientras cuentas (`vivo`) la recomendación se sostiene en la misma
-     actividad y la tarjeta ni aparece ni desaparece: está encima de la lista.
-     Se elige de nuevo cuando la lista se asienta. */
-  const empujon = empujonDelDia(op.vivo ? recoFija : null);
+  /* La recomendación se elige de nuevo en cada toque: la tarjeta tiene alto
+     fijo, así que cambiar su texto no mueve la lista. Antes se sostenía la
+     misma actividad hasta que la lista se asentaba, y al tachar la recomendada
+     la tarjeta se quedaba diciendo "La tachaste" hasta 15 s si seguías tocando.
+     Lo único que no puede pasar mientras cuentas es que la tarjeta aparezca o
+     desaparezca (eso sí mueve la lista): si ya no queda nada pendiente, se
+     sostiene la última con su "La tachaste" y se esconde al asentarse. */
+  const empujon = empujonDelDia(null) || (op.vivo ? empujonDelDia(recoFija) : null);
   recoFija = empujon && empujon.id;
   const reco = document.getElementById("reco");
   if(!op.vivo) reco.classList.toggle("oculto", !empujon);
