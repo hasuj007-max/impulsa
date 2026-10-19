@@ -3258,20 +3258,6 @@ function sumaEmbudo(desde){
 const porc = (a,b) => b ? Math.round(a/b*100) : 0;
 // para mostrar: abajo de 1% con un decimal, que "0%" de algo que sí pasa confunde
 const porcTxt = (a,b) => { if(!b || !a) return "0"; const p = a/b*100; return p < 1 ? p.toFixed(1) : String(Math.round(p)); };
-/* "De cada 10 con la info, 3 compran"; con menos de 1 de cada 10 se dice al
-   revés ("1 de cada 25 con la info se inscribe") para no decir "0 de cada 10".
-   Con pocas personas (menos de POCOS) se dicen los números exactos ("De 14
-   con la info, 2 se inscribieron"): el redondeo hacía que 1 de 14 y 2 de 14
-   salieran los dos como "1 de cada 10", con porcentajes distintos al lado. */
-const POCOS = 30;
-function deCadaInfo(a, b, plural, singular, pasadoPl, pasadoSg){
-  if(!a) return `Con la info, nadie ${singular} todavía`;
-  if(b < POCOS) return `De <b>${b}</b> con la info, <b>${a}</b> ${a===1? pasadoSg : pasadoPl}`;
-  const de10 = Math.round(a/b*10);
-  // abajo de 10% ("1 de cada 10" redondeado) se dice "1 de cada N": un 5% no es 1 de cada 10
-  return a/b >= 0.1 ? `De cada <b>10</b> con la info, <b>${de10}</b> ${de10===1? singular : plural}`
-                   : `<b>1</b> de cada <b>${Math.round(b/a)}</b> con la info ${singular}`;
-}
 function pintarEmbudoNum(){
   document.querySelectorAll("#selPeriodo button").forEach(b=>b.classList.toggle("activa", b.dataset.per===periodoNum));
   const t = sumaEmbudo(desdeDePeriodo(periodoNum));
@@ -3292,19 +3278,24 @@ function pintarEmbudoNum(){
     + `<div class="emb-finales">${fila("e-venta","Compraron", t.v)}${fila("e-socio","Se inscribieron", t.s)}</div>`
     + `<p class="nota">De la gente que agregaste ${nombrePer}, hasta dónde llegó. Solo cuenta la gente de Gente: las conversaciones de tus actividades no entran aquí.</p>`;
 
-  // las cinco tasas, cada una en palabras y con su fórmula
-  const tasa = (cls, frase, p, formula) => `<div class="tasa ${cls}"><div class="td">${frase}</div><div class="tp">${p}%</div><div class="tf">${formula}</div></div>`;
+  /* Una frase por resultado, que dice qué hacer: "Para 1 venta: agrega a 17
+     personas y dale la info a 10". Antes eran las cinco fórmulas del prompt
+     de Gemini por separado, y dos pares ("1 de cada 10 con la info se
+     inscribe" y "1 socio por cada 13 personas") se leían como repetidos; él
+     no entendía por qué había dos estadísticas de lo mismo. Abajo de cada
+     frase, los números de donde sale, para que se vea que no es inventada. */
+  const tasa = (cls, frase, p, formula) => `<div class="tasa ${cls}"><div class="td">${frase}</div><div class="tp">${p}</div>${formula ? `<div class="tf">${formula}</div>` : ""}</div>`;
+  const paraUno = (n, que, cls, nadie) => n
+    ? tasa(cls, `Para <b>1 ${que}</b>: agrega a <b>${Math.max(1, Math.round(t.c/n))}</b> personas y dale la info a <b>${Math.max(1, Math.round(t.r/n))}</b>`, "",
+           `${n} de ${t.c} personas · ${n} de ${t.r} con la info`)
+    : tasa(cls, nadie, "", "");
   let tasas = "";
   if(todo.c < BASE_PROB){
     tasas = `<p class="nota" style="margin:0">Aparecen al llegar a ${BASE_PROB} personas en Gente.</p>`;
   }else{
-    tasas += tasa("e-info", t.c < POCOS
-        ? `De <b>${t.c}</b> personas que agregaste, a <b>${t.r}</b> les diste la info`
-        : `De cada <b>100</b> personas que agregas, a <b>${porc(t.r,t.c)}</b> les das la info`, porcTxt(t.r,t.c), "Interés · info ÷ personas");
-    tasas += tasa("e-venta", deCadaInfo(t.v, t.r, "compran", "compra", "compraron", "compró"), porcTxt(t.v,t.r), "Venta · compraron ÷ info");
-    tasas += tasa("e-socio", deCadaInfo(t.s, t.r, "se inscriben", "se inscribe", "se inscribieron", "se inscribió"), porcTxt(t.s,t.r), "Reclutamiento · se inscribieron ÷ info");
-    tasas += tasa("e-venta", t.v ? `<b>1 venta</b> por cada <b>${Math.round(t.c/t.v)}</b> personas` : "Nadie compró de esta gente", porcTxt(t.v,t.c), "Eficiencia para venta · compraron ÷ personas");
-    tasas += tasa("e-socio", t.s ? `<b>1 socio</b> por cada <b>${Math.round(t.c/t.s)}</b> personas` : "Nadie se inscribió de esta gente", porcTxt(t.s,t.c), "Eficiencia para socios · se inscribieron ÷ personas");
+    tasas += tasa("e-info", `A <b>${t.r} de ${t.c}</b> personas que agregaste les diste la info`, porcTxt(t.r,t.c)+"%", "");
+    tasas += paraUno(t.v, "venta", "e-venta", "Todavía nadie de esta gente ha comprado");
+    tasas += paraUno(t.s, "socio", "e-socio", "Todavía nadie de esta gente se ha inscrito");
     tasas += `<p class="nota">Es lo que ha pasado ${nombrePer}, no una promesa: entre más gente registres, más se acerca a tu realidad.${periodoNum==="mes" ? " En el mes, la gente que agregaste hace poco todavía no termina de decidir." : ""}</p>`;
   }
   document.getElementById("tasas").innerHTML = tasas;
