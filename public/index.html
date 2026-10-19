@@ -405,9 +405,20 @@ main{padding:0 16px}
 .chip.activa b{color:var(--sobre-verde)}
 .busca-fila{display:flex;gap:8px;margin-bottom:11px}
 .busca-fila .buscador{flex:1;min-width:0;margin-bottom:0}
-.sel-etapa{flex:none;max-width:42%;padding:12px 10px;border:1px solid var(--line);
-  border-radius:14px;font-size:13px;font-weight:700;background:var(--card);color:var(--ink);
-  font-family:inherit}
+/* pasos del embudo: fila que se desliza en Gente, rejilla de botones en la ficha */
+.pasos{display:flex;gap:6px;overflow-x:auto;margin:0 -16px 12px;padding:0 16px 2px;scrollbar-width:none}
+.pasos::-webkit-scrollbar{display:none}
+.paso{flex:none;display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;border:1px solid var(--line2);
+  background:var(--card);font-family:inherit;font-size:12.5px;font-weight:800;color:var(--ink-soft);cursor:pointer;white-space:nowrap}
+.paso b{color:var(--ink);font-variant-numeric:tabular-nums}
+.paso.activa{background:var(--grad);border-color:transparent;color:var(--sobre-verde)}
+.paso.activa b{color:var(--sobre-verde)}
+.pasos-ficha{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.pasos-ficha button{border:1px solid var(--line2);background:var(--card2);border-radius:12px;padding:10px 4px;
+  font-family:inherit;font-size:12.5px;font-weight:800;color:var(--ink-soft);cursor:pointer;line-height:1.2}
+.pasos-ficha button.hecho{color:var(--verde);border-color:rgba(74,222,128,.35)}
+.pasos-ficha button.activa{background:var(--grad);border-color:transparent;color:var(--sobre-verde)}
+.pasos-ficha button.activa.no{background:var(--red-soft);color:var(--red)}
 .prospecto{display:flex;align-items:center;gap:11px;padding:13px 0;border-bottom:1px solid var(--line);cursor:pointer}
 .prospecto:last-child{border-bottom:none}
 .avatar{width:42px;height:42px;border-radius:13px;background:var(--green-soft);color:var(--verde2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;flex:none}
@@ -813,13 +824,16 @@ nav button.activa{color:var(--verde)}
   <section class="tab" id="tab-prospectos">
     <div class="busca-fila">
       <input class="buscador" id="buscador" type="search" placeholder="Buscar…">
-      <select class="sel-etapa" id="selEtapa" aria-label="Filtrar por etapa"></select>
       <!-- Antes era un botón flotante abajo a la derecha, encima de la lista:
            tapaba la palomita de seguimiento de la fila que pasaba por debajo
            y el toque abría "Nuevo prospecto" en vez de marcarla. -->
       <button class="btn-nuevo" onclick="abrirFormulario()" aria-label="Nuevo prospecto">+</button>
     </div>
     <div class="chips" id="chipsEtapas"></div>
+    <!-- Los pasos del embudo como filtro: tocas "Info" y ves solo a quienes les
+         diste la información. Antes era un desplegable con las etapas por su
+         nombre interno ("En conversación", "Interesado"). -->
+    <div class="pasos" id="pasosGente" role="group" aria-label="Filtrar por paso"></div>
     <div class="card"><div id="listaProspectos"></div></div>
     <!-- Los descartados salen de la lista principal: estorban entre la gente viva -->
     <button class="plegable oculto" id="btnDescartados" onclick="alternarDescartados()"></button>
@@ -996,6 +1010,13 @@ nav button.activa{color:var(--verde)}
   <div class="asa"></div>
   <h3 id="hojaTitulo">Nuevo prospecto</h3>
   <div class="campo"><label>Nombre</label><input id="fNombre" type="text" placeholder="Ej. María López"></div>
+  <!-- El paso va arriba, justo bajo el nombre: es lo que más se cambia. Se
+       escoge con botones; el select queda escondido porque es el que guarda el
+       valor (y la huella de "cambios sin guardar"). -->
+  <div class="campo"><label>¿En qué paso va?</label>
+    <div class="pasos-ficha" id="pasosFicha"></div>
+    <select id="fEtapa" hidden></select>
+  </div>
   <div class="doble">
     <div class="campo"><label>Red / origen</label>
       <select id="fRed">
@@ -1004,7 +1025,6 @@ nav button.activa{color:var(--verde)}
         <option>Referido</option><option>Otro</option>
       </select>
     </div>
-    <div class="campo"><label>Etapa</label><select id="fEtapa"></select></div>
   </div>
   <div class="campo"><label>Teléfono o @usuario</label><input id="fContacto" type="text" placeholder="+52 999 123 4567 o @maria.lopez"></div>
   <div class="campo"><label>Próximo seguimiento</label><input id="fFecha" type="date"></div>
@@ -1162,6 +1182,19 @@ function elegirTema(pref){
 mediaClaro.addEventListener("change", ()=>{ if(temaElegido()==="auto") aplicarTema(); });
 aplicarTema();
 const ETAPAS = ["Nuevo","Contactado","En conversación","Interesado","Cliente","Socio","Descartado"];
+/* Lo que el socio ve: los pasos del embudo con sus palabras. Por dentro las
+   etapas siguen con su nombre de siempre (hist, métricas, respaldos, el CSV).
+   "Nuevo" y "Contactado" son el mismo paso: si agregas a alguien es porque ya
+   le hablaste. */
+const PASOS = [
+  {k:"Contactado",      t:"Le hablé",       corto:"Le hablé"},
+  {k:"En conversación", t:"Le di la info",  corto:"Info"},
+  {k:"Interesado",      t:"En seguimiento", corto:"Seguimiento"},
+  {k:"Cliente",         t:"Compró",         corto:"Clientes"},
+  {k:"Socio",           t:"Se inscribió",   corto:"Socios"},
+  {k:"Descartado",      t:"Dijo que no",    corto:"Dijeron no"}
+];
+const pasoDe = etapa => etapa==="Nuevo" ? "Contactado" : etapa;
 
 /* Escalera del embudo para la ley de promedios. Cada prospecto guarda en `hist`
    la fecha en que alcanzó cada etapa POR PRIMERA VEZ. Sin esto, alguien que
@@ -2705,11 +2738,10 @@ function pintarChips(){
              onclick="filtrarLista('${f.id}')">
        <b>${cuentaFiltro(f.id)}</b>${f.et}</button>`).join("");
 
-  const sel = document.getElementById("selEtapa");
-  if(sel.options.length !== ETAPAS.length+1)
-    sel.innerHTML = `<option value="Todas">Toda etapa</option>`
-      + ETAPAS.map(e=>`<option value="${e}">${e}</option>`).join("");
-  sel.value = filtroEtapa;
+  const cuenta = k => datos.prospectos.filter(p=>pasoDe(p.etapa)===k).length;
+  const chip = (k, t, n) => `<button class="paso ${filtroEtapa===k?"activa":""}" onclick="filtrarEtapa('${k}')" aria-pressed="${filtroEtapa===k}">${t}${n===null? "" : ` <b>${n}</b>`}</button>`;
+  document.getElementById("pasosGente").innerHTML =
+    chip("Todas", "Todos los pasos", null) + PASOS.map(p=>chip(p.k, p.corto, cuenta(p.k))).join("");
 }
 function filtrarLista(id){ filtroLista=id; pintarProspectos(); }
 function filtrarEtapa(e){ filtroEtapa=e; pintarProspectos(); }
@@ -2738,7 +2770,7 @@ function pintarProspectos(){
     // sin fecha al final: quien no tiene seguimiento agendado no es urgente
     lista.sort((a,b)=> (a.fecha||"9999").localeCompare(b.fecha||"9999"));
   }
-  if(filtroEtapa!=="Todas") lista = lista.filter(p=>p.etapa===filtroEtapa);
+  if(filtroEtapa!=="Todas") lista = lista.filter(p=>pasoDe(p.etapa)===filtroEtapa);
   if(filtroTexto) lista = lista.filter(p=>p.nombre.toLowerCase().includes(filtroTexto)||(p.notas||"").toLowerCase().includes(filtroTexto));
 
   const cont=document.getElementById("listaProspectos");
@@ -2818,7 +2850,6 @@ function pintarDescartados(){
 }
 
 document.getElementById("buscador").addEventListener("input",e=>{ filtroTexto=e.target.value.trim().toLowerCase(); pintarProspectos(); });
-document.getElementById("selEtapa").addEventListener("change",e=>{ filtrarEtapa(e.target.value); });
 
 /* ---- Formulario ---- */
 let editandoId=null;
@@ -2830,7 +2861,8 @@ function abrirFormulario(id){
   document.getElementById("hojaTitulo").textContent = p? "Editar prospecto" : "Nuevo prospecto";
   document.getElementById("fNombre").value = p? p.nombre : "";
   document.getElementById("fRed").value    = p? p.red    : "Instagram";
-  sel.value = p? p.etapa : "Nuevo";
+  sel.value = p? p.etapa : "Contactado";   // si lo agregas, ya le hablaste
+  pintarPasosFicha(p);
   document.getElementById("fContacto").value = p? (p.contacto||"") : "";
   document.getElementById("fFecha").value  = p? (p.fecha||"") : "";
   document.getElementById("fNotas").value  = p? (p.notas||"") : "";
@@ -2841,6 +2873,21 @@ function abrirFormulario(id){
   huellaAlAbrir = huellaFicha();
   document.getElementById("velo").classList.add("abierta");
   document.getElementById("hoja").classList.add("abierta");
+}
+/* Los botones de paso de la ficha. El actual va iluminado y los que ya pasó
+   (según su historial) llevan palomita, aunque lo hayas regresado. */
+function pintarPasosFicha(p){
+  const actual = pasoDe(document.getElementById("fEtapa").value);
+  const hist = (p && p.hist) || {};
+  document.getElementById("pasosFicha").innerHTML = PASOS.map(x=>{
+    const hecho = x.k!==actual && x.k!=="Descartado" && !!hist[x.k];
+    return `<button type="button" class="${x.k===actual?"activa":""} ${hecho?"hecho":""} ${x.k==="Descartado"?"no":""}"
+      onclick="escogerPaso('${x.k}')" aria-pressed="${x.k===actual}">${hecho?"✓ ":""}${x.t}</button>`;
+  }).join("");
+}
+function escogerPaso(k){
+  document.getElementById("fEtapa").value = k;
+  pintarPasosFicha(editandoId ? datos.prospectos.find(x=>x.id===editandoId) : null);
 }
 const CAMPOS_FICHA = ["fNombre","fRed","fEtapa","fContacto","fFecha","fNotas"];
 function huellaFicha(){ return CAMPOS_FICHA.map(id=>document.getElementById(id).value).join(""); }
@@ -2888,6 +2935,8 @@ function guardarProspecto(){
   const anterior = editandoId? datos.prospectos.find(x=>x.id===editandoId) : null;
   const yaConversado = !!(anterior && anterior.hist &&
     (anterior.hist["Contactado"] || anterior.hist["En conversación"]));
+  // lo que ya había alcanzado antes de este guardado (para contar solo la 1.ª vez)
+  const antes = {...((anterior && anterior.hist) || {})};
   if(editandoId){
     const p=datos.prospectos.find(x=>x.id===editandoId);
     if(p){ Object.assign(p,registro); sellarEtapa(p, registro.etapa); }
@@ -2910,9 +2959,22 @@ function guardarProspecto(){
   const sellado = editandoId ? datos.prospectos.find(x=>x.id===editandoId) : registro;
   const sumaConv = !yaConversado && !!(sellado && sellado.hist &&
     (sellado.hist["Contactado"] || sellado.hist["En conversación"]));
+  /* Lo que la persona alcanzó POR PRIMERA VEZ también cuenta en los números
+     del mes: "le di la info" (En conversación), una venta (Cliente) o un socio.
+     Así lo que haces con cada persona y tus Resultados del mes cuadran solos.
+     Regresarla de paso no resta: el historial guarda que sí llegó. Llegar a
+     Interesado, Cliente o Socio rellena los pasos de antes (sellarEtapa), así
+     que también cuenta la info. */
+  const h = (sellado && sellado.hist) || {};
+  const nuevo = k => !antes[k] && !!h[k];
+  const suma = [];
+  if(sumaConv) suma.push(["conv", "+1 conversación"]);
+  if(nuevo("En conversación")) suma.push(["info", "+1 le di la info"]);
+  if(nuevo("Cliente")) suma.push(["venta", "+1 venta"]);
+  if(nuevo("Socio")) suma.push(["socio", "+1 socio"]);
   guardar(); cerrarFormulario(true); pintarProspectos(); pintarHoy();
-  avisar("Guardado ✓"+(sumaConv? " · +1 conversación" : ""));
-  if(sumaConv) contar("conv", 1);
+  avisar("Guardado ✓" + suma.map(x=>" · "+x[1]).join(""));
+  suma.forEach(([id]) => contar(id, 1));
 }
 function eliminarProspecto(){
   if(!editandoId) return;

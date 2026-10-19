@@ -181,6 +181,17 @@ en `public/index.html` (qué paneles se ven) y `esAdmin()` en `firestore.rules`
     las conversaciones pasadas no, porque moverían la racha. Las ventas de ese
     día no bajan de las que tienen importe.
   El líder NO ve la info ni las tasas (el resumen sigue igual).
+- **Pasos de la persona (18-10-2026).** En la ficha, el paso se escoge con
+  botones (`PASOS`, `escogerPaso()`): Le hablé · Le di la info · En
+  seguimiento · Compró · Se inscribió · Dijo que no. Por dentro siguen las
+  etapas de siempre (Contactado, En conversación, Interesado, Cliente, Socio,
+  Descartado); "Nuevo" se muestra como "Le hablé" (`pasoDe()`) y una persona
+  nueva entra como Contactado ("si la agregas es que ya le hablaste", y suma
+  su conversación). En Gente, los mismos pasos son el filtro (`#pasosGente`),
+  en lugar del desplegable de etapas. **La PRIMERA vez que alguien llega a
+  En conversación, Cliente o Socio, `guardarProspecto()` suma +1 a `info`,
+  `venta` o `socio` del día** (con `contar()`), para que la persona y los
+  números del mes cuadren sin tocar el + aparte; regresarla de paso no resta.
 - **Qué fuente te convierte mejor** sí sale de los prospectos: cuenta a los
   descartados usando `p.hist` y quien es cliente Y socio cuenta como UNA
   persona cerrada.
