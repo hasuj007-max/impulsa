@@ -17,7 +17,7 @@ ni cuenta"; hoy es Firebase Hosting con cuentas de Google). Este archivo manda.
 
 ## Estado y pendientes (al 10-10-2026)
 
-Lo último desplegado es `impulsa-v46` (18-10-2026: ficha en iPhone sin salirse de la pantalla; la v45 del mismo día quitó el zoom de los campos). Último respaldo en `respaldos/`: 10-10-2026 (17 cuentas, ninguna perdió datos contra el del 02-09). Pendiente, en el orden propuesto:
+Lo último desplegado es `impulsa-v47` (18-10-2026: etiqueta del paso junto al nombre en Gente). Último respaldo en `respaldos/`: 10-10-2026 (17 cuentas, ninguna perdió datos contra el del 02-09). Pendiente, en el orden propuesto:
 
 1. **Ventas: rediseñar el modelo.** Él dijo que "venta en pesos + ganancia en
    dólares" está mal planteado y tiene otra idea que **aún no ha contado**.
