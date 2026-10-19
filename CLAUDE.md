@@ -291,6 +291,11 @@ en `public/index.html` (qué paneles se ven) y `esAdmin()` en `firestore.rules`
 
 ## Trampas (cada una costó datos o un día de depuración)
 
+- **iPhone hace zoom solo al tocar un campo con letra de menos de 16 px** y la
+  pantalla se queda grande (`user-scalable=no` no lo evita). Todo input,
+  select y textarea va a 16 px o más; `html{touch-action:manipulation}` quita
+  el zoom de doble toque. Medir: ningún campo con `fontSize` < 16.
+
 ☠️ **La migración de `PLAN_VERSION` NO debe tocar `actualizado`.** Estamparle la
 hora para que "ganara" a la nube destruyó datos reales: un aparato con copia
 vieja se migraba al abrirlo, quedaba con la hora de ahora, le ganaba a la copia
