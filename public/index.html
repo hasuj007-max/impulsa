@@ -175,7 +175,7 @@ main{padding:0 16px}
   color:var(--ink-soft);margin:0 0 8px 3px}
 /* Dos, no tres: "en seguimiento" no es un resultado del mes — es trabajo
    pendiente, y ahora vive en su propia tarjeta con nombres y palomita. */
-.trio{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.trio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:14px}
 .trio .t{background:var(--brillo),var(--card);
   border:1px solid var(--line);border-radius:17px;padding:14px 10px;text-align:center}
 .trio .tn{font-size:28px;font-weight:800;letter-spacing:-1px;line-height:1.05}
@@ -183,6 +183,7 @@ main{padding:0 16px}
 .trio .tm{font-size:11.5px;font-weight:700;color:var(--ink-soft);margin-top:5px;line-height:1.3}
 .trio .t.verde .tn{color:var(--verde)}
 .trio .t.oro   .tn{color:var(--gold)}
+.trio .t.azul  .tn{color:var(--azul)}
 .trio .t.rojo  .tn{color:var(--red)}
 .trio .tmas{display:block;width:32px;height:32px;margin:9px auto 0;border:none;border-radius:11px;
   background:var(--grad);color:var(--sobre-verde);font-size:18px;font-weight:800;cursor:pointer;
@@ -434,14 +435,8 @@ main{padding:0 16px}
 .vacio p{font-size:14px}
 
 /* ---------- Métricas ----------
-   Arriba una frase, no cuatro cuadros. Los KPIs decían "0 ventas · 7 días" y dos
-   dedos más abajo "2 / 12 del mes": dos ventanas de tiempo distintas sin avisar,
-   y el lector no tenía cómo saberlo. Ahora la portada de esta pestaña es la ley
-   de promedios, que es la única cifra que cambia decisiones. */
-.titular{background:var(--brillo),var(--card);border:1px solid var(--line);
-  border-radius:var(--radius);padding:19px 18px;margin-bottom:14px}
-.titular .magico{margin-top:0;padding-top:0;border-top:none}
-.titular .pie{font-size:12px;font-weight:700;color:var(--ink-soft);margin-top:13px}
+   La portada es el embudo por números (ver más abajo): conversaciones, les di
+   la info, ventas y socios, con sus probabilidades y el plan del mes. */
 #grafica{display:flex;align-items:flex-end;gap:6px;height:145px}
 #grafica.densa{gap:2px}
 .cbar{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:5px;justify-content:flex-end;cursor:pointer}
@@ -467,6 +462,45 @@ main{padding:0 16px}
 .pt-naranja{background:var(--gold)}
 .pt-rojo{background:var(--red)}
 
+/* ---------- Embudo por números (Números) ---------- */
+.emb-fila{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;align-items:baseline}
+.emb-fila .et{font-size:14px;font-weight:700}
+.emb-fila .ec{font-size:21px;font-weight:800;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+.emb-fila .eb{grid-column:1/-1;height:10px;border-radius:5px;background:var(--velo);overflow:hidden}
+.emb-fila .eb i{display:block;height:100%;border-radius:5px;background:var(--grad);transition:width .4s}
+.emb-fila.e-info .ec{color:var(--azul)} .emb-fila.e-info .eb i{background:var(--azul)}
+.emb-fila.e-venta .ec{color:var(--verde)}
+.emb-fila.e-socio .ec{color:var(--gold)} .emb-fila.e-socio .eb i{background:var(--gold)}
+.emb-salto{font-size:12.5px;font-weight:700;color:var(--ink-soft);padding:7px 0 9px 2px}
+.emb-salto b{color:var(--ink)}
+.emb-finales{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.aprende{padding:11px 13px;border-radius:14px;border:1px dashed var(--gold);background:var(--gold-soft);font-size:13px;font-weight:700;line-height:1.45;margin-bottom:12px}
+.aprende .ab{height:7px;border-radius:4px;background:var(--velo2);overflow:hidden;margin:8px 0 2px}
+.aprende .ab i{display:block;height:100%;background:var(--gold)}
+.tasa{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;padding:11px 0;border-top:1px solid var(--line);align-items:center}
+.tasa:first-child{border-top:none;padding-top:0}
+.tasa .td{font-size:14px;font-weight:600;line-height:1.35}
+.tasa .td b{font-weight:800}
+.tasa .tp{font-size:20px;font-weight:800;letter-spacing:-.4px;font-variant-numeric:tabular-nums;text-align:right}
+.tasa .tf{grid-column:1/-1;font-size:11px;color:var(--ink-soft);font-weight:700}
+.tasa.e-info .tp{color:var(--azul)} .tasa.e-venta .tp{color:var(--verde)} .tasa.e-socio .tp{color:var(--gold)}
+.metas-plan{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.meta-c{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:10px 12px;min-width:0}
+.meta-c .mt{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--ink-soft)}
+.meta-c .mv{display:flex;align-items:center;justify-content:space-between;margin-top:6px}
+.meta-c .mv b{font-size:24px;font-weight:800;letter-spacing:-.6px;font-variant-numeric:tabular-nums}
+.meta-c .mv button{width:30px;height:30px;border-radius:10px;border:1px solid var(--line2);background:var(--card);color:var(--ink);font-family:inherit;font-weight:800;font-size:16px;cursor:pointer}
+.meta-c .ml{font-size:11.5px;color:var(--ink-soft);font-weight:700;margin-top:4px}
+.meta-c.e-venta .mv b{color:var(--verde)} .meta-c.e-socio .mv b{color:var(--gold)}
+.plan-res{margin-top:14px;padding:14px;border-radius:16px;background:var(--green-soft)}
+.plan-res .pg{font-size:18px;font-weight:800;line-height:1.35;letter-spacing:-.3px;text-wrap:balance}
+.plan-res .pg b{color:var(--verde)}
+.plan-res .ps{font-size:13px;font-weight:600;color:var(--ink-soft);margin-top:6px;line-height:1.45}
+.plan-res .ps b{color:var(--ink)}
+.plan-res .ps.ojo{color:var(--gold)}
+.tres-campos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tres-campos input{text-align:center;font-size:18px!important;font-weight:800}
+
 /* ---------- Día cerrado ---------- */
 .cerrado{display:flex;align-items:flex-start;gap:9px;padding:11px 13px;border-radius:13px;background:var(--velo);border:1px solid var(--line);font-size:12.5px;font-weight:600;color:var(--ink-soft);line-height:1.45;margin-bottom:12px}
 .cerrado svg{flex:none;margin-top:1px}
@@ -474,18 +508,7 @@ main{padding:0 16px}
 .cbar .d{font-size:9px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;height:12px}
 .cbar.hoy .d{color:var(--verde)}
 .rango{display:flex;gap:6px}
-.rango .chip{padding:5px 11px;font-size:12px}
-/* ---------- Ley de promedios ---------- */
-.nivel{display:flex;align-items:center;gap:10px;padding:8px 0}
-.nivel .n{font-size:13px;font-weight:700;flex:1;min-width:0}
-.nivel .b{width:78px;height:8px;background:var(--velo);border-radius:4px;overflow:hidden;flex:none}
-.nivel .b i{display:block;height:100%;background:var(--grad);border-radius:4px}
-.nivel .c{font-size:14px;font-weight:800;width:34px;text-align:right;flex:none}
-.nivel .pc{font-size:11px;font-weight:800;color:var(--ink-soft);width:36px;text-align:right;flex:none}
-.magico{margin-top:14px;padding-top:14px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
-.magico .m{font-size:13px;font-weight:600;color:var(--ink-soft);line-height:1.4}
-.magico .m b{font-size:20px;font-weight:800;color:var(--verde);letter-spacing:-.5px}
-.magico .m.oro b{color:var(--gold)}
+.rango .chip{padding:5px 11px;font-size:12px;white-space:nowrap}
 .fuente{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
 .fuente:last-child{border-bottom:none}
 .fuente .fi{flex:1;min-width:0}
@@ -493,24 +516,6 @@ main{padding:0 16px}
 .fuente .fd{font-size:11px;color:var(--ink-soft);font-weight:600;margin-top:2px}
 .fuente .fr{font-size:13px;font-weight:800;flex:none;text-align:right;color:var(--verde2)}
 .fuente .fr.nulo{color:var(--ink-soft)}
-/* ---------- Meta del mes ---------- */
-.mes-fila{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px}
-.mes-fila .mn{font-size:14px;font-weight:700}
-.mes-fila .mv{font-size:14px;font-weight:800}
-.mes-barra{height:9px;background:var(--velo);border-radius:5px;overflow:hidden;margin-bottom:6px}
-.mes-barra i{display:block;height:100%;background:var(--grad);border-radius:5px}
-.mes-bloque{margin-bottom:16px}
-.mes-bloque:last-child{margin-bottom:0}
-.proy{font-size:12px;font-weight:600;color:var(--ink-soft);line-height:1.45}
-.proy b{color:var(--ink)}
-.proy.bien b{color:var(--verde)}
-.proy.mal b{color:var(--gold)}
-
-.fila-etapa{display:flex;align-items:center;gap:10px;padding:7px 0}
-.fila-etapa .n{font-size:13px;font-weight:700;width:120px;flex:none}
-.fila-etapa .b{flex:1;height:8px;background:var(--velo);border-radius:4px;overflow:hidden}
-.fila-etapa .b i{display:block;height:100%;background:var(--grad);border-radius:4px}
-.fila-etapa .c{font-size:13px;font-weight:800;width:26px;text-align:right}
 .tabla-act{width:100%;border-collapse:collapse}
 .tabla-act td{padding:8px 0;border-bottom:1px dashed var(--line);font-size:14px}
 .tabla-act td:last-child{text-align:right;font-weight:800}
@@ -781,6 +786,9 @@ nav button.activa{color:var(--verde)}
          se miden aparte y no cuentan para la racha ni para el % del día. -->
     <h2 class="rotulo-suelto">Resultados del mes</h2>
     <div class="trio" id="trioInicio"></div>
+    <!-- Para lo que se olvidó apuntar. Solo resultados: las conversaciones de
+         días pasados no se tocan, porque cambiarían el anillo y la racha. -->
+    <button class="plegable" style="margin:-4px 0 14px" onclick="abrirOtroDia()">📅 Apuntar resultados de otro día</button>
 
     <!-- Lo vendido y lo ganado. Solo aparece cuando hay ventas en el mes. -->
     <div class="card oculto" id="cardVentas">
@@ -820,14 +828,34 @@ nav button.activa{color:var(--verde)}
 
   <!-- ============ MÉTRICAS ============ -->
   <section class="tab" id="tab-metricas">
-    <!-- La portada de esta pestaña es la ley de promedios: es la única cifra
-         que cambia decisiones. Antes aquí había cuatro cuadros con ventanas de
-         tiempo distintas entre sí y con la meta del mes de abajo. -->
-    <div class="titular" id="titular"></div>
-
-    <div class="card" id="cardMes">
-      <h2 id="tituloMes">Meta del mes</h2>
-      <div id="metaMes"></div>
+    <!-- La portada es el embudo por números: conversaciones → les di la info →
+         ventas y socios, con sus probabilidades y lo que hace falta para la
+         meta del mes. Salen de los contadores del día, no de la lista de
+         prospectos: así no depende de que registres a cada persona. -->
+    <div class="segmento" id="selPeriodo" style="margin-bottom:14px">
+      <button data-per="mes" onclick="cambiarPeriodo('mes')">Este mes</button>
+      <button data-per="90" onclick="cambiarPeriodo('90')">90 días</button>
+      <button data-per="siempre" onclick="cambiarPeriodo('siempre')">Siempre</button>
+    </div>
+    <div class="card">
+      <h2>Tu embudo</h2>
+      <div id="embudoNum"></div>
+    </div>
+    <div class="card">
+      <h2>Tus probabilidades</h2>
+      <div id="tasas"></div>
+    </div>
+    <div class="card">
+      <h2 id="tituloPlan">¿Cuánto necesito este mes?</h2>
+      <div class="metas-plan">
+        <div class="meta-c e-venta"><div class="mt">Meta de ventas</div>
+          <div class="mv"><button onclick="moverMetaMes('ventas',-1)" aria-label="Bajar meta de ventas">−</button><b id="planMetaV"></b><button onclick="moverMetaMes('ventas',1)" aria-label="Subir meta de ventas">+</button></div>
+          <div class="ml" id="planLlevaV"></div></div>
+        <div class="meta-c e-socio"><div class="mt">Meta de socios</div>
+          <div class="mv"><button onclick="moverMetaMes('socios',-1)" aria-label="Bajar meta de socios">−</button><b id="planMetaS"></b><button onclick="moverMetaMes('socios',1)" aria-label="Subir meta de socios">+</button></div>
+          <div class="ml" id="planLlevaS"></div></div>
+      </div>
+      <div id="plan"></div>
     </div>
 
     <div class="card">
@@ -846,12 +874,6 @@ nav button.activa{color:var(--verde)}
       </div>
       <div id="grafica"></div>
     </div>
-    <div class="card">
-      <h2>Ley de promedios</h2>
-      <p class="sub-card">Tu embudo real, contando también a los prospectos que ya descartaste. Así las tasas no salen infladas.</p>
-      <div id="embudo"></div>
-    </div>
-
     <div class="card">
       <h2>Qué fuente te convierte mejor</h2>
       <p class="sub-card">Cierres logrados por cada origen. Te dice dónde vale la pena invertir tu tiempo.</p>
@@ -1026,6 +1048,22 @@ nav button.activa{color:var(--verde)}
   <button class="btn btn-sec" onclick="cerrarConteo()">Cancelar</button>
 </div>
 
+<!-- Hoja: resultados de un día pasado (lo que se olvidó apuntar) -->
+<div class="hoja" id="hojaOtroDia" role="dialog" aria-labelledby="odTitulo">
+  <div class="asa"></div>
+  <h3 id="odTitulo">Resultados de otro día</h3>
+  <p class="nota" style="margin:-6px 0 12px">Para lo que se te olvidó apuntar. Las conversaciones de días pasados no se cambian aquí, porque moverían tu racha.</p>
+  <div class="campo"><label for="odFecha">Día</label><input id="odFecha" type="date"></div>
+  <div class="tres-campos">
+    <div class="campo"><label for="odInfo">Les di la info</label><input id="odInfo" type="number" min="0" inputmode="numeric"></div>
+    <div class="campo"><label for="odVenta">Ventas</label><input id="odVenta" type="number" min="0" inputmode="numeric"></div>
+    <div class="campo"><label for="odSocio">Socios</label><input id="odSocio" type="number" min="0" inputmode="numeric"></div>
+  </div>
+  <p class="nota" id="odNota" style="margin-top:0"></p>
+  <button class="btn btn-pri" onclick="guardarOtroDia()">Guardar</button>
+  <button class="btn btn-sec" onclick="cerrarOtroDia()">Cancelar</button>
+</div>
+
 <!-- Festejo al cerrar el día. Capa propia, encima de todo salvo la portada. -->
 <div class="festejo oculto" id="festejo" role="dialog" aria-modal="true" aria-labelledby="festejoTitulo" onclick="if(event.target===this) cerrarFestejo()">
   <div class="festejo-confeti" id="festejoConfeti" aria-hidden="true"></div>
@@ -1131,14 +1169,6 @@ const ETAPAS = ["Nuevo","Contactado","En conversación","Interesado","Cliente","
    avanzado, e inflaría las tasas de conversión. */
 const ESCALERA = ["Nuevo","Contactado","En conversación","Interesado"];
 const CERRADAS = ["Cliente","Socio"];
-const NIVELES = [
-  {n:0, etiqueta:"Prospectos nuevos"},
-  {n:1, etiqueta:"Contactados"},
-  {n:2, etiqueta:"Les di información"},
-  {n:3, etiqueta:"Interesados"},
-  {n:4, etiqueta:"Clientes o socios"}
-];
-
 /* Nivel más alto que alcanzó un prospecto, aunque hoy esté descartado. */
 function nivelAlcanzado(p){
   let n = 0;
@@ -1370,7 +1400,7 @@ function compactarPlanes(d){
    No se reescribe el historial (los días guardados quedan intactos): solo se
    deja de exigir lo que nunca estuvo en manos de la persona. Sin esto, la
    racha y la constancia de julio seguían rotas por ventas que no llegaron. */
-const IDS_RESULTADO = ["venta", "socio"];
+const IDS_RESULTADO = ["venta", "socio", "info"];
 function metasActivas(clave){
   return metasDelDia(clave).filter(m=>m.objetivo>0 && !IDS_RESULTADO.includes(m.id));
 }
@@ -2248,11 +2278,14 @@ function pintarTrio(){
       </div>
     </div>`;
   };
+  const info = sumaMes("info");
   document.getElementById("trioInicio").innerHTML =
     /* Nunca en rojo: son resultados. Pintar de rojo un 0 en ventas el día 2 del
        mes es exactamente el castigo que quisimos quitar de las actividades.
-       En cero se quedan neutros; en cuanto hay algo, se celebran. */
-      bloque(v, +mm.ventas||0, "ventas del mes", v>0? "verde":"", "venta", "abrirVenta()", "una venta")
+       En cero se quedan neutros; en cuanto hay algo, se celebran.
+       "Les di la info" va primero: es el paso que lleva a los otros dos. */
+      bloque(info, 0, "les di la info", info>0? "azul":"", "info", "registrarInfo()", "uno a les di la info")
+    + bloque(v, +mm.ventas||0, "ventas del mes", v>0? "verde":"", "venta", "abrirVenta()", "una venta")
     + bloque(s, +mm.socios||0, "socios del mes", s>0? "oro":"",  "socio", "registrarSocio()", "un socio nuevo");
   pintarVentas();
 }
@@ -2284,6 +2317,12 @@ function ventasDelMes(){
 function registrarSocio(){
   contar("socio", 1);
   avisar("🎉 ¡Nuevo socio!", "Deshacer", ()=>contar("socio", -1));
+}
+/* Alguien aceptó escuchar la propuesta (la "R" del embudo). Mismo contador del
+   día que todo lo demás, así que sale en Números sin escribirlo dos veces. */
+function registrarInfo(){
+  contar("info", 1);
+  avisar("Le diste la info ✓", "Deshacer", ()=>contar("info", -1));
 }
 
 /* ---- Alta de una venta, con lo que vendiste y lo que ganaste ---- */
@@ -2339,17 +2378,60 @@ function bajarResultado(id){
     const [ky,km] = k.split("-").map(Number);
     return ky===y && km===m && (datos.dias[k][id]||0)>0;
   }).sort();
-  if(!claves.length){
-    avisar(id==="venta"? "No hay ventas este mes" : "No hay socios este mes");
-    return;
-  }
+  const NOMBRE = {venta:["No hay ventas este mes","Venta quitada"],
+                  socio:["No hay socios este mes","Socio quitado"],
+                  info: ["No hay nadie con la info este mes","Quitado de les di la info"]}[id];
+  if(!claves.length){ avisar(NOMBRE[0]); return; }
   const k = claves[claves.length-1];
   datos.dias[k][id] = Math.max(0, datos.dias[k][id]-1);
   guardar(); pintarHoy();
-  avisar(id==="venta"? "Venta quitada" : "Socio quitado", "Deshacer", ()=>{
+  avisar(NOMBRE[1], "Deshacer", ()=>{
     const d = diaDe(k); d[id] = (d[id]||0)+1;
     guardar(); pintarHoy();
   });
+}
+
+/* ---- Resultados de un día pasado ----
+   Solo info, ventas y socios. Las ventas no pueden bajar de las que ese día
+   tienen importe apuntado: esas se quitan desde su renglón, con su dinero. */
+function abrirOtroDia(){
+  const f = document.getElementById("odFecha");
+  f.max = hoy();
+  const ayer = new Date(); ayer.setDate(ayer.getDate()-1);
+  f.value = claveDia(ayer);
+  cargarOtroDia();
+  document.getElementById("velo").classList.add("abierta");
+  document.getElementById("hojaOtroDia").classList.add("abierta");
+}
+function cerrarOtroDia(){
+  document.getElementById("hojaOtroDia").classList.remove("abierta");
+  document.getElementById("velo").classList.remove("abierta");
+}
+function ventasConImporte(k){ return datos.ventas.filter(v=>v.f===k).length; }
+function cargarOtroDia(){
+  const k = document.getElementById("odFecha").value;
+  const d = datos.dias[k] || {};
+  document.getElementById("odInfo").value  = d.info||0;
+  document.getElementById("odVenta").value = d.venta||0;
+  document.getElementById("odSocio").value = d.socio||0;
+  const fijas = ventasConImporte(k);
+  document.getElementById("odNota").textContent = fijas
+    ? fijas+(fijas===1? " venta de ese día tiene importe" : " ventas de ese día tienen importe")+": para quitarla, hazlo desde Ventas del mes."
+    : "";
+}
+document.getElementById("odFecha").addEventListener("change", cargarOtroDia);
+function guardarOtroDia(){
+  const k = document.getElementById("odFecha").value;
+  if(!k || k > hoy()){ avisar("Escoge un día de hoy para atrás"); return; }
+  const n = id => Math.max(0, Math.min(9999, parseInt(document.getElementById(id).value)||0));
+  const nuevo = {info:n("odInfo"), venta:Math.max(n("odVenta"), ventasConImporte(k)), socio:n("odSocio")};
+  const d = datos.dias[k];
+  // un día sin nada antes y sin nada ahora no se crea
+  if(!d && !nuevo.info && !nuevo.venta && !nuevo.socio){ cerrarOtroDia(); return; }
+  const dia = diaDe(k);
+  Object.assign(dia, nuevo);
+  guardar(); cerrarOtroDia(); pintarHoy(); if(tabActiva==="metricas") pintarMetricas();
+  avisar("Guardado el "+fCorta(k)+" ✓");
 }
 
 /* ---- Lo vendido y lo ganado en el mes ---- */
@@ -2484,7 +2566,7 @@ function cerrarDia(){
   document.getElementById("velo").classList.remove("abierta");
 }
 function cerrarTodo(){
-  cerrarFormulario(); cerrarDia(); cerrarVenta(); cerrarConteo();
+  cerrarFormulario(); cerrarDia(); cerrarVenta(); cerrarConteo(); cerrarOtroDia();
 }
 
 /* =================== PLANTILLAS =================== */
@@ -2851,39 +2933,10 @@ function ultimosDias(n){
   return arr;
 }
 function pintarMetricas(){
-  pintarTitular();
+  pintarEmbudoNum();
   pintarGrafica();
-  pintarMetaMes();
   pintarTablaSemana(ultimosDias(7));
-  pintarEmbudo();
   pintarFuentes();
-}
-
-/* La frase de la ley de promedios, arriba del todo. Es la única cifra de esta
-   pestaña que cambia decisiones: dice cuánta gente tienes que tocar para cerrar
-   uno. Antes vivía enterrada al final del embudo, debajo de cuatro cuadros de
-   siete días que no cuadraban con la meta del mes de al lado. */
-function pintarTitular(){
-  const cont = document.getElementById("titular");
-  const lista = datos.prospectos;
-  if(lista.length < 5){
-    cont.innerHTML = `<div class="magico"><div class="m">`
-      + `Llevas <b>${lista.length}</b> ${lista.length===1?"prospecto":"prospectos"}. `
-      + `Con 5 empiezo a poder decirte cuántos necesitas para cerrar uno.</div></div>`;
-    return;
-  }
-  const { clientes, socios, total: cerradas } = cierresDe(lista);
-  const conInfo  = lista.filter(p=>nivelAlcanzado(p)>=2).length;
-  const xCliente = unoDeCada(lista.length, clientes);
-  const xSocio   = unoDeCada(lista.length, socios);
-  const xInfo    = unoDeCada(conInfo, cerradas);
-  cont.innerHTML = `<div class="magico">
-    ${xCliente? `<div class="m">De cada <b>${xCliente}</b> prospectos nuevos, 1 se hace cliente.</div>`
-              : `<div class="m">Aún no cierras clientes — sigue alimentando el embudo.</div>`}
-    ${xSocio? `<div class="m oro">De cada <b>${xSocio}</b> prospectos nuevos, 1 se hace socio.</div>` : ""}
-    ${xInfo? `<div class="m">De cada <b>${xInfo}</b> a los que les das información, 1 cierra.</div>` : ""}
-  </div>
-  <div class="pie">Sobre tus ${lista.length} prospectos, contando también a los descartados.</div>`;
 }
 
 let rangoGrafica=7;
@@ -2938,38 +2991,6 @@ function cierresDe(lista){
   const socios   = lista.filter(p=>(p.hist&&p.hist["Socio"])   || p.etapa==="Socio").length;
   return { clientes, socios, total: lista.filter(p=>nivelAlcanzado(p)>=4).length };
 }
-/* Con muestras chicas el redondeo miente ("1 de cada 1.4" no es "1 de cada 1"),
-   así que se conserva un decimal por debajo de 3. */
-function unoDeCada(base, cierres){
-  if(!cierres) return null;
-  const r = base/cierres;
-  return r<3? Math.round(r*10)/10 : Math.round(r);
-}
-
-function pintarEmbudo(){
-  const cont = document.getElementById("embudo");
-  const lista = datos.prospectos;
-  const base = lista.length;
-  if(base < 5){
-    cont.innerHTML = `<div class="vacio"><div class="big">📊</div><p>Necesitas al menos 5 prospectos<br>para que los promedios signifiquen algo.<br>Llevas ${base}.</p></div>`;
-    return;
-  }
-  const filas = NIVELES.map(nv=>{
-    const c = lista.filter(p=>nivelAlcanzado(p)>=nv.n).length;
-    const pc = Math.round(c/base*100);
-    return `<div class="nivel">
-      <span class="n">${nv.etiqueta}</span>
-      <div class="b"><i style="width:${pc}%"></i></div>
-      <span class="c">${c}</span><span class="pc">${pc}%</span>
-    </div>`;
-  }).join("");
-
-  /* Las frases de "uno de cada cuántos" ya no van aquí: son la portada de la
-     pestaña (ver pintarTitular). Repetirlas al final sería decir dos veces lo
-     mismo con dos pesos distintos. */
-  cont.innerHTML = filas;
-}
-
 function pintarFuentes(){
   const cont = document.getElementById("fuentes");
   const lista = datos.prospectos;
@@ -3025,39 +3046,164 @@ function sumaMes(idMeta){
   });
   return s;
 }
-function bloqueMes(nombre, actual, meta, diaHoy, diasMes){
-  if(meta<=0) return "";
-  const pct = Math.min(100, Math.round(actual/meta*100));
-  const proyeccion = Math.round(actual/diaHoy*diasMes);
-  const faltan = Math.max(0, meta-actual);
-  const diasRestantes = Math.max(1, diasMes-diaHoy);
-  const porDia = (faltan/diasRestantes);
-  let texto, clase;
-  if(actual>=meta){
-    texto = `<b>¡Meta cumplida!</b> Llevas ${actual} de ${meta}.`; clase="bien";
-  }else if(proyeccion>=meta){
-    texto = `A este ritmo cierras el mes en <b>${proyeccion}</b>. Vas encaminado.`; clase="bien";
-  }else{
-    texto = `A este ritmo terminas en <b>${proyeccion}</b>. Necesitas <b>${porDia<1? porDia.toFixed(1) : Math.ceil(porDia)}</b> al día los ${diasRestantes} días que quedan.`;
-    clase="mal";
-  }
-  return `<div class="mes-bloque">
-    <div class="mes-fila"><span class="mn">${nombre}</span><span class="mv">${actual} / ${meta}</span></div>
-    <div class="mes-barra"><i style="width:${pct}%"></i></div>
-    <p class="proy ${clase}">${texto}</p>
-  </div>`;
-}
-function pintarMetaMes(){
+/* ---- Embudo por números ----
+   Las cuatro variables salen de los contadores de cada día:
+     C = conversaciones (la actividad "conv")   R = les di la info ("info")
+     V = ventas ("venta")                       S = socios ("socio")
+   Las tasas se calculan SIEMPRE sobre la suma de un periodo, nunca de un día:
+   la venta llega días después de la plática y un día suelto da porcentajes
+   locos. Con menos de BASE_PROB conversaciones la probabilidad todavía no es
+   del socio y se dice "aprendiendo" en vez de dar un porcentaje engañoso.
+   La info se empezó a contar en oct-2026: las tasas que dependen de ella solo
+   miran desde el primer día que tiene alguna, para no compararla contra meses
+   de conversaciones en los que no se apuntaba. */
+const BASE_PROB = 50;
+let periodoNum = "mes";
+function cambiarPeriodo(p){ periodoNum = p; pintarEmbudoNum(); }
+function desdeDePeriodo(p){
   const f = new Date();
-  const diaHoy = f.getDate();
-  const diasMes = new Date(f.getFullYear(), f.getMonth()+1, 0).getDate();
-  document.getElementById("tituloMes").textContent =
-    "Meta de " + f.toLocaleDateString("es-MX",{month:"long"});
+  if(p==="mes") return claveDia(new Date(f.getFullYear(), f.getMonth(), 1));
+  if(p==="90"){ f.setDate(f.getDate()-89); return claveDia(f); }
+  return "";
+}
+function sumaEmbudo(desde){
+  const t = {c:0, r:0, v:0, s:0};
+  Object.keys(datos.dias).forEach(k=>{
+    if(desde && k < desde) return;
+    const d = datos.dias[k];
+    t.c += d.conv||0; t.r += d.info||0; t.v += d.venta||0; t.s += d.socio||0;
+  });
+  return t;
+}
+function inicioInfo(){
+  return Object.keys(datos.dias).filter(k=>(datos.dias[k].info||0)>0).sort()[0] || "";
+}
+const porc = (a,b) => b ? Math.round(a/b*100) : 0;
+// para mostrar: abajo de 1% con un decimal, que "0%" de algo que sí pasa confunde
+const porcTxt = (a,b) => { if(!b || !a) return "0"; const p = a/b*100; return p < 1 ? p.toFixed(1) : String(Math.round(p)); };
+/* "De cada 10 con la info, 3 compran"; con menos de 1 de cada 10 se dice al
+   revés ("1 de cada 25 con la info se inscribe") para no decir "0 de cada 10". */
+function deCadaInfo(a, b, plural, singular){
+  if(!a) return `Con la info, nadie ${singular} todavía`;
+  const de10 = Math.round(a/b*10);
+  return de10 >= 1 ? `De cada <b>10</b> con la info, <b>${de10}</b> ${de10===1? singular : plural}`
+                   : `<b>1</b> de cada <b>${Math.round(b/a)}</b> con la info ${singular}`;
+}
+function pintarEmbudoNum(){
+  document.querySelectorAll("#selPeriodo button").forEach(b=>b.classList.toggle("activa", b.dataset.per===periodoNum));
+  const desde = desdeDePeriodo(periodoNum);
+  const t = sumaEmbudo(desde);
+  const todo = sumaEmbudo("");
+  const ini = inicioInfo();
+  // para las tasas de la info, solo desde que se empezó a apuntar
+  const ti = ini ? sumaEmbudo(desde > ini ? desde : ini) : {c:0,r:0,v:0,s:0};
+  const nombrePer = {mes:"este mes", "90":"en los últimos 90 días", siempre:"desde que empezaste"}[periodoNum];
+
+  const aprende = todo.c < BASE_PROB
+    ? `<div class="aprende">Aprendiendo tu probabilidad: llevas <b>${todo.c} de ${BASE_PROB}</b> conversaciones.
+        <div class="ab"><i style="width:${todo.c/BASE_PROB*100}%"></i></div>
+        Con menos de ${BASE_PROB}, un porcentaje engaña: una sola venta lo mueve muchísimo.</div>` : "";
+  const ancho = n => t.c ? Math.max(n? 2 : 0, Math.min(100, n/t.c*100)) : 0;
+  const fila = (cls, txt, n) => `<div class="emb-fila ${cls}"><span class="et">${txt}</span><span class="ec">${n}</span><div class="eb"><i style="width:${ancho(n)}%"></i></div></div>`;
+  document.getElementById("embudoNum").innerHTML = aprende
+    + fila("", "Conversaciones", t.c)
+    + `<div class="emb-salto">${ti.c ? `A <b>${porc(ti.r,ti.c)}%</b> les diste la info` : `Toca el + de "les di la info" en Hoy cada vez que alguien acepte escuchar`}</div>`
+    + fila("e-info", "Les di la info", t.r)
+    + `<div class="emb-salto">${ti.r ? `De esos, <b>${porc(ti.v,ti.r)}%</b> compraron y <b>${porc(ti.s,ti.r)}%</b> se hicieron socios` : "&nbsp;"}</div>`
+    + `<div class="emb-finales">${fila("e-venta","Ventas", t.v)}${fila("e-socio","Socios", t.s)}</div>`
+    + `<p class="nota">Lo que pasó ${nombrePer}.${ini && desde < ini ? ` "Les di la info" se cuenta desde el ${fCorta(ini)}.` : ""}</p>`;
+
+  // las cinco tasas, cada una en palabras y con su fórmula
+  const tasa = (cls, frase, p, formula) => `<div class="tasa ${cls}"><div class="td">${frase}</div><div class="tp">${p}%</div><div class="tf">${formula}</div></div>`;
+  // (cada tasa recibe ya el texto del porcentaje, ver porcTxt)
+  let tasas = "";
+  if(todo.c < BASE_PROB){
+    tasas = `<p class="nota" style="margin:0">Aparecen al llegar a ${BASE_PROB} conversaciones registradas.</p>`;
+  }else{
+    if(ti.c >= BASE_PROB){
+      tasas += tasa("e-info", `De cada <b>100</b> con los que hablas, a <b>${porc(ti.r,ti.c)}</b> les das la info`, porcTxt(ti.r,ti.c), "Interés · info ÷ conversaciones");
+      if(ti.r){
+        tasas += tasa("e-venta", deCadaInfo(ti.v, ti.r, "compran", "compra"), porcTxt(ti.v,ti.r), "Venta · ventas ÷ info");
+        tasas += tasa("e-socio", deCadaInfo(ti.s, ti.r, "se hacen socios", "se hace socio"), porcTxt(ti.s,ti.r), "Reclutamiento · socios ÷ info");
+      }
+    }else{
+      tasas += `<p class="nota" style="margin:0 0 6px">Las de "les di la info" salen al juntar ${BASE_PROB} conversaciones desde que la empezaste a apuntar (llevas ${ti.c}).</p>`;
+    }
+    tasas += tasa("e-venta", t.v ? `<b>1 venta</b> por cada <b>${Math.round(t.c/t.v)}</b> conversaciones` : "Sin ventas en este periodo", porcTxt(t.v,t.c), "Eficiencia para venta · ventas ÷ conversaciones");
+    tasas += tasa("e-socio", t.s ? `<b>1 socio</b> por cada <b>${Math.round(t.c/t.s)}</b> conversaciones` : "Sin socios en este periodo", porcTxt(t.s,t.c), "Eficiencia para socios · socios ÷ conversaciones");
+    tasas += `<p class="nota">Es lo que ha pasado ${nombrePer}, no una promesa: entre más conversaciones registres, más se acerca a tu realidad.</p>`;
+  }
+  document.getElementById("tasas").innerHTML = tasas;
+  pintarPlan(todo);
+}
+
+/* ---- ¿Cuánto necesito este mes? ----
+   Con las tasas de los últimos 90 días (o de siempre si en 90 días hay menos
+   de BASE_PROB conversaciones) y lo que ya se lleva en el mes. */
+function moverMetaMes(cual, d){
+  if(!datos.metaMes) datos.metaMes = {ventas:0, socios:0};
+  datos.metaMes[cual] = Math.max(0, (+datos.metaMes[cual]||0) + d);
+  guardar(); pintarPlan(sumaEmbudo("")); pintarTrio();
+}
+function usarMetaConv(n){
+  const m = datos.metas.find(x=>x.id==="conv"); if(!m) return;
+  m.objetivo = n;
+  resellarHoy(); reacomodarMetas(); guardar();
+  pintarHoy(); pintarPlan(sumaEmbudo(""));
+  avisar("Tu meta de conversaciones ahora es "+n+" al día ✓");
+}
+function pintarPlan(todo){
+  const f = new Date();
+  const diasQuedan = new Date(f.getFullYear(), f.getMonth()+1, 0).getDate() - f.getDate() + 1;   // hoy incluido
+  document.getElementById("tituloPlan").textContent = "¿Cuánto necesito en " + f.toLocaleDateString("es-MX",{month:"long"}) + "?";
   const mm = datos.metaMes||{ventas:0,socios:0};
-  const html = bloqueMes("Ventas", sumaMes("venta"), +mm.ventas||0, diaHoy, diasMes)
-             + bloqueMes("Nuevos socios", sumaMes("socio"), +mm.socios||0, diaHoy, diasMes);
-  document.getElementById("cardMes").style.display = html? "block" : "none";
-  document.getElementById("metaMes").innerHTML = html;
+  const metaV = +mm.ventas||0, metaS = +mm.socios||0;
+  const llevaV = sumaMes("venta"), llevaS = sumaMes("socio");
+  document.getElementById("planMetaV").textContent = metaV;
+  document.getElementById("planMetaS").textContent = metaS;
+  document.getElementById("planLlevaV").textContent = "Llevas "+llevaV;
+  document.getElementById("planLlevaS").textContent = "Llevas "+llevaS;
+  const cont = document.getElementById("plan");
+  if(todo.c < BASE_PROB){
+    cont.innerHTML = `<div class="aprende" style="margin:14px 0 0">Para calcularlo necesito tu probabilidad: llevas <b>${todo.c} de ${BASE_PROB}</b> conversaciones.</div>`;
+    return;
+  }
+  const d90 = new Date(); d90.setDate(d90.getDate()-89);
+  const t90 = sumaEmbudo(claveDia(d90));
+  const base = t90.c >= BASE_PROB ? t90 : todo;
+  const deDonde = t90.c >= BASE_PROB ? "los últimos 90 días" : "todo tu historial";
+  const faltaV = Math.max(0, metaV - llevaV), faltaS = Math.max(0, metaS - llevaS);
+  const rV = base.v/base.c, rS = base.s/base.c;
+  if(!faltaV && !faltaS){
+    cont.innerHTML = metaV || metaS
+      ? `<div class="plan-res"><p class="pg" style="margin:0">Ya llegaste a tus metas del mes. <b>¡Felicidades!</b></p></div>`
+      : `<p class="nota">Ponle una meta de ventas o de socios y te digo con cuántas personas hablar al día.</p>`;
+    return;
+  }
+  if((faltaV && !rV) || (faltaS && !rS)){
+    cont.innerHTML = `<div class="aprende" style="margin:14px 0 0">Todavía no tienes ${faltaV && !rV ? "ventas" : "socios"} registrados en ${deDonde}, así que no puedo calcular cuántas conversaciones te cuesta uno.</div>`;
+    return;
+  }
+  const necV = faltaV ? faltaV/rV : 0, necS = faltaS ? faltaS/rS : 0;
+  const nec = Math.ceil(Math.max(necV, necS));
+  const porDia = Math.ceil(nec/diasQuedan);
+  // a cuántos de esos les darás la info: con la tasa desde que se apunta la info
+  const ini = inicioInfo(), ti = ini ? sumaEmbudo(ini) : null;
+  const conInfo = ti && ti.c ? Math.ceil(nec * ti.r/ti.c) : 0;
+  const manda = necV >= necS
+    ? `${faltaV===1 ? "La venta que te falta es la que" : `Las ${faltaV} ventas que te faltan son las que`} más conversaciones piden${faltaS ? "; con esas también salen los socios" : ""}.`
+    : `${faltaS===1 ? "El socio que te falta es el que" : `Los ${faltaS} socios que te faltan son los que`} más conversaciones piden${faltaV ? "; con esos también salen las ventas" : ""}.`;
+  const conv = datos.metas.find(x=>x.id==="conv");
+  const metaHoy = conv ? conv.objetivo : 0;
+  cont.innerHTML = `<div class="plan-res">
+      <p class="pg" style="margin:0">Habla con <b>${porDia} ${porDia===1?"persona":"personas"} al día</b> (${porDia*7} a la semana) ${diasQuedan===1 ? "hoy, que es el último día" : `los ${diasQuedan} días que quedan`}.</p>
+      <p class="ps">Son <b>${nec}</b> conversaciones más${conInfo ? `, de las que a unas <b>${conInfo}</b> les darás la info` : ""}. ${manda} Calculado con tus tasas de ${deDonde}.</p>
+      ${metaHoy && porDia > metaHoy*2 ? `<p class="ps ojo">Es mucho para lo que queda del mes. Puedes bajar la meta, o darle la info a más de las personas con las que hablas: así necesitas menos conversaciones.</p>` : ""}
+    </div>
+    ${conv && porDia !== metaHoy
+      ? `<button class="btn btn-pri" onclick="usarMetaConv(${porDia})">Usar ${porDia} como mi meta diaria de conversaciones</button>
+         <p class="nota">Hoy tu meta es ${metaHoy} al día. ${porDia > metaHoy ? "Con esa no llegas." : "Con menos también llegas."}</p>`
+      : `<p class="nota">Tu meta diaria de conversaciones ya va con este plan.</p>`}`;
 }
 
 /* =================== CONSTANCIA =================== */

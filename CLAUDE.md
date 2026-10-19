@@ -100,8 +100,11 @@ de arriba abajo: tira de los últimos 7 días → bloque de estado (anillo con l
 marca del 80%, mensaje, pie, aviso de atrasados) → actividades (tarjeta "Te
 recomiendo" y luego la lista: empezadas, sin empezar, cumplidas tachadas,
 pausadas; ver `acomodarMetas()`) → "Hoy le
-escribes a" (seguimientos) → resultados del mes (ventas/socios con − y +) →
-"Ventas de <mes>" → agenda.
+escribes a" (seguimientos) → resultados del mes (les di la info / ventas /
+socios, con − y +, y "Apuntar resultados de otro día") → "Ventas de <mes>" →
+agenda. Números, de arriba abajo: periodo (mes / 90 días / siempre) → tu
+embudo → tus probabilidades → ¿cuánto necesito este mes? → anillo día por día
+→ qué fuente convierte → actividad de la semana.
 
 **Este diseño es el que él quiere.** Del 07 al 10-10-2026 estuvo publicada
 (v37) una interfaz nueva copiada de una captura que le gustó: encabezado con
@@ -117,7 +120,7 @@ actual lo ignora.
 datos = {
   metas[],        // el plan diario: {id, nombre, objetivo}
   planVersion,    // ver "Publicar un plan nuevo"
-  dias{},         // "YYYY-MM-DD" → {idMeta: conteo, _pl: idDePlan}
+  dias{},         // "YYYY-MM-DD" → {idMeta: conteo, venta, socio, info, _pl: idDePlan}
   planes{},       // listas de metas deduplicadas; cada día apunta a la suya con _pl
   prospectos[],   // {id, nombre, red, etapa, contacto, fecha, notas, creado, hist{}, log[]}
   ventas[],       // {id, f, monto (pesos), ganancia (dólares)} — solo el dinero
@@ -157,9 +160,30 @@ en `public/index.html` (qué paneles se ven) y `esAdmin()` en `firestore.rules`
   Cambiar el plan hoy no reescribe el historial. Es un candado que él pidió.
 - **Meta en objetivo 0 = pausada**: no cuenta ni como lograda ni como pendiente
   en racha, anillo ni barras.
-- **Ley de promedios**: el embudo cuenta a los descartados usando `p.hist`
-  (fecha de cada etapa alcanzada). Sin eso las tasas salen infladas. Quien es
-  cliente Y socio cuenta como UNA persona cerrada, no dos.
+- **Embudo por números (18-10-2026, él lo pidió a partir de un prompt de
+  Gemini y un prototipo que aprobó).** Las probabilidades salen de CONTADORES
+  del día, no de la lista de prospectos (un prototipo por personas no le
+  gustó): C = `conv` (la actividad), R = `info` ("les di la info": alguien
+  aceptó escuchar; es un resultado como `venta` y `socio`, en `IDS_RESULTADO`),
+  V = `venta`, S = `socio`. Reglas, en `pintarEmbudoNum()`/`pintarPlan()`:
+  - Las tasas se calculan sobre SUMAS de un periodo, nunca de un día (la venta
+    llega días después).
+  - Con menos de `BASE_PROB` (50) conversaciones en total: "Aprendiendo tu
+    probabilidad", sin porcentajes. Él insiste en que la probabilidad es una
+    suposición hasta tener datos.
+  - `info` empezó a contarse en oct-2026: las tasas que la usan miran solo
+    desde `inicioInfo()` (primer día con info), o compararían contra meses sin
+    dato. V÷C y S÷C usan todo el periodo.
+  - El plan del mes usa las tasas de 90 días (o de siempre si en 90 días hay
+    menos de 50 conversaciones) y lo que ya se lleva; ofrece poner esa cifra
+    como objetivo de `conv`.
+  - "Resultados de otro día" deja apuntar info/ventas/socios de días pasados;
+    las conversaciones pasadas no, porque moverían la racha. Las ventas de ese
+    día no bajan de las que tienen importe.
+  El líder NO ve la info ni las tasas (el resumen sigue igual).
+- **Qué fuente te convierte mejor** sí sale de los prospectos: cuenta a los
+  descartados usando `p.hist` y quien es cliente Y socio cuenta como UNA
+  persona cerrada.
 - **El mensaje del inicio golpea al día flojo, nunca a la persona**, y del 40%
   para arriba nunca reprocha. Las reglas están escritas sobre `mensajeDelDia()`.
 - **Ventas, tal como están hoy (él quiere rediseñarlas, ver Pendientes):** la
