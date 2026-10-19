@@ -59,6 +59,16 @@
    (inputs, selects, textareas) van a 16 px o más. Y `manipulation` quita el
    zoom de tocar dos veces rápido, que pasaba al darle + seguido. */
 html{touch-action:manipulation}
+/* Los campos de fecha y hora del iPhone traen su propio ancho y alto mínimos y
+   se brincan el width:100%: "Próximo seguimiento" salía más alto y empujaba la
+   ficha hacia la derecha, cortada por la orilla. Sin la apariencia nativa
+   obedecen el ancho; el alto mínimo es el de los demás campos (vacíos se
+   encogían). Y ninguna hoja ni la página se pueden correr de lado. */
+input[type=date],input[type=time]{-webkit-appearance:none;appearance:none;min-width:0;max-width:100%;
+  display:block;min-height:44px;text-align:left}
+.agregar-tarea input{min-height:44px}
+input[type=date]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and-time-value{text-align:left}
+html,body{overflow-x:hidden}
 /* min-height y NO height: con `height:100%` + border-box, el padding-bottom
    queda atrapado dentro de la altura de la pantalla y el final del contenido
    se esconde detrás de la barra fija. */
@@ -577,7 +587,7 @@ main{padding:0 16px}
 /* ---------- Hoja (formulario) ---------- */
 .velo{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;z-index:40}
 .velo.abierta{display:block}
-.hoja{position:fixed;left:0;right:0;bottom:0;background:var(--card);border:1px solid var(--line);border-bottom:none;border-radius:26px 26px 0 0;padding:12px 20px calc(24px + env(safe-area-inset-bottom));z-index:50;transform:translateY(100%);transition:transform .25s ease;max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.hoja{position:fixed;left:0;right:0;bottom:0;overflow-x:hidden;background:var(--card);border:1px solid var(--line);border-bottom:none;border-radius:26px 26px 0 0;padding:12px 20px calc(24px + env(safe-area-inset-bottom));z-index:50;transform:translateY(100%);transition:transform .25s ease;max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .hoja.abierta{transform:none}
 .hoja .asa{width:40px;height:4px;border-radius:2px;background:var(--line2);margin:0 auto 14px}
 .hoja h3{font-size:18px;font-weight:800;margin-bottom:14px}

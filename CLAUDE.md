@@ -295,6 +295,11 @@ en `public/index.html` (qué paneles se ven) y `esAdmin()` en `firestore.rules`
   pantalla se queda grande (`user-scalable=no` no lo evita). Todo input,
   select y textarea va a 16 px o más; `html{touch-action:manipulation}` quita
   el zoom de doble toque. Medir: ningún campo con `fontSize` < 16.
+- **Los campos de fecha y hora del iPhone se brincan el `width:100%`** (traen
+  ancho y alto propios): "Próximo seguimiento" empujaba la ficha fuera de la
+  pantalla. Van con `appearance:none`, `min-width:0` y alto mínimo; la página
+  y las hojas llevan `overflow-x:hidden`. Chrome no lo reproduce: probar en el
+  iPhone.
 
 ☠️ **La migración de `PLAN_VERSION` NO debe tocar `actualizado`.** Estamparle la
 hora para que "ganara" a la nube destruyó datos reales: un aparato con copia
