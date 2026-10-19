@@ -281,6 +281,11 @@ en `public/index.html` (qué paneles se ven) y `esAdmin()` en `firestore.rules`
 - **El plan diario y la meta del mes (Ajustes) se guardan solos** al salir de
   cada campo (evento `change`); los botones de guardar siguen, pero ya no
   hacen falta.
+- **Personas repetidas** (18-10-2026): al agregar o editar, si el nombre
+  (sin mayúsculas, acentos ni espacios de más) o el teléfono/@ coincide con
+  otra persona, sale un aviso en la ficha con "Abrir su ficha" y, al
+  guardar, "Es otra persona, guardar" (`buscarDuplicado()`). No bloquea: sí
+  hay dos "María López". El teléfono se compara por sus últimos 10 dígitos.
 - **Nuevo prospecto es el "+" junto al buscador de Gente** (18-10-2026). Era
   un botón flotante abajo a la derecha que tapaba la palomita de seguimiento
   de la fila que pasaba por debajo.

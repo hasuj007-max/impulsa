@@ -439,6 +439,13 @@ main{padding:0 16px}
 .avatar{width:42px;height:42px;border-radius:13px;background:var(--green-soft);color:var(--verde2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;flex:none}
 .prospecto .datos{flex:1;min-width:0}
 .prospecto .nom{font-size:15px;font-weight:700;line-height:1.25;overflow-wrap:break-word}
+.dup{margin-top:8px;padding:10px 12px;border-radius:12px;background:var(--gold-soft);border:1px solid rgba(246,185,63,.35);
+  font-size:13px;font-weight:600;line-height:1.4;color:var(--ink)}
+.dup b{color:var(--gold)}
+.dup .dup-btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.dup button{border:none;border-radius:999px;padding:7px 12px;font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;
+  background:var(--card);color:var(--ink);border:1px solid var(--line2)}
+.dup button.fuerte{background:var(--gold);color:#2A1C00;border-color:transparent}
 .paso-tag{display:inline-block;vertical-align:2px;margin-left:4px;padding:2px 8px;border-radius:999px;
   font-size:10.5px;font-weight:800;letter-spacing:.2px;white-space:nowrap}
 .paso-tag.t-info{background:var(--azul-soft);color:var(--azul)}
@@ -1031,7 +1038,10 @@ nav button.activa{color:var(--verde)}
 <div class="hoja" id="hoja">
   <div class="asa"></div>
   <h3 id="hojaTitulo">Nuevo prospecto</h3>
-  <div class="campo"><label>Nombre</label><input id="fNombre" type="text" placeholder="Ej. María López"></div>
+  <div class="campo"><label>Nombre</label><input id="fNombre" type="text" placeholder="Ej. María López">
+    <!-- Aviso de "ya la tienes": sale mientras escribes y al guardar -->
+    <div class="dup oculto" id="avisoDup" role="status"></div>
+  </div>
   <!-- El paso va arriba, justo bajo el nombre: es lo que más se cambia. Se
        escoge con botones; el select queda escondido porque es el que guarda el
        valor (y la huella de "cambios sin guardar"). -->
@@ -2896,6 +2906,8 @@ function abrirFormulario(id){
   document.getElementById("fNombre").value = p? p.nombre : "";
   document.getElementById("fRed").value    = p? p.red    : "Instagram";
   sel.value = p? p.etapa : "Contactado";   // si lo agregas, ya le hablaste
+  dupConfirmado = null;
+  document.getElementById("avisoDup").classList.add("oculto");
   pintarPasosFicha(p);
   document.getElementById("fContacto").value = p? (p.contacto||"") : "";
   document.getElementById("fFecha").value  = p? (p.fecha||"") : "";
@@ -2951,9 +2963,55 @@ function agregarLog(){
   document.getElementById("fLogTxt").value="";
   guardar(); pintarLog(p);
 }
+/* ---- ¿Ya la tienes? ----
+   Mismo nombre (sin importar mayúsculas, acentos ni espacios de más) o mismo
+   teléfono / @usuario que otra persona de tu lista. Se avisa mientras
+   escribes y otra vez al guardar; no se bloquea, porque sí hay dos "María
+   López", pero hay que confirmarlo. Antes salían personas repetidas en la
+   lista y cada una contaba aparte en las estadísticas. */
+const claveTexto = t => (t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\s+/g," ").trim();
+function claveContacto(c){
+  const t = (c||"").trim();
+  if(!t) return "";
+  const dig = t.replace(/\D/g,"");
+  if(dig.length >= 7) return "tel:" + dig.slice(-10);        // +52 999… y 999… son el mismo
+  return "@" + claveTexto(t).replace(/^@/,"");
+}
+function buscarDuplicado(nombre, contacto, exceptoId){
+  const n = claveTexto(nombre), c = claveContacto(contacto);
+  return datos.prospectos.find(p => p.id !== exceptoId &&
+    ((n && claveTexto(p.nombre) === n) || (c && claveContacto(p.contacto) === c)));
+}
+let dupConfirmado = null;   // id de la persona repetida que ya dijiste que sí es otra
+function pintarAvisoDup(alGuardar){
+  const caja = document.getElementById("avisoDup");
+  const d = buscarDuplicado(document.getElementById("fNombre").value, document.getElementById("fContacto").value, editandoId);
+  caja.classList.toggle("oculto", !d);
+  if(!d) return null;
+  const mismoNombre = claveTexto(d.nombre) === claveTexto(document.getElementById("fNombre").value);
+  const paso = (PASOS.find(x=>x.k===pasoDe(d.etapa))||{}).t || d.etapa;
+  caja.innerHTML = `⚠︎ Ya tienes a <b>${esc(d.nombre)}</b>${mismoNombre ? "" : " con ese mismo contacto"} (${esc(d.red)} · ${esc(paso)}).
+    <div class="dup-btns">
+      <button type="button" class="fuerte" onclick="abrirDuplicado('${d.id}')">Abrir su ficha</button>
+      ${alGuardar ? `<button type="button" onclick="guardarDeTodos('${d.id}')">Es otra persona, guardar</button>` : ""}
+    </div>`;
+  return d;
+}
+function abrirDuplicado(id){ cerrarFormulario(true); abrirFormulario(id); }
+function guardarDeTodos(id){ dupConfirmado = id; guardarProspecto(); }
+["fNombre","fContacto"].forEach(id =>
+  document.getElementById(id).addEventListener("input", ()=>{ dupConfirmado = null; pintarAvisoDup(false); }));
+
 function guardarProspecto(){
   const nombre=document.getElementById("fNombre").value.trim();
   if(!nombre){ avisar("Ponle un nombre al prospecto"); return; }
+  const repetido = buscarDuplicado(nombre, document.getElementById("fContacto").value, editandoId);
+  if(repetido && dupConfirmado !== repetido.id){
+    pintarAvisoDup(true);
+    avisar("Ya tienes a "+repetido.nombre);
+    return;
+  }
+  dupConfirmado = null;
   const registro={
     nombre, red:document.getElementById("fRed").value,
     etapa:document.getElementById("fEtapa").value,
