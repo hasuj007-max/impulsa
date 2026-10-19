@@ -3146,16 +3146,18 @@ function sumaMes(idMeta){
   return s;
 }
 /* ---- Embudo por números ----
-   Las cuatro variables salen de los contadores de cada día:
-     C = conversaciones (la actividad "conv")   R = les di la info ("info")
-     V = ventas ("venta")                       S = socios ("socio")
-   Las tasas se calculan SIEMPRE sobre la suma de un periodo, nunca de un día:
-   la venta llega días después de la plática y un día suelto da porcentajes
-   locos. Con menos de BASE_PROB conversaciones la probabilidad todavía no es
-   del socio y se dice "aprendiendo" en vez de dar un porcentaje engañoso.
-   La info se empezó a contar en oct-2026: las tasas que dependen de ella solo
-   miran desde el primer día que tiene alguna, para no compararla contra meses
-   de conversaciones en los que no se apuntaba. */
+   Sale de la GENTE, no de la actividad del día (decisión suya, 18-10-2026):
+   cuentan solo las personas que agregó en Gente, que son con las que ya habló
+   y le siguieron la plática. Las conversaciones de la actividad diaria siguen
+   para el anillo y la racha, pero aquí no entran.
+     C = personas agregadas (creado en el periodo, incluidas las que dijeron no)
+     R = de esas, cuántas llegaron a "Le di la info" (o más)
+     V = cuántas compraron            S = cuántas se inscribieron
+   Es por "camada": de la gente que agregaste en el periodo, hasta dónde llegó.
+   Usa el historial de cada persona (p.hist), así que una descartada después
+   de recibir la info cuenta como que la recibió. Con menos de BASE_PROB
+   personas la probabilidad todavía no es del socio: se dice "aprendiendo" en
+   vez de dar un porcentaje engañoso. */
 const BASE_PROB = 50;
 let periodoNum = "mes";
 function cambiarPeriodo(p){ periodoNum = p; pintarEmbudoNum(); }
@@ -3166,16 +3168,14 @@ function desdeDePeriodo(p){
   return "";
 }
 function sumaEmbudo(desde){
-  const t = {c:0, r:0, v:0, s:0};
-  Object.keys(datos.dias).forEach(k=>{
-    if(desde && k < desde) return;
-    const d = datos.dias[k];
-    t.c += d.conv||0; t.r += d.info||0; t.v += d.venta||0; t.s += d.socio||0;
-  });
-  return t;
-}
-function inicioInfo(){
-  return Object.keys(datos.dias).filter(k=>(datos.dias[k].info||0)>0).sort()[0] || "";
+  const gente = datos.prospectos.filter(p => !desde || (p.creado||"") >= desde);
+  const llego = (p, e) => !!(p.hist && p.hist[e]) || p.etapa===e;
+  return {
+    c: gente.length,
+    r: gente.filter(p=>nivelAlcanzado(p)>=2).length,
+    v: gente.filter(p=>llego(p,"Cliente")).length,
+    s: gente.filter(p=>llego(p,"Socio")).length
+  };
 }
 const porc = (a,b) => b ? Math.round(a/b*100) : 0;
 // para mostrar: abajo de 1% con un decimal, que "0%" de algo que sí pasa confunde
@@ -3190,66 +3190,50 @@ function deCadaInfo(a, b, plural, singular){
 }
 function pintarEmbudoNum(){
   document.querySelectorAll("#selPeriodo button").forEach(b=>b.classList.toggle("activa", b.dataset.per===periodoNum));
-  const desde = desdeDePeriodo(periodoNum);
-  const t = sumaEmbudo(desde);
+  const t = sumaEmbudo(desdeDePeriodo(periodoNum));
   const todo = sumaEmbudo("");
-  const ini = inicioInfo();
-  // para las tasas de la info, solo desde que se empezó a apuntar
-  const ti = ini ? sumaEmbudo(desde > ini ? desde : ini) : {c:0,r:0,v:0,s:0};
   const nombrePer = {mes:"este mes", "90":"en los últimos 90 días", siempre:"desde que empezaste"}[periodoNum];
 
   const aprende = todo.c < BASE_PROB
-    ? `<div class="aprende">Aprendiendo tu probabilidad: llevas <b>${todo.c} de ${BASE_PROB}</b> conversaciones.
+    ? `<div class="aprende">Aprendiendo tu probabilidad: llevas <b>${todo.c} de ${BASE_PROB}</b> personas en Gente.
         <div class="ab"><i style="width:${todo.c/BASE_PROB*100}%"></i></div>
         Con menos de ${BASE_PROB}, un porcentaje engaña: una sola venta lo mueve muchísimo.</div>` : "";
   const ancho = n => t.c ? Math.max(n? 2 : 0, Math.min(100, n/t.c*100)) : 0;
   const fila = (cls, txt, n) => `<div class="emb-fila ${cls}"><span class="et">${txt}</span><span class="ec">${n}</span><div class="eb"><i style="width:${ancho(n)}%"></i></div></div>`;
   document.getElementById("embudoNum").innerHTML = aprende
-    + fila("", "Conversaciones", t.c)
-    + `<div class="emb-salto">${ti.c ? `A <b>${porc(ti.r,ti.c)}%</b> les diste la info` : `Toca el + de "les di la info" en Hoy cada vez que alguien acepte escuchar`}</div>`
+    + fila("", "Personas que agregaste", t.c)
+    + `<div class="emb-salto">${t.c ? `A <b>${porc(t.r,t.c)}%</b> les diste la info` : "&nbsp;"}</div>`
     + fila("e-info", "Les di la info", t.r)
-    + `<div class="emb-salto">${ti.r ? `De esos, <b>${porc(ti.v,ti.r)}%</b> compraron y <b>${porc(ti.s,ti.r)}%</b> se hicieron socios` : "&nbsp;"}</div>`
-    + `<div class="emb-finales">${fila("e-venta","Ventas", t.v)}${fila("e-socio","Socios", t.s)}</div>`
-    + `<p class="nota">Lo que pasó ${nombrePer}.${ini && desde < ini ? ` "Les di la info" se cuenta desde el ${fCorta(ini)}.` : ""}</p>`;
+    + `<div class="emb-salto">${t.r ? `De esos, <b>${porc(t.v,t.r)}%</b> compraron y <b>${porc(t.s,t.r)}%</b> se inscribieron` : "&nbsp;"}</div>`
+    + `<div class="emb-finales">${fila("e-venta","Compraron", t.v)}${fila("e-socio","Se inscribieron", t.s)}</div>`
+    + `<p class="nota">De la gente que agregaste ${nombrePer}, hasta dónde llegó. Solo cuenta la gente de Gente: las conversaciones de tus actividades no entran aquí.</p>`;
 
   // las cinco tasas, cada una en palabras y con su fórmula
   const tasa = (cls, frase, p, formula) => `<div class="tasa ${cls}"><div class="td">${frase}</div><div class="tp">${p}%</div><div class="tf">${formula}</div></div>`;
-  // (cada tasa recibe ya el texto del porcentaje, ver porcTxt)
   let tasas = "";
   if(todo.c < BASE_PROB){
-    tasas = `<p class="nota" style="margin:0">Aparecen al llegar a ${BASE_PROB} conversaciones registradas.</p>`;
+    tasas = `<p class="nota" style="margin:0">Aparecen al llegar a ${BASE_PROB} personas en Gente.</p>`;
   }else{
-    if(ti.c >= BASE_PROB){
-      tasas += tasa("e-info", `De cada <b>100</b> con los que hablas, a <b>${porc(ti.r,ti.c)}</b> les das la info`, porcTxt(ti.r,ti.c), "Interés · info ÷ conversaciones");
-      if(ti.r){
-        tasas += tasa("e-venta", deCadaInfo(ti.v, ti.r, "compran", "compra"), porcTxt(ti.v,ti.r), "Venta · ventas ÷ info");
-        tasas += tasa("e-socio", deCadaInfo(ti.s, ti.r, "se hacen socios", "se hace socio"), porcTxt(ti.s,ti.r), "Reclutamiento · socios ÷ info");
-      }
-    }else{
-      tasas += `<p class="nota" style="margin:0 0 6px">Las de "les di la info" salen al juntar ${BASE_PROB} conversaciones desde que la empezaste a apuntar (llevas ${ti.c}).</p>`;
-    }
-    tasas += tasa("e-venta", t.v ? `<b>1 venta</b> por cada <b>${Math.round(t.c/t.v)}</b> conversaciones` : "Sin ventas en este periodo", porcTxt(t.v,t.c), "Eficiencia para venta · ventas ÷ conversaciones");
-    tasas += tasa("e-socio", t.s ? `<b>1 socio</b> por cada <b>${Math.round(t.c/t.s)}</b> conversaciones` : "Sin socios en este periodo", porcTxt(t.s,t.c), "Eficiencia para socios · socios ÷ conversaciones");
-    tasas += `<p class="nota">Es lo que ha pasado ${nombrePer}, no una promesa: entre más conversaciones registres, más se acerca a tu realidad.</p>`;
+    tasas += tasa("e-info", `De cada <b>100</b> personas que agregas, a <b>${porc(t.r,t.c)}</b> les das la info`, porcTxt(t.r,t.c), "Interés · info ÷ personas");
+    tasas += tasa("e-venta", deCadaInfo(t.v, t.r, "compran", "compra"), porcTxt(t.v,t.r), "Venta · compraron ÷ info");
+    tasas += tasa("e-socio", deCadaInfo(t.s, t.r, "se inscriben", "se inscribe"), porcTxt(t.s,t.r), "Reclutamiento · se inscribieron ÷ info");
+    tasas += tasa("e-venta", t.v ? `<b>1 venta</b> por cada <b>${Math.round(t.c/t.v)}</b> personas` : "Nadie compró de esta gente", porcTxt(t.v,t.c), "Eficiencia para venta · compraron ÷ personas");
+    tasas += tasa("e-socio", t.s ? `<b>1 socio</b> por cada <b>${Math.round(t.c/t.s)}</b> personas` : "Nadie se inscribió de esta gente", porcTxt(t.s,t.c), "Eficiencia para socios · se inscribieron ÷ personas");
+    tasas += `<p class="nota">Es lo que ha pasado ${nombrePer}, no una promesa: entre más gente registres, más se acerca a tu realidad.${periodoNum==="mes" ? " En el mes, la gente que agregaste hace poco todavía no termina de decidir." : ""}</p>`;
   }
   document.getElementById("tasas").innerHTML = tasas;
   pintarPlan(todo);
 }
 
 /* ---- ¿Cuánto necesito este mes? ----
-   Con las tasas de los últimos 90 días (o de siempre si en 90 días hay menos
-   de BASE_PROB conversaciones) y lo que ya se lleva en el mes. */
+   Con las tasas de la gente de los últimos 90 días (o de siempre si en 90
+   días hay menos de BASE_PROB personas) y lo que ya se lleva en el mes. La
+   respuesta es cuánta gente agregar a Gente, no cuántas conversaciones: la
+   actividad del día cuenta también a quien no siguió la plática. */
 function moverMetaMes(cual, d){
   if(!datos.metaMes) datos.metaMes = {ventas:0, socios:0};
   datos.metaMes[cual] = Math.max(0, (+datos.metaMes[cual]||0) + d);
   guardar(); pintarPlan(sumaEmbudo("")); pintarTrio();
-}
-function usarMetaConv(n){
-  const m = datos.metas.find(x=>x.id==="conv"); if(!m) return;
-  m.objetivo = n;
-  resellarHoy(); reacomodarMetas(); guardar();
-  pintarHoy(); pintarPlan(sumaEmbudo(""));
-  avisar("Tu meta de conversaciones ahora es "+n+" al día ✓");
 }
 function pintarPlan(todo){
   const f = new Date();
@@ -3264,45 +3248,41 @@ function pintarPlan(todo){
   document.getElementById("planLlevaS").textContent = "Llevas "+llevaS;
   const cont = document.getElementById("plan");
   if(todo.c < BASE_PROB){
-    cont.innerHTML = `<div class="aprende" style="margin:14px 0 0">Para calcularlo necesito tu probabilidad: llevas <b>${todo.c} de ${BASE_PROB}</b> conversaciones.</div>`;
+    cont.innerHTML = `<div class="aprende" style="margin:14px 0 0">Para calcularlo necesito tu probabilidad: llevas <b>${todo.c} de ${BASE_PROB}</b> personas en Gente.</div>`;
     return;
   }
-  const d90 = new Date(); d90.setDate(d90.getDate()-89);
-  const t90 = sumaEmbudo(claveDia(d90));
+  const t90 = sumaEmbudo(desdeDePeriodo("90"));
   const base = t90.c >= BASE_PROB ? t90 : todo;
-  const deDonde = t90.c >= BASE_PROB ? "los últimos 90 días" : "todo tu historial";
+  const deDonde = t90.c >= BASE_PROB ? "tu gente de los últimos 90 días" : "toda tu gente";
   const faltaV = Math.max(0, metaV - llevaV), faltaS = Math.max(0, metaS - llevaS);
   const rV = base.v/base.c, rS = base.s/base.c;
   if(!faltaV && !faltaS){
     cont.innerHTML = metaV || metaS
       ? `<div class="plan-res"><p class="pg" style="margin:0">Ya llegaste a tus metas del mes. <b>¡Felicidades!</b></p></div>`
-      : `<p class="nota">Ponle una meta de ventas o de socios y te digo con cuántas personas hablar al día.</p>`;
+      : `<p class="nota">Ponle una meta de ventas o de socios y te digo a cuánta gente agregar al día.</p>`;
     return;
   }
   if((faltaV && !rV) || (faltaS && !rS)){
-    cont.innerHTML = `<div class="aprende" style="margin:14px 0 0">Todavía no tienes ${faltaV && !rV ? "ventas" : "socios"} registrados en ${deDonde}, así que no puedo calcular cuántas conversaciones te cuesta uno.</div>`;
+    cont.innerHTML = `<div class="aprende" style="margin:14px 0 0">Todavía nadie de ${deDonde} ${faltaV && !rV ? "ha comprado" : "se ha inscrito"}, así que no puedo calcular a cuánta gente necesitas para ${faltaV && !rV ? "una venta" : "un socio"}.</div>`;
     return;
   }
   const necV = faltaV ? faltaV/rV : 0, necS = faltaS ? faltaS/rS : 0;
   const nec = Math.ceil(Math.max(necV, necS));
   const porDia = Math.ceil(nec/diasQuedan);
-  // a cuántos de esos les darás la info: con la tasa desde que se apunta la info
-  const ini = inicioInfo(), ti = ini ? sumaEmbudo(ini) : null;
-  const conInfo = ti && ti.c ? Math.ceil(nec * ti.r/ti.c) : 0;
+  const conInfo = Math.ceil(nec * base.r/base.c);
+  // tu ritmo: cuánta gente agregaste por día en los últimos 30
+  const hace30 = new Date(); hace30.setDate(hace30.getDate()-29);
+  const ritmo = datos.prospectos.filter(p=>(p.creado||"") >= claveDia(hace30)).length / 30;
+  const ritmoTxt = ritmo >= 1 ? Math.round(ritmo) : ritmo.toFixed(1);
   const manda = necV >= necS
-    ? `${faltaV===1 ? "La venta que te falta es la que" : `Las ${faltaV} ventas que te faltan son las que`} más conversaciones piden${faltaS ? "; con esas también salen los socios" : ""}.`
-    : `${faltaS===1 ? "El socio que te falta es el que" : `Los ${faltaS} socios que te faltan son los que`} más conversaciones piden${faltaV ? "; con esos también salen las ventas" : ""}.`;
-  const conv = datos.metas.find(x=>x.id==="conv");
-  const metaHoy = conv ? conv.objetivo : 0;
+    ? `${faltaV===1 ? "La venta que te falta es la que" : `Las ${faltaV} ventas que te faltan son las que`} más gente piden${faltaS ? "; con esas también salen los socios" : ""}.`
+    : `${faltaS===1 ? "El socio que te falta es el que" : `Los ${faltaS} socios que te faltan son los que`} más gente piden${faltaV ? "; con esos también salen las ventas" : ""}.`;
   cont.innerHTML = `<div class="plan-res">
-      <p class="pg" style="margin:0">Habla con <b>${porDia} ${porDia===1?"persona":"personas"} al día</b> (${porDia*7} a la semana) ${diasQuedan===1 ? "hoy, que es el último día" : `los ${diasQuedan} días que quedan`}.</p>
-      <p class="ps">Son <b>${nec}</b> conversaciones más${conInfo ? `, de las que a unas <b>${conInfo}</b> les darás la info` : ""}. ${manda} Calculado con tus tasas de ${deDonde}.</p>
-      ${metaHoy && porDia > metaHoy*2 ? `<p class="ps ojo">Es mucho para lo que queda del mes. Puedes bajar la meta, o darle la info a más de las personas con las que hablas: así necesitas menos conversaciones.</p>` : ""}
-    </div>
-    ${conv && porDia !== metaHoy
-      ? `<button class="btn btn-pri" onclick="usarMetaConv(${porDia})">Usar ${porDia} como mi meta diaria de conversaciones</button>
-         <p class="nota">Hoy tu meta es ${metaHoy} al día. ${porDia > metaHoy ? "Con esa no llegas." : "Con menos también llegas."}</p>`
-      : `<p class="nota">Tu meta diaria de conversaciones ya va con este plan.</p>`}`;
+      <p class="pg" style="margin:0">Agrega a <b>${porDia} ${porDia===1?"persona":"personas"} al día</b> a Gente (${porDia*7} a la semana) ${diasQuedan===1 ? "hoy, que es el último día" : `los ${diasQuedan} días que quedan`}.</p>
+      <p class="ps">Gente con la que hables y te siga la plática: <b>${nec}</b> personas más, de las que a unas <b>${conInfo}</b> les darás la info. ${manda} Calculado con ${deDonde}.</p>
+      <p class="ps">Tu ritmo de los últimos 30 días: <b>${ritmoTxt}</b> al día.</p>
+      ${porDia > Math.max(2, ritmo*2) ? `<p class="ps ojo">Es mucho más que tu ritmo. Puedes bajar la meta, o darle la info a más de la gente que agregas: así necesitas menos personas.</p>` : ""}
+    </div>`;
 }
 
 /* =================== CONSTANCIA =================== */

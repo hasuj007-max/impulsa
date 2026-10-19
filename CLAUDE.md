@@ -160,27 +160,25 @@ en `public/index.html` (qué paneles se ven) y `esAdmin()` en `firestore.rules`
   Cambiar el plan hoy no reescribe el historial. Es un candado que él pidió.
 - **Meta en objetivo 0 = pausada**: no cuenta ni como lograda ni como pendiente
   en racha, anillo ni barras.
-- **Embudo por números (18-10-2026, él lo pidió a partir de un prompt de
-  Gemini y un prototipo que aprobó).** Las probabilidades salen de CONTADORES
-  del día, no de la lista de prospectos (un prototipo por personas no le
-  gustó): C = `conv` (la actividad), R = `info` ("les di la info": alguien
-  aceptó escuchar; es un resultado como `venta` y `socio`, en `IDS_RESULTADO`),
-  V = `venta`, S = `socio`. Reglas, en `pintarEmbudoNum()`/`pintarPlan()`:
-  - Las tasas se calculan sobre SUMAS de un periodo, nunca de un día (la venta
-    llega días después).
-  - Con menos de `BASE_PROB` (50) conversaciones en total: "Aprendiendo tu
+- **Embudo de Números (18-10-2026, él lo pidió a partir de un prompt de
+  Gemini y prototipos que aprobó).** Las probabilidades salen SOLO de la gente
+  de Gente, no de la actividad "conv" (decisión suya: "son personas con las
+  que ya hablé y me siguieron la plática"; las conversaciones del día siguen
+  para el anillo y la racha). `sumaEmbudo(desde)`: C = personas agregadas en el
+  periodo (`p.creado`, incluidas las descartadas), R = de esas, las que
+  llegaron a En conversación o más (`nivelAlcanzado`), V/S = las que llegaron
+  a Cliente/Socio. Es por camada: de la gente del periodo, hasta dónde llegó.
+  - Con menos de `BASE_PROB` (50) personas en total: "Aprendiendo tu
     probabilidad", sin porcentajes. Él insiste en que la probabilidad es una
     suposición hasta tener datos.
-  - `info` empezó a contarse en oct-2026: las tasas que la usan miran solo
-    desde `inicioInfo()` (primer día con info), o compararían contra meses sin
-    dato. V÷C y S÷C usan todo el periodo.
-  - El plan del mes usa las tasas de 90 días (o de siempre si en 90 días hay
-    menos de 50 conversaciones) y lo que ya se lleva; ofrece poner esa cifra
-    como objetivo de `conv`.
-  - "Resultados de otro día" deja apuntar info/ventas/socios de días pasados;
-    las conversaciones pasadas no, porque moverían la racha. Las ventas de ese
-    día no bajan de las que tienen importe.
-  El líder NO ve la info ni las tasas (el resumen sigue igual).
+  - El plan del mes ("¿Cuánto necesito?") usa la gente de 90 días (o toda si
+    hay menos de 50) y lo que ya se lleva en el mes según los CONTADORES
+    (`sumaMes`); responde cuánta gente agregar a Gente al día y lo compara
+    con su ritmo de los últimos 30 días.
+  - Los contadores del día `info`, `venta`, `socio` siguen siendo los
+    "Resultados del mes" de Hoy (con + y −, y "Apuntar resultados de otro
+    día"); los pasos de la persona los suman solos (ver abajo).
+  El líder NO ve nada de esto (el resumen sigue igual).
 - **Pasos de la persona (18-10-2026).** En la ficha, el paso se escoge con
   botones (`PASOS`, `escogerPaso()`): Le hablé · Le di la info · En
   seguimiento · Compró · Se inscribió · Dijo que no. Por dentro siguen las
