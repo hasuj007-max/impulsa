@@ -3019,14 +3019,7 @@ function guardarProspecto(){
     fecha:document.getElementById("fFecha").value||"",
     notas:document.getElementById("fNotas").value.trim()
   };
-  /* Se mira ANTES de sellar la etapa: una conversación se cuenta la PRIMERA vez
-     que este prospecto llega a Contactado o En conversación, y nunca más. Antes
-     se comparaba con la etapa anterior, así que mover a alguien de Nuevo a
-     Contactado, devolverlo a Nuevo y repetir sumaba una conversación cada vez:
-     números inventados que ensuciaban la ley de promedios. */
   const anterior = editandoId? datos.prospectos.find(x=>x.id===editandoId) : null;
-  const yaConversado = !!(anterior && anterior.hist &&
-    (anterior.hist["Contactado"] || anterior.hist["En conversación"]));
   // lo que ya había alcanzado antes de este guardado (para contar solo la 1.ª vez)
   const antes = {...((anterior && anterior.hist) || {})};
   if(editandoId){
@@ -3040,17 +3033,11 @@ function guardarProspecto(){
     sellarEtapa(registro, registro.etapa);
     datos.prospectos.push(registro);
   }
-  /* Llegar por primera vez a Contactado/En conversación suma 1 conversación.
-     Pasa por contar(), igual que el "+": antes se sumaba a mano y, si esa
-     conversación era la que llevaba el día al 80% o al 100%, el festejo no
-     salía — y como ya no había raya que cruzar, no salía en todo el día. */
-  /* Se mira el historial YA sellado: pasar de Nuevo directo a Interesado,
-     Cliente o Socio también rellena Contactado (ver sellarEtapa), así que
-     también fue una conversación. Antes solo contaba si la etapa elegida era
-     Contactado o En conversación, y después ya no contaba nunca. */
+  /* Agregar o mover gente NO toca la actividad "Conversaciones" del día
+     (decisión suya, 18-10-2026: "mis mensajes diarios no tienen nada que ver
+     con los contactos que agrego"). Antes cada persona nueva sumaba +1 y se le
+     llenaba la actividad sola. La actividad se cuenta solo con su "+". */
   const sellado = editandoId ? datos.prospectos.find(x=>x.id===editandoId) : registro;
-  const sumaConv = !yaConversado && !!(sellado && sellado.hist &&
-    (sellado.hist["Contactado"] || sellado.hist["En conversación"]));
   /* Lo que la persona alcanzó POR PRIMERA VEZ también cuenta en los números
      del mes: "le di la info" (En conversación), una venta (Cliente) o un socio.
      Así lo que haces con cada persona y tus Resultados del mes cuadran solos.
@@ -3076,11 +3063,10 @@ function guardarProspecto(){
   });
   const nuevo = k => !antes[k] && !!h[k];
   const suma = [];
-  if(sumaConv) suma.push(["conv", "+1 conversación"]);
   if(nuevo("En conversación")) suma.push(["info", "+1 le di la info"]);
   if(nuevo("Cliente")) suma.push(["venta", "+1 venta"]);
   if(nuevo("Socio")) suma.push(["socio", "+1 socio"]);
-  suma.forEach(([id]) => { if(id!=="conv") sellado.cuenta[id] = hoy(); });
+  suma.forEach(([id]) => { sellado.cuenta[id] = hoy(); });
   guardar(); cerrarFormulario(true); pintarProspectos(); pintarHoy();
   avisar("Guardado ✓" + suma.map(x=>" · "+x[1]).concat(quita.map(x=>" · "+x)).join(""));
   suma.forEach(([id]) => contar(id, 1));

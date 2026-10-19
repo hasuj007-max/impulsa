@@ -184,8 +184,8 @@ en `public/index.html` (qué paneles se ven) y `esAdmin()` en `firestore.rules`
   seguimiento · Compró · Se inscribió · Dijo que no. Por dentro siguen las
   etapas de siempre (Contactado, En conversación, Interesado, Cliente, Socio,
   Descartado); "Nuevo" se muestra como "Le hablé" (`pasoDe()`) y una persona
-  nueva entra como Contactado ("si la agregas es que ya le hablaste", y suma
-  su conversación). En Gente, los mismos pasos son el filtro (`#pasosGente`),
+  nueva entra como Contactado ("si la agregas es que ya le hablaste"; NO suma
+  a la actividad de Conversaciones). En Gente, los mismos pasos son el filtro (`#pasosGente`),
   en lugar del desplegable de etapas. **La PRIMERA vez que alguien llega a
   En conversación, Cliente o Socio, `guardarProspecto()` suma +1 a `info`,
   `venta` o `socio` del día** (con `contar()`), para que la persona y los
@@ -219,8 +219,8 @@ en `public/index.html` (qué paneles se ven) y `esAdmin()` en `firestore.rules`
   - El número de cada fila ("14/25") tiene ancho reservado para
     "objetivo/objetivo" (`--car`): al pasar de 9 a 10 crecía, el nombre
     bajaba de renglón y la lista se movía 7 px.
-  - Todo lo que sume a una actividad pasa por `contar()` (el "+", la hoja de
-    conteo, la conversación que suma un prospecto nuevo): ahí viven el festejo
+  - Todo lo que sume a un contador del día pasa por `contar()` (el "+", la
+    hoja de conteo, los pasos de una persona): ahí viven el festejo
     y el orden congelado. Sumar a mano en `dia[...]` se salta el festejo.
   - `pintarHoy({vivo:true})` —lo que usa `contar()`— NO toca el mensaje ni el
     pie, que están encima de la lista y cambian de renglones (medido: el primer
@@ -289,9 +289,11 @@ en `public/index.html` (qué paneles se ven) y `esAdmin()` en `firestore.rules`
 - **Nuevo prospecto es el "+" junto al buscador de Gente** (18-10-2026). Era
   un botón flotante abajo a la derecha que tapaba la palomita de seguimiento
   de la fila que pasaba por debajo.
-- Una conversación se suma la PRIMERA vez que el historial del prospecto
-  llega a Contactado o En conversación, aunque se salte esas etapas (Nuevo →
-  Interesado/Cliente/Socio rellena las anteriores en `sellarEtapa`).
+- **Agregar o mover gente NO suma a la actividad "Conversaciones"** (él lo
+  pidió el 18-10-2026: "mis mensajes diarios no tienen nada que ver con los
+  contactos que agrego"; antes cada persona nueva sumaba +1 y se le llenaba la
+  actividad sola). La actividad solo sube con su "+" o su hoja de conteo. Los
+  pasos de la persona sí suman a `info`, `venta` y `socio`.
 - **Tocar el número de una actividad abre una hoja para escribirlo** (+5, +10,
   "Todas"). Existe porque el plan por defecto suma 145 unidades al día y el "+"
   va de uno en uno. El campo no se autoenfoca a propósito: el teclado taparía
