@@ -439,6 +439,13 @@ main{padding:0 16px}
 .avatar{width:42px;height:42px;border-radius:13px;background:var(--green-soft);color:var(--verde2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;flex:none}
 .prospecto .datos{flex:1;min-width:0}
 .prospecto .nom{font-size:15px;font-weight:700;line-height:1.25;overflow-wrap:break-word}
+.paso-tag{display:inline-block;vertical-align:2px;margin-left:4px;padding:2px 8px;border-radius:999px;
+  font-size:10.5px;font-weight:800;letter-spacing:.2px;white-space:nowrap}
+.paso-tag.t-info{background:var(--azul-soft);color:var(--azul)}
+.paso-tag.t-seg{background:rgba(140,100,255,.16);color:var(--et-contactado)}
+.paso-tag.t-venta{background:var(--green-soft);color:var(--green)}
+.paso-tag.t-socio{background:var(--gold-soft);color:var(--gold)}
+.paso-tag.t-no{background:var(--velo);color:var(--ink-soft)}
 /* Sin nowrap ni puntos suspensivos: la fecha del seguimiento es el dato por el
    que se abre esta pantalla, y antes era justo lo que se cortaba
    ("Marketplace · seg:…"). Ahora se lee entera y las notas salen de la fila. */
@@ -2096,12 +2103,24 @@ function pintarSeguimientos(seg){
 /* Fila de persona compartida por los seguimientos del inicio y la lista de
    Gente: una sola forma de dibujar a alguien en toda la app. La palomita va
    al final para que quede en columna: las etiquetas miden distinto. */
+/* La etiqueta del paso junto al nombre: de un vistazo, a quién ya le diste la
+   info, quién está en seguimiento y quién ya compró o se inscribió. "Le
+   hablé" no lleva, porque así empiezan todos. (Él había pedido quitar la
+   etiqueta vieja, que decía "Conversando"; esta la pidió el 18-10-2026.) */
+const ETIQUETA_PASO = {
+  "En conversación":["Info","t-info"], "Interesado":["Seguimiento","t-seg"],
+  "Cliente":["Venta","t-venta"], "Socio":["Socio","t-socio"], "Descartado":["Dijo no","t-no"]
+};
+function etiquetaPaso(p){
+  const e = ETIQUETA_PASO[p.etapa];
+  return e ? ` <span class="paso-tag ${e[1]}">${e[0]}</span>` : "";
+}
 function filaPersona(p, H){
   const toca = p.fecha && p.fecha <= H && p.etapa !== "Descartado";
   return `<div class="prospecto" onclick="abrirFormulario('${p.id}')">
     <div class="avatar">${esc(iniciales(p.nombre))}</div>
     <div class="datos">
-      <div class="nom">${esc(p.nombre)}</div>
+      <div class="nom">${esc(p.nombre)}${etiquetaPaso(p)}</div>
       <div class="sub">${esc(p.red)} · ${textoSeguimiento(p, H)}</div>
     </div>
     ${toca? `<button class="btn-seg" onclick="event.stopPropagation(); seguimientoHecho('${p.id}', this)"
@@ -2831,7 +2850,7 @@ function filaPersonaFria(p){
   return `<div class="prospecto" onclick="abrirFormulario('${p.id}')">
     <div class="avatar">${esc(iniciales(p.nombre))}</div>
     <div class="datos">
-      <div class="nom">${esc(p.nombre)}</div>
+      <div class="nom">${esc(p.nombre)}${etiquetaPaso(p)}</div>
       <div class="sub">${esc(p.red)} · <span class="aviso-seg">${d} días sin moverse</span></div>
     </div>
   </div>`;

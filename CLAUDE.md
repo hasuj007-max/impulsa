@@ -272,9 +272,12 @@ en `public/index.html` (qué paneles se ven) y `esAdmin()` en `firestore.rules`
   (`fecha <= hoy`) le sale un ✓ en `filaPersona()`. Al tocarla: nota "Seguimiento
   hecho ✓" en `p.log` (cuenta como movimiento para "fríos") y `fecha` = hoy +
   `DIAS_SEGUIMIENTO` (3), así el recordatorio vuelve solo. Aviso con Deshacer.
-- **Las filas de gente no llevan botón de chat ni etiqueta de etapa**: él los
-  pidió fuera ("ya sé por dónde lo voy a contactar"). No volver a ponerlos ni
-  meter el chat en la ficha. La etapa se ve en la ficha y en el filtro.
+- **Las filas de gente no llevan botón de chat** (él lo pidió fuera: "ya sé
+  por dónde lo voy a contactar"; no volver a ponerlo ni meterlo en la ficha).
+  **Sí llevan una etiqueta chiquita del paso junto al nombre** (Info,
+  Seguimiento, Venta, Socio, Dijo no; `etiquetaPaso()`), pedida el
+  18-10-2026; "Le hablé" no lleva. La que quitó antes era la vieja,
+  "Conversando".
 - **El plan diario y la meta del mes (Ajustes) se guardan solos** al salir de
   cada campo (evento `change`); los botones de guardar siguen, pero ya no
   hacen falta.
