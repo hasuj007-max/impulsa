@@ -17,7 +17,7 @@ ni cuenta"; hoy es Firebase Hosting con cuentas de Google). Este archivo manda.
 
 ## Estado y pendientes (al 10-10-2026)
 
-Lo último desplegado es `impulsa-v41` (18-10-2026: siete bugs del pulidor, incluido el + de Gente junto al buscador). Último respaldo en `respaldos/`: 10-10-2026 (17 cuentas, ninguna perdió datos contra el del 02-09). Pendiente, en el orden propuesto:
+Lo último desplegado es `impulsa-v42` (18-10-2026: embudo por números). Último respaldo en `respaldos/`: 10-10-2026 (17 cuentas, ninguna perdió datos contra el del 02-09). Pendiente, en el orden propuesto:
 
 1. **Ventas: rediseñar el modelo.** Él dijo que "venta en pesos + ganancia en
    dólares" está mal planteado y tiene otra idea que **aún no ha contado**.
