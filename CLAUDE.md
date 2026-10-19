@@ -168,10 +168,6 @@ en `public/index.html` (qué paneles se ven) y `esAdmin()` en `firestore.rules`
   periodo (`p.creado`, incluidas las descartadas), R = de esas, las que
   llegaron a En conversación o más (`nivelAlcanzado`), V/S = las que llegaron
   a Cliente/Socio. Es por camada: de la gente del periodo, hasta dónde llegó.
-  - "Tus probabilidades" son 3 renglones: a cuántos de cuántos les diste la
-    info, y "Para 1 venta / 1 socio: agrega a X personas y dale la info a Y"
-    con los números de donde sale. Antes eran las 5 fórmulas del prompt por
-    separado y él no entendía por qué había dos estadísticas de lo mismo.
   - Con menos de `BASE_PROB` (50) personas en total: "Aprendiendo tu
     probabilidad", sin porcentajes. Él insiste en que la probabilidad es una
     suposición hasta tener datos.
