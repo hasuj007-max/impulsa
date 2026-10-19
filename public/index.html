@@ -33,7 +33,6 @@
   --azul-soft:rgba(111,165,255,.15); --gold-soft:rgba(246,185,63,.14);
   --green-soft:rgba(74,222,128,.15); --red-soft:rgba(255,107,107,.12);
   --et-nuevo:#7FA9FF; --et-contactado:#B79DFF; --et-interesado:#FF8FC7; --et-socio:#5BC9F5;
-  --fab:#121712; --fab-ink:#fff;
   --nav:rgba(10,12,10,.82);
   --radius:20px;
 }
@@ -52,7 +51,6 @@
   --azul-soft:rgba(37,99,235,.12); --gold-soft:rgba(184,117,3,.14);
   --green-soft:rgba(21,128,61,.13); --red-soft:rgba(220,38,38,.1);
   --et-nuevo:#1D4ED8; --et-contactado:#6D28D9; --et-interesado:#BE185D; --et-socio:#0369A1;
-  --fab:#16A34A; --fab-ink:#fff;
   --nav:rgba(243,246,242,.85);
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -84,9 +82,6 @@ header.app{
 main{padding:0 16px}
 .tab{display:none}
 .tab.activa{display:block;animation:fade .18s ease}
-/* El botón flotante (+) se asoma 148px sobre el borde: sin esto tapaba el
-   último prospecto de la lista. */
-#tab-prospectos{padding-bottom:72px}
 @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
@@ -262,7 +257,9 @@ main{padding:0 16px}
 .meta .conteo{font-size:13px;font-weight:800;color:var(--ink-soft);min-width:46px;text-align:right}
 /* El número se toca para escribirlo: fondo de pastilla para que se lea como
    botón. Sin él nadie adivina que ahí se puede tocar. */
-.meta button.conteo{border:none;font-family:inherit;cursor:pointer;text-align:center;
+/* --car = caracteres de "objetivo/objetivo" (lo pone filaMeta) */
+.meta button.conteo{min-width:max(46px, calc(var(--car,5) * 1ch + 18px));
+  border:none;font-family:inherit;cursor:pointer;text-align:center;font-variant-numeric:tabular-nums;
   padding:7px 9px;border-radius:10px;background:var(--velo);color:var(--ink)}
 .meta button.conteo:active{transform:scale(.94)}
 
@@ -357,6 +354,15 @@ main{padding:0 16px}
 /* El "−" deja de competir con el "+": es un rescate para cuando te pasaste,
    no una acción de todos los días. */
 .btn-menos{width:30px;height:40px;border-radius:10px;font-size:19px;background:none;color:var(--ink-soft);opacity:.55}
+/* Teléfonos angostos: el "−" y los huecos se achican para que "Conversaciones"
+   quepa entera; a 320 px se partía en "Conversacion / es". */
+@media (max-width:359px){
+  .meta{gap:6px}
+  .meta .nombre{font-size:14px}
+  .meta .botones{gap:2px}
+  .btn-menos{width:24px}
+  .meta button.conteo{padding:7px 6px;min-width:max(40px, calc(var(--car,5) * 1ch + 12px))}
+}
 /* Ni lo cumplido ni lo pausado piden que les sigas sumando: su "+" se apaga.
    Al quedarse todo a la vista, el botón verde de una pausada al final de la
    lista era lo más llamativo de la pantalla. */
@@ -572,9 +578,11 @@ nav{position:fixed;left:0;right:0;bottom:0;background:var(--nav);backdrop-filter
 nav button{flex:1;background:none;border:none;padding:10px 0 8px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;font-weight:800;color:var(--ink-soft);cursor:pointer;text-transform:uppercase;letter-spacing:.4px}
 nav button svg{display:block}
 nav button.activa{color:var(--verde)}
-.fab{position:fixed;right:18px;bottom:calc(92px + env(safe-area-inset-bottom));width:56px;height:56px;border-radius:999px;background:var(--fab);color:var(--fab-ink);font-size:27px;border:1px solid var(--line2);box-shadow:var(--sombra);cursor:pointer;z-index:30;display:none}
-.fab.visible{display:block}
-.toast{position:fixed;left:50%;transform:translateX(-50%) translateY(20px);bottom:calc(100px + env(safe-area-inset-bottom));background:#1B2130;border:1px solid var(--line2);color:#fff;padding:11px 20px;border-radius:999px;font-size:13px;font-weight:700;opacity:0;transition:.25s;z-index:60;pointer-events:none;white-space:nowrap;display:flex;align-items:center;gap:12px}
+.btn-nuevo{flex:none;width:46px;border:none;border-radius:14px;background:var(--grad);color:var(--sobre-verde);
+  font-family:inherit;font-size:24px;font-weight:800;cursor:pointer;box-shadow:var(--sombra)}
+.btn-nuevo:active{transform:scale(.94)}
+.toast{position:fixed;left:50%;transform:translateX(-50%) translateY(20px);bottom:calc(100px + env(safe-area-inset-bottom));background:#1B2130;border:1px solid var(--line2);color:#fff;padding:11px 20px;border-radius:999px;font-size:13px;font-weight:700;opacity:0;transition:.25s;z-index:60;pointer-events:none;display:flex;align-items:center;gap:12px;
+  width:max-content;max-width:calc(100vw - 32px);text-align:center;line-height:1.35}
 .toast.ver{opacity:1;transform:translateX(-50%) translateY(0)}
 .toast.con-accion{pointer-events:auto}
 .toast-btn{background:none;border:none;color:var(--verde);font-size:13px;font-weight:800;cursor:pointer;text-decoration:underline}
@@ -796,8 +804,12 @@ nav button.activa{color:var(--verde)}
   <!-- ============ PROSPECTOS ============ -->
   <section class="tab" id="tab-prospectos">
     <div class="busca-fila">
-      <input class="buscador" id="buscador" type="search" placeholder="Buscar prospecto...">
+      <input class="buscador" id="buscador" type="search" placeholder="Buscar…">
       <select class="sel-etapa" id="selEtapa" aria-label="Filtrar por etapa"></select>
+      <!-- Antes era un botón flotante abajo a la derecha, encima de la lista:
+           tapaba la palomita de seguimiento de la fila que pasaba por debajo
+           y el toque abría "Nuevo prospecto" en vez de marcarla. -->
+      <button class="btn-nuevo" onclick="abrirFormulario()" aria-label="Nuevo prospecto">+</button>
     </div>
     <div class="chips" id="chipsEtapas"></div>
     <div class="card"><div id="listaProspectos"></div></div>
@@ -946,7 +958,7 @@ nav button.activa{color:var(--verde)}
         <button class="btn btn-sec" onclick="exportarCSV()">⬇︎ Prospectos en Excel (CSV)</button>
         <button class="btn btn-sec" onclick="document.getElementById('archivoImport').click()">⬆︎ Restaurar respaldo</button>
         <input type="file" id="archivoImport" accept=".json" hidden onchange="importar(this)">
-        <p class="nota">Tus datos viven solo en este teléfono. Descarga un respaldo cada semana: si Safari borra sus datos o cambias de equipo, lo restauras aquí y no pierdes nada.</p>
+        <p class="nota">Tus datos ya se guardan solos en tu cuenta. Este archivo es una copia extra por si acaso: guárdalo donde quieras y, si algún día lo necesitas, lo restauras aquí.</p>
         <button class="btn btn-peligro" onclick="borrarTodo()">Borrar todos los datos</button>
       </div>
     </details>
@@ -955,7 +967,6 @@ nav button.activa{color:var(--verde)}
   </section>
 </main>
 
-<button class="fab" id="fab" onclick="abrirFormulario()" aria-label="Nuevo prospecto">+</button>
 
 <!-- Hoja: formulario de prospecto -->
 <div class="velo" id="velo" onclick="cerrarTodo()"></div>
@@ -1485,7 +1496,6 @@ function irA(nombre, btn){
   document.getElementById("tab-"+nombre).classList.add("activa");
   document.querySelectorAll("nav button").forEach(b=>b.classList.remove("activa"));
   btn.classList.add("activa");
-  document.getElementById("fab").classList.toggle("visible", nombre==="prospectos");
   revisarCambioDia();
   pintarTab();
   window.scrollTo(0,0);
@@ -1854,7 +1864,10 @@ function filaMeta(m, v, empujon = ""){
       ? `<div class="conteo">${v? v+" · pausada" : "pausada"}</div>`
       /* el número es un botón: tocarlo abre la hoja para escribir cuántas
          llevas. Va con fondo de pastilla para que se lea como tocable. */
-      : `<button class="conteo" onclick="abrirConteo('${m.id}')" aria-label="Escribir cuántas llevas de ${esc(m.nombre)}${empujon? ". "+esc(empujon) : ""}">${v}/${m.objetivo}</button>`}
+      /* Ancho reservado para "objetivo/objetivo": al pasar de 9 a 10 el
+         número crecía, el nombre bajaba a dos renglones y la lista entera se
+         movía 7 px bajo el dedo (regla de oro). */
+      : `<button class="conteo" style="--car:${String(m.objetivo).length*2+1}" onclick="abrirConteo('${m.id}')" aria-label="Escribir cuántas llevas de ${esc(m.nombre)}${empujon? ". "+esc(empujon) : ""}">${v}/${m.objetivo}</button>`}
     ${pausada? "" : `<div class="botones">
       <button class="btn-cnt btn-menos" onclick="contar('${m.id}',-1)" aria-label="Restar 1 a ${esc(m.nombre)}">−</button>
       <button class="btn-cnt btn-mas" onclick="contar('${m.id}',1)" aria-label="Sumar 1 a ${esc(m.nombre)}">+</button>
@@ -2808,7 +2821,13 @@ function guardarProspecto(){
      Pasa por contar(), igual que el "+": antes se sumaba a mano y, si esa
      conversación era la que llevaba el día al 80% o al 100%, el festejo no
      salía — y como ya no había raya que cruzar, no salía en todo el día. */
-  const sumaConv = ["Contactado","En conversación"].includes(registro.etapa) && !yaConversado;
+  /* Se mira el historial YA sellado: pasar de Nuevo directo a Interesado,
+     Cliente o Socio también rellena Contactado (ver sellarEtapa), así que
+     también fue una conversación. Antes solo contaba si la etapa elegida era
+     Contactado o En conversación, y después ya no contaba nunca. */
+  const sellado = editandoId ? datos.prospectos.find(x=>x.id===editandoId) : registro;
+  const sumaConv = !yaConversado && !!(sellado && sellado.hist &&
+    (sellado.hist["Contactado"] || sellado.hist["En conversación"]));
   guardar(); cerrarFormulario(true); pintarProspectos(); pintarHoy();
   avisar("Guardado ✓"+(sumaConv? " · +1 conversación" : ""));
   if(sumaConv) contar("conv", 1);
@@ -3129,8 +3148,12 @@ function guardarMetaMes(){
     ventas: Math.max(0, parseInt(document.getElementById("mesVentas").value)||0),
     socios: Math.max(0, parseInt(document.getElementById("mesSocios").value)||0)
   };
-  guardar(); avisar("Meta del mes guardada ✓");
+  guardar(); pintarTrio(); pintarAjustes(); avisar("Meta del mes guardada ✓");
 }
+/* Igual que el plan: se guarda al salir del campo. Antes, cambiar la meta y
+   salirse de Ajustes la perdía sin avisar si no se tocaba el botón. */
+["mesVentas","mesSocios"].forEach(id =>
+  document.getElementById(id).addEventListener("change", guardarMetaMes));
 /* Vuelca lo escrito en el editor a datos.metas. Se llama antes de agregar o
    quitar filas: sin esto, repintar el editor descartaba en silencio lo que el
    usuario ya había tecleado en las otras metas. */

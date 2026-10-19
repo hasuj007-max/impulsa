@@ -178,6 +178,9 @@ en `public/index.html` (qué paneles se ven) y `esAdmin()` en `firestore.rules`
     (4 s) después del último toque (y al abrir, entrar a la pestaña, cambiar de
     día, sincronizar o editar el plan). Eran 900 ms y no alcanzaba: con las
     empezadas arriba, contar con calma movía la lista bajo el dedo (10-10-2026).
+  - El número de cada fila ("14/25") tiene ancho reservado para
+    "objetivo/objetivo" (`--car`): al pasar de 9 a 10 crecía, el nombre
+    bajaba de renglón y la lista se movía 7 px.
   - Todo lo que sume a una actividad pasa por `contar()` (el "+", la hoja de
     conteo, la conversación que suma un prospecto nuevo): ahí viven el festejo
     y el orden congelado. Sumar a mano en `dia[...]` se salta el festejo.
@@ -234,9 +237,15 @@ en `public/index.html` (qué paneles se ven) y `esAdmin()` en `firestore.rules`
 - **Las filas de gente no llevan botón de chat ni etiqueta de etapa**: él los
   pidió fuera ("ya sé por dónde lo voy a contactar"). No volver a ponerlos ni
   meter el chat en la ficha. La etapa se ve en la ficha y en el filtro.
-- **El plan diario (Ajustes) se guarda solo** al salir de cada campo (evento
-  `change` en `#editorMetas`); el botón "Guardar metas" sigue, pero ya no hace
-  falta.
+- **El plan diario y la meta del mes (Ajustes) se guardan solos** al salir de
+  cada campo (evento `change`); los botones de guardar siguen, pero ya no
+  hacen falta.
+- **Nuevo prospecto es el "+" junto al buscador de Gente** (18-10-2026). Era
+  un botón flotante abajo a la derecha que tapaba la palomita de seguimiento
+  de la fila que pasaba por debajo.
+- Una conversación se suma la PRIMERA vez que el historial del prospecto
+  llega a Contactado o En conversación, aunque se salte esas etapas (Nuevo →
+  Interesado/Cliente/Socio rellena las anteriores en `sellarEtapa`).
 - **Tocar el número de una actividad abre una hoja para escribirlo** (+5, +10,
   "Todas"). Existe porque el plan por defecto suma 145 unidades al día y el "+"
   va de uno en uno. El campo no se autoenfoca a propósito: el teclado taparía
