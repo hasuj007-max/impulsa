@@ -2962,19 +2962,56 @@ function guardarProspecto(){
   /* Lo que la persona alcanzó POR PRIMERA VEZ también cuenta en los números
      del mes: "le di la info" (En conversación), una venta (Cliente) o un socio.
      Así lo que haces con cada persona y tus Resultados del mes cuadran solos.
-     Regresarla de paso no resta: el historial guarda que sí llegó. Llegar a
-     Interesado, Cliente o Socio rellena los pasos de antes (sellarEtapa), así
-     que también cuenta la info. */
+     Llegar a Interesado, Cliente o Socio rellena los pasos de antes
+     (sellarEtapa), así que también cuenta la info.
+     Y se puede CORREGIR: si la regresas por debajo de ese paso (fue un error),
+     se resta del día en que se sumó y se borra ese paso de su historial, para
+     que volver a marcarlo cuente otra vez. `p.cuenta` guarda en qué día se
+     sumó cada cosa. "Dijo que no" después de la info no resta la info (sí la
+     recibió); Cliente → Socio no resta la venta (compró y luego se inscribió). */
   const h = (sellado && sellado.hist) || {};
+  if(!sellado.cuenta) sellado.cuenta = {};
+  const quita = [];
+  REVERSIBLES.forEach(r=>{
+    if(r.sigue(registro.etapa)) return;
+    const dia = diaContado(sellado, r);
+    if(!dia) return;
+    const d = datos.dias[dia];
+    if(d && (d[r.id]||0) > (r.id==="venta" ? ventasConImporte(dia) : 0)) d[r.id]--;
+    r.hist.forEach(k=>{ delete h[k]; });
+    delete sellado.cuenta[r.id];
+    quita.push(r.menos);
+  });
   const nuevo = k => !antes[k] && !!h[k];
   const suma = [];
   if(sumaConv) suma.push(["conv", "+1 conversación"]);
   if(nuevo("En conversación")) suma.push(["info", "+1 le di la info"]);
   if(nuevo("Cliente")) suma.push(["venta", "+1 venta"]);
   if(nuevo("Socio")) suma.push(["socio", "+1 socio"]);
+  suma.forEach(([id]) => { if(id!=="conv") sellado.cuenta[id] = hoy(); });
   guardar(); cerrarFormulario(true); pintarProspectos(); pintarHoy();
-  avisar("Guardado ✓" + suma.map(x=>" · "+x[1]).join(""));
+  avisar("Guardado ✓" + suma.map(x=>" · "+x[1]).concat(quita.map(x=>" · "+x)).join(""));
   suma.forEach(([id]) => contar(id, 1));
+}
+/* Lo que se puede deshacer al regresar a alguien de paso: qué contador, con
+   qué etapas sigue valiendo, y qué pasos se borran de su historial. */
+const REVERSIBLES = [
+  {id:"venta", menos:"−1 venta", hist:["Cliente"],
+   sigue: e => e==="Cliente" || e==="Socio"},
+  {id:"socio", menos:"−1 socio", hist:["Socio"],
+   sigue: e => e==="Socio"},
+  {id:"info",  menos:"−1 le di la info", hist:["En conversación","Interesado"],
+   sigue: e => !["Nuevo","Contactado"].includes(e)}
+];
+/* El día en que se sumó. Lo marcado desde que existe `cuenta` lo trae; lo
+   marcado el día que salieron los pasos (18-10-2026), antes de este arreglo,
+   se reconoce por la fecha de ese paso en su historial. Lo de antes nunca se
+   sumó solo, así que no se resta. */
+const ALTA_PASOS = "2026-10-18";
+function diaContado(p, r){
+  if(p.cuenta && p.cuenta[r.id]) return p.cuenta[r.id];
+  const f = p.hist && p.hist[r.hist[0]];
+  return f && f >= ALTA_PASOS ? f : "";
 }
 function eliminarProspecto(){
   if(!editandoId) return;

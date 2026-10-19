@@ -191,7 +191,12 @@ en `public/index.html` (qué paneles se ven) y `esAdmin()` en `firestore.rules`
   en lugar del desplegable de etapas. **La PRIMERA vez que alguien llega a
   En conversación, Cliente o Socio, `guardarProspecto()` suma +1 a `info`,
   `venta` o `socio` del día** (con `contar()`), para que la persona y los
-  números del mes cuadren sin tocar el + aparte; regresarla de paso no resta.
+  números del mes cuadren sin tocar el + aparte. **Y se puede corregir**: si
+  la regresas por debajo de ese paso, se resta del día en que se sumó
+  (`p.cuenta` guarda ese día; `REVERSIBLES`) y se borra ese paso de su
+  historial, así volver a marcarla cuenta otra vez. Cliente → Socio no resta
+  la venta; "Dijo que no" después de la info no resta la info. Lo marcado
+  antes del 18-10-2026 nunca se sumó solo y no se resta.
 - **Qué fuente te convierte mejor** sí sale de los prospectos: cuenta a los
   descartados usando `p.hist` y quien es cliente Y socio cuenta como UNA
   persona cerrada.
