@@ -17,7 +17,7 @@ ni cuenta"; hoy es Firebase Hosting con cuentas de Google). Este archivo manda.
 
 ## Estado y pendientes (al 10-10-2026)
 
-Lo último desplegado es `impulsa-v50` (18-10-2026: regreso de las probabilidades a 5 renglones; se quedan el aviso de repetidos y la gente separada de las conversaciones del día). Último respaldo en `respaldos/`: 10-10-2026 (17 cuentas, ninguna perdió datos contra el del 02-09). Pendiente, en el orden propuesto:
+Lo último desplegado es `impulsa-v51` (19-10-2026: Gente agrupada por paso). Último respaldo en `respaldos/`: 10-10-2026 (17 cuentas, ninguna perdió datos contra el del 02-09). Pendiente, en el orden propuesto:
 
 1. **Ventas: rediseñar el modelo.** Él dijo que "venta en pesos + ganancia en
    dólares" está mal planteado y tiene otra idea que **aún no ha contado**.
