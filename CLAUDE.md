@@ -285,6 +285,11 @@ en `public/index.html` (qué paneles se ven) y `esAdmin()` en `firestore.rules`
 - **El plan diario y la meta del mes (Ajustes) se guardan solos** al salir de
   cada campo (evento `change`); los botones de guardar siguen, pero ya no
   hacen falta.
+- **Gente va agrupada por paso, siempre** (19-10-2026, pedido suyo): primero
+  "Sin la info todavía" (Le hablé/Nuevo), luego Les di la info, En
+  seguimiento, Clientes y Socios, cada grupo con su título y su número
+  (`ordenPaso()`, `TITULO_GRUPO`). Dentro del grupo, por fecha de seguimiento.
+  Aplica también con Atrasados y Hoy; no en Fríos.
 - **Personas repetidas** (18-10-2026): al agregar o editar, si el nombre
   (sin mayúsculas, acentos ni espacios de más) o el teléfono/@ coincide con
   otra persona, sale un aviso en la ficha con "Abrir su ficha" y, al

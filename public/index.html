@@ -436,6 +436,11 @@ main{padding:0 16px}
 .pasos-ficha button.activa.no{background:var(--red-soft);color:var(--red)}
 .prospecto{display:flex;align-items:center;gap:11px;padding:13px 0;border-bottom:1px solid var(--line);cursor:pointer}
 .prospecto:last-child{border-bottom:none}
+/* título de cada grupo de paso en la lista de Gente */
+.grupo-paso{font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--ink-soft);
+  padding:14px 0 4px;border-bottom:1px solid var(--line)}
+.grupo-paso:first-child{padding-top:2px}
+.grupo-paso span{color:var(--ink);margin-left:4px}
 .avatar{width:42px;height:42px;border-radius:13px;background:var(--green-soft);color:var(--verde2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;flex:none}
 .prospecto .datos{flex:1;min-width:0}
 .prospecto .nom{font-size:15px;font-weight:700;line-height:1.25;overflow-wrap:break-word}
@@ -1227,6 +1232,11 @@ const PASOS = [
   {k:"Descartado",      t:"Dijo que no",    corto:"Dijeron no"}
 ];
 const pasoDe = etapa => etapa==="Nuevo" ? "Contactado" : etapa;
+// título de cada grupo en la lista de Gente
+const TITULO_GRUPO = {"Contactado":"Sin la info todavía", "En conversación":"Les di la info",
+  "Interesado":"En seguimiento", "Cliente":"Clientes", "Socio":"Socios", "Descartado":"Dijeron que no"};
+// posición del paso para ordenar la lista de Gente (Le hablé primero)
+const ordenPaso = p => { const i = PASOS.findIndex(x=>x.k===pasoDe(p.etapa)); return i<0 ? PASOS.length : i; };
 
 /* Escalera del embudo para la ley de promedios. Cada prospecto guarda en `hist`
    la fecha en que alcanzó cada etapa POR PRIMERA VEZ. Sin esto, alguien que
@@ -2811,8 +2821,12 @@ function pintarProspectos(){
   }else{
     if(filtroLista==="atrasados") lista = lista.filter(p=>p.fecha && p.fecha<H);
     else if(filtroLista==="hoy")  lista = lista.filter(p=>p.fecha===H);
-    // sin fecha al final: quien no tiene seguimiento agendado no es urgente
-    lista.sort((a,b)=> (a.fecha||"9999").localeCompare(b.fecha||"9999"));
+    /* Agrupada por paso, siempre en el mismo orden: primero a quienes todavía
+       no les das la info, luego info, seguimiento, clientes y socios (él lo
+       pidió así, 19-10-2026). Dentro de cada grupo, por fecha de seguimiento;
+       sin fecha al final, porque quien no tiene seguimiento no es urgente. */
+    lista.sort((a,b)=> ordenPaso(a) - ordenPaso(b)
+      || (a.fecha||"9999").localeCompare(b.fecha||"9999"));
   }
   if(filtroEtapa!=="Todas") lista = lista.filter(p=>pasoDe(p.etapa)===filtroEtapa);
   if(filtroTexto) lista = lista.filter(p=>p.nombre.toLowerCase().includes(filtroTexto)||(p.notas||"").toLowerCase().includes(filtroTexto));
@@ -2848,9 +2862,18 @@ function pintarProspectos(){
              : `<div class="big">👥</div><p>${datos.prospectos.length? "Nadie coincide con el filtro." : "Aún no tienes prospectos.<br>Toca <b>+</b> para agregar el primero."}</p>`))
     }</div>`;
   }else{
-    cont.innerHTML = lista.map(p=> filtroLista==="frios"
-      ? filaPersonaFria(p)
-      : filaPersona(p, H)).join("");
+    // un título por grupo de paso (solo si en la lista hay más de uno)
+    const grupos = filtroLista!=="frios" && new Set(lista.map(p=>pasoDe(p.etapa))).size > 1;
+    let anterior = null;
+    cont.innerHTML = lista.map(p=>{
+      let titulo = "";
+      if(grupos && pasoDe(p.etapa) !== anterior){
+        anterior = pasoDe(p.etapa);
+        const n = lista.filter(x=>pasoDe(x.etapa)===anterior).length;
+        titulo = `<div class="grupo-paso">${TITULO_GRUPO[anterior] || anterior} <span>${n}</span></div>`;
+      }
+      return titulo + (filtroLista==="frios" ? filaPersonaFria(p) : filaPersona(p, H));
+    }).join("");
   }
   pintarDescartados();
 }
